@@ -158,7 +158,7 @@ Engine::init(void)
 	this->generateTerrain();
 	std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 	startTime = clock();
-	this->compileDisplayList();
+	// this->compileDisplayList();
 	std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 	this->camera = new Camera(Vec3f(0, 0, 0));
 	return (1);
@@ -192,7 +192,8 @@ Engine::render(void)
 	this->camera->look();
 	this->renderAxes();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
-	glCallList(this->cubeList);
+	// glCallList(this->cubeList);
+	this->octree->renderGround(1.0f, 1.0f, 1.0f);
 	glFlush();
 }
 

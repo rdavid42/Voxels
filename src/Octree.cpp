@@ -222,8 +222,8 @@ Octree::renderGround(float const &r, float const &g, float const &b) const
 
 	if (this->_state == GROUND)
 	{
-		// glColor3f(z, z, 1.0f - z);
-		glColor3f(1.0f, 1.0f, 1.0f);
+		glColor3f(z, z, 1.0f - z);
+		// glColor3f(1.0f, 1.0f, 1.0f);
 		drawCube(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 	}
 	for (int i = 0; i < CHD_MAX; ++i)
