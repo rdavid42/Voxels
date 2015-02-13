@@ -36,6 +36,7 @@ public:
 	Octree				*search(float const &x, float const &y, float const &z);
 	void				renderGround(float const &r, float const &g, float const &b) const;
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;
+	void				drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const;
 	void				setCube(float const &x, float const &y, float const &z, float const &s);
 	void				setState(int32_t const &state);
 	void				setParent(Octree *parent);

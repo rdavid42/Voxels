@@ -183,8 +183,11 @@ Octree::drawCube(float const &x, float const &y, float const &z, float const &s)
 		glVertex3f(x,		y + s,	z + s);	// 6
 		glVertex3f(x,		y,		z + s);	// 4
 	glEnd();
+}
 
-	glColor3f(0.0f, 0.0f, 0.0f);
+void
+Octree::drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const
+{
 	glBegin(GL_LINES);
 		glVertex3f(x,		y,		z);		// 0
 		glVertex3f(x + s,	y,		z);		// 1
@@ -225,6 +228,13 @@ Octree::renderGround(float const &r, float const &g, float const &b) const
 		glColor3f(z, z, 1.0f - z);
 		// glColor3f(1.0f, 1.0f, 1.0f);
 		drawCube(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
+		glColor3f(0.0f, 0.0f, 0.0f);
+		// drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
+	}
+	else if (this->_parent == NULL)
+	{
+		glColor3f(1.0f, 1.0f, 1.0f);
+		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 	}
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
