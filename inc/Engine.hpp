@@ -5,6 +5,7 @@
 # include <iostream>
 # include <stdint.h>
 # include "Octree.hpp"
+# include "Noise.hpp"
 
 class Engine
 {
@@ -16,6 +17,7 @@ public:
 	Octree				*octree;
 	Camera				*camera;
 	GLuint				cubeList;
+	Noise				*noise;
 
 	Engine(void);
 	~Engine(void);
@@ -29,9 +31,8 @@ public:
 	void				render(void);
 	void				renderAxes(void);
 	void				loop(void);
-	// float				getDistance(int x, int y, int x1, int y1);
-	// void				getWeight(void);
 	void				generateTerrain(void);
+	void				generateFractalTerrain(void);
 	Engine				&operator=(Engine const &rhs);
 
 private:

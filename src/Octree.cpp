@@ -2,8 +2,11 @@
 #include "Constants.hpp"
 #include "Octree.hpp"
 
+uint32_t
+Octree::max_depth = MAX_DEPTH;
+
 Octree::Octree(void)
-	: _state(0), _cube(), _parent(this)
+	: _state(0), _cube(), _parent(NULL)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
@@ -11,7 +14,7 @@ Octree::Octree(void)
 }
 
 Octree::Octree(Octree const &src)
-	: _state(src.getState()), _cube(src.getCube()), _parent(this)
+	: _state(src.getState()), _cube(src.getCube()), _parent(NULL)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
@@ -55,18 +58,31 @@ Octree::subdivide(void)
 int
 Octree::createChild(uint32_t const &i)
 {
-	float const	s = this->_cube.getS() / 2.0f;
-
 	if (this->_children[i] == NULL)
 	{
-		this->_children[i] = new Octree(this->_cube.getX() + (i & 1) * s,
-										this->_cube.getY() + ((i >> 1) & 1) * s,
-										this->_cube.getZ() + ((i >> 2) & 1) * s,
+		float const		s = this->_cube.getS() / 2.0f;
+
+		this->_children[i] = new Octree(this->_cube.getX() + (i & MASK_1)		 * s,
+										this->_cube.getY() + ((i >> 1) & MASK_1) * s,
+										this->_cube.getZ() + ((i >> 2) & MASK_1) * s,
 										s);
 		this->_children[i]->setParent(this);
 		return (1);
 	}
 	return (0);
+}
+
+void
+Octree::grow(uint32_t const &gd) // gd : grow direction [0, 1, 2, 3, 4, 5, 6, 7]
+{
+	if (this->_parent != NULL)
+		return ;
+	this->max_depth++;
+	this->_parent = new Octree(	this->_cube.getX() - (~gd & MASK_1)		   * this->_cube.getS(),
+								this->_cube.getY() - (~(gd >> 1) & MASK_1) * this->_cube.getS(),
+								this->_cube.getZ() - (~(gd >> 2) & MASK_1) * this->_cube.getS(),
+								this->_cube.getS()						* 2);
+	this->_parent->setChild(~gd & 3, this);
 }
 
 // no NULL check and coordinates given
@@ -225,7 +241,10 @@ Octree::renderGround(float const &r, float const &g, float const &b) const
 
 	if (this->_state == GROUND)
 	{
-		glColor3f(z, z, 1.0f - z);
+		if (z >= 0.0f)
+			glColor3f(z * 4, 0.4f, z * 4);
+		else if (z < 0.0f)
+			glColor3f(0.0f, -z * 2, 0.0f);
 		// glColor3f(1.0f, 1.0f, 1.0f);
 		drawCube(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 		glColor3f(0.0f, 0.0f, 0.0f);

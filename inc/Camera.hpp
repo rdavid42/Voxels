@@ -23,7 +23,7 @@
 #  include <SDL.h>
 # endif
 
-# include "Vec3f.hpp"
+# include "Vec3.hpp"
 
 typedef std::map<SDL_Keycode, bool>				t_keyStates;
 typedef std::map<std::string, SDL_Keycode>		t_keyConfig;
@@ -31,7 +31,7 @@ typedef std::map<std::string, SDL_Keycode>		t_keyConfig;
 class Camera
 {
 public:
-	Camera(Vec3f const &pos);
+	Camera(Vec3<float> const &pos);
 	virtual ~Camera(void);
 
 	void									onMouseMotion(SDL_MouseMotionEvent const &e);
@@ -54,10 +54,10 @@ private:
 	bool									_wheelDown;
 	t_keyStates								_keyStates;				// keys current state true/false
 	t_keyConfig								_keyConfig;				// keys configuration
-	Vec3f									_position;				// camera absolute position
-	Vec3f									_target;				// absolute position of point focused
-	Vec3f									_forward;				// forward vector
-	Vec3f									_left;					// left vector
+	Vec3<float>								_position;				// camera absolute position
+	Vec3<float>								_target;				// absolute position of point focused
+	Vec3<float>								_forward;				// forward vector
+	Vec3<float>								_left;					// left vector
 	double									_theta;					// horizontal rotation angle
 	double									_phi;					// vertical rotation angle
 

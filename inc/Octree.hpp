@@ -13,25 +13,24 @@ class Octree
 {
 private:
 	int32_t				_state;
-	uint32_t			_truc;
 	Cube				_cube;
 	Octree				*_parent;
 	Octree				*_children[CHD_MAX];
 
 public:
+	static uint32_t		max_depth;
+
 	Octree(void);
 	Octree(Cube const &c);
 	Octree(float const &x, float const &y, float const &z, float const &s);
 	Octree(Octree const &src);
 	virtual ~Octree(void);
 
-	void				simulateWater(Octree *origin);
-	void				updateWaterParticle(Octree *origin);
-
 	int					subdivide(void);
 	Octree				*getNeighbor(void);
 	int					createChild(uint32_t const &i);
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s);
+	void				grow(uint32_t const &i);
 	void				insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state);
 	Octree				*search(float const &x, float const &y, float const &z);
 	void				renderGround(float const &r, float const &g, float const &b) const;

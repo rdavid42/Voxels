@@ -71,6 +71,10 @@ Engine::generateTerrain(void)
 		y = -OCTREE_SIZE / 2;
 		while (y <= OCTREE_SIZE)
 		{
+			i = 0;
+			b = 0;
+			pond = 0;
+			tmpWeight = 0;
 			while (i < 8)
 			{
 				dis = sqrtf((x - posx[i]) * (x - posx[i]) + (y - posy[i]) * (y - posy[i]));
@@ -81,19 +85,31 @@ Engine::generateTerrain(void)
 				i++;
 			}
 			result = tmpWeight / pond;
-			pond = 0;
-			tmpWeight = 0;
 			if (b != 0)
 				result = b;
 			if (isnan(result))
 				result = 0;
-			this->octree->insert(x, y, result, MAX_DEPTH, state);
-			i = 0;
+			this->octree->insert(x, y, result, Octree::max_depth, state);
 			y += OCTREE_SIZE / 1000;
-			b = 0;
 		}
-		y = -0.5f;
 		x += OCTREE_SIZE / 1000;
+	}
+}
+
+void
+Engine::generateFractalTerrain(void)
+{
+	float				x;
+	float				y;
+	float				n;
+
+	for (y = -OCTREE_SIZE / 2; y < OCTREE_SIZE; y += OCTREE_SIZE / 1000)
+	{
+		for (x = -OCTREE_SIZE / 2; x < OCTREE_SIZE; x += OCTREE_SIZE / 1000)
+		{
+			n = noise->fractal(0, x, y, 0);
+			this->octree->insert(x, y, n, Octree::max_depth, GROUND);
+		}
 	}
 }
 
@@ -129,7 +145,6 @@ Engine::getDisplayMode(void)
 int
 Engine::init(void)
 {
-	srandom(time(NULL));
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 		return (sdlError(0));
 	this->octree = NULL;
@@ -146,21 +161,27 @@ Engine::init(void)
 		return (sdlError(0));
 	if (!(this->context = SDL_GL_CreateContext(this->window)))
 		return (sdlError(0));
+	this->noise = new Noise(42, 256);
+	this->noise->configs.emplace_back(10, 1.0, 0.4, 0.1, 0.2);
+	srandom(time(NULL));
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (double)this->window_width / this->window_height, 0.001, 1000);
+	gluPerspective(70, (float)(this->window_width / this->window_height), 0.01, 10);
 	glEnable(GL_DEPTH_TEST);
 	// glEnable(GL_BLEND);
 	clock_t startTime = clock();
 	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
-	this->generateTerrain();
+	// this->generateTerrain();
+	this->generateFractalTerrain();
 	std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-	startTime = clock();
+	// startTime = clock();
 	// this->compileDisplayList();
-	std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-	this->camera = new Camera(Vec3f(0, 0, 0));
+	// std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
+	this->octree->grow(0);
+	this->octree = this->octree->getParent();
 	return (1);
 }
 
@@ -171,15 +192,15 @@ Engine::renderAxes(void)
 	// X red
 	glColor3f(1.0f, 0.0f, 0.0f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(1000.0f, 0.0f, 0.0f);
 	// Y green
 	glColor3f(0.0f, 1.0f, 0.0f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 1.0f, 0.0f);
+	glVertex3f(0.0f, 1000.0f, 0.0f);
 	// Z blue
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 1.0f);
+	glVertex3f(0.0f, 0.0f, 1000.0f);
 	glEnd();
 }
 
@@ -201,7 +222,6 @@ void
 Engine::update(Uint32 const &elapsed_time)
 {
 	this->camera->animate(elapsed_time);
-	// SDL_WarpMouseInWindow(this->window, this->window_width / 2, this->window_height / 2);
 }
 
 void

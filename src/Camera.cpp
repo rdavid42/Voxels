@@ -1,7 +1,7 @@
 
 #include "Camera.hpp"
 
-Camera::Camera(const Vec3f &pos)
+Camera::Camera(const Vec3<float> &pos)
 {
 	this->_position = pos;
 	this->_theta = 0.0;
@@ -42,8 +42,8 @@ Camera::onMouseMotion(SDL_MouseMotionEvent const &e)
 void
 Camera::calcVectors(void)
 {
-	static const Vec3f		up(0.0f, 0.0f, 1.0f);
-	double					rtmp;
+	static const Vec3<float>	up(0.0f, 0.0f, 1.0f);
+	double						rtmp;
 
 	if (_phi > 89)
 		_phi = 89;
@@ -122,7 +122,7 @@ Camera::animate(Uint32 timeStep)
 			_verticalMotionActive = false;
 		else
 			_verticalMotionDelay -= timeStep;
-		_position += Vec3f(0, 0, _verticalMotionDir * realSpeed * timeStep);
+		_position += Vec3<float>(0, 0, _verticalMotionDir * realSpeed * timeStep);
 	}
 	_target = _position + _forward;
 }
