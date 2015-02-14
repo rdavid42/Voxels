@@ -136,8 +136,14 @@ Camera::look()
 		0,				0,				1			);	// up vector constant
 }
 
-Camera
-&Camera::operator=(Camera const &rhs)
+Vec3<float> const &
+Camera::getPosition(void) const
+{
+	return (this->_position);
+}
+
+Camera &
+Camera::operator=(Camera const &rhs)
 {
 	if (this != &rhs)
 	{
@@ -149,6 +155,12 @@ Camera
 std::ostream
 &operator<<(std::ostream &o, Camera const &i)
 {
-	o	<< "Camera: " << &i;
+	o	<< "Camera:"
+		<< " x: "
+		<< i.getPosition().x
+		<< ", y: "
+		<< i.getPosition().y
+		<< ", z: "
+		<< i.getPosition().z;
 	return (o);
 }

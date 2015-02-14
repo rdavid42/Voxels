@@ -62,7 +62,7 @@ Octree::createChild(uint32_t const &i)
 	{
 		float const		s = this->_cube.getS() / 2.0f;
 
-		this->_children[i] = new Octree(this->_cube.getX() + (i & MASK_1)		 * s,
+		this->_children[i] = new Octree(this->_cube.getX() + ((i >> 0) & MASK_1) * s,
 										this->_cube.getY() + ((i >> 1) & MASK_1) * s,
 										this->_cube.getZ() + ((i >> 2) & MASK_1) * s,
 										s);
@@ -78,10 +78,10 @@ Octree::grow(uint32_t const &gd) // gd : grow direction [0, 1, 2, 3, 4, 5, 6, 7]
 	if (this->_parent != NULL)
 		return ;
 	this->max_depth++;
-	this->_parent = new Octree(	this->_cube.getX() - (~gd & MASK_1)		   * this->_cube.getS(),
-								this->_cube.getY() - (~(gd >> 1) & MASK_1) * this->_cube.getS(),
-								this->_cube.getZ() - (~(gd >> 2) & MASK_1) * this->_cube.getS(),
-								this->_cube.getS()						* 2);
+	this->_parent = new Octree(	this->_cube.getX() - (~(gd >> 0) & MASK_1)	* this->_cube.getS(),
+								this->_cube.getY() - (~(gd >> 1) & MASK_1)	* this->_cube.getS(),
+								this->_cube.getZ() - (~(gd >> 2) & MASK_1)	* this->_cube.getS(),
+								this->_cube.getS()							* 2);
 	this->_parent->setChild(~gd & 3, this);
 }
 
@@ -118,7 +118,7 @@ Octree
 void
 Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state)
 {
-	// size never changes for children of this octree.
+	// size never changes for children.
 	float const		s = this->_cube.getS() / 2.0f;
 	float			nx;
 	float			ny;
@@ -134,9 +134,9 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 				** precomputing child coordinates in order to check if the vertex is inside.
 				** new_dim = dim + coefficient * size;
 				*/
-				nx = this->_cube.getX() + ((i) & 1) * s;
-				ny = this->_cube.getY() + ((i >> 1) & 1) * s;
-				nz = this->_cube.getZ() + ((i >> 2) & 1) * s;
+				nx = this->_cube.getX() + ((i >> 0) & MASK_1) * s;
+				ny = this->_cube.getY() + ((i >> 1) & MASK_1) * s;
+				nz = this->_cube.getZ() + ((i >> 2) & MASK_1) * s;
 				if (x >= nx && x < nx + s && y >= ny && y < ny + s && z >= nz && z < nz + s)
 				{
 					this->createChild(i, nx, ny, nz, s);
@@ -242,9 +242,9 @@ Octree::renderGround(float const &r, float const &g, float const &b) const
 	if (this->_state == GROUND)
 	{
 		if (z >= 0.0f)
-			glColor3f(z * 4, 0.4f, z * 4);
+			glColor3f(z / 3, z / 3, z / 3);
 		else if (z < 0.0f)
-			glColor3f(0.0f, -z * 2, 0.0f);
+			glColor3f(-z + ((double)random() / (double)RAND_MAX) / 2, -z + ((double)random() / (double)RAND_MAX), 0.3f);
 		// glColor3f(1.0f, 1.0f, 1.0f);
 		drawCube(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 		glColor3f(0.0f, 0.0f, 0.0f);

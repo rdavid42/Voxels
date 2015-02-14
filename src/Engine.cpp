@@ -4,7 +4,7 @@
 #include <ctime>
 #include "Engine.hpp"
 
-#define OCTREE_SIZE			2.0f
+#define OCTREE_SIZE			16.0f
 
 Engine::Engine(void)
 {
@@ -102,12 +102,13 @@ Engine::generateFractalTerrain(void)
 	float				x;
 	float				y;
 	float				n;
+	float const			i = OCTREE_SIZE / powf(2.0f, 9);
 
-	for (y = -OCTREE_SIZE / 2; y < OCTREE_SIZE; y += OCTREE_SIZE / 1000)
+	for (y = -OCTREE_SIZE / 2; y < OCTREE_SIZE; y += i)
 	{
-		for (x = -OCTREE_SIZE / 2; x < OCTREE_SIZE; x += OCTREE_SIZE / 1000)
+		for (x = -OCTREE_SIZE / 2; x < OCTREE_SIZE; x += i)
 		{
-			n = noise->fractal(0, x, y, 0);
+			n = noise->fractal(0, x, y, 0) * 10;
 			this->octree->insert(x, y, n, Octree::max_depth, GROUND);
 		}
 	}
@@ -162,13 +163,13 @@ Engine::init(void)
 	if (!(this->context = SDL_GL_CreateContext(this->window)))
 		return (sdlError(0));
 	this->noise = new Noise(42, 256);
-	this->noise->configs.emplace_back(10, 1.0, 0.4, 0.1, 0.2);
+	this->noise->configs.emplace_back(20, 0.3, 4.0, 0.3, 0.1);
 	srandom(time(NULL));
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (float)(this->window_width / this->window_height), 0.01, 10);
+	gluPerspective(70, (float)(this->window_width / this->window_height), 0.01, 1000000);
 	glEnable(GL_DEPTH_TEST);
 	// glEnable(GL_BLEND);
 	clock_t startTime = clock();
@@ -177,9 +178,9 @@ Engine::init(void)
 	this->generateFractalTerrain();
 	std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 	// startTime = clock();
-	// this->compileDisplayList();
+	this->compileDisplayList();
 	// std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
+	this->camera = new Camera(Vec3<float>(-3.65569, -1.27185, 4.55836));
 	this->octree->grow(0);
 	this->octree = this->octree->getParent();
 	return (1);
@@ -213,8 +214,8 @@ Engine::render(void)
 	this->camera->look();
 	this->renderAxes();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
-	// glCallList(this->cubeList);
-	this->octree->renderGround(1.0f, 1.0f, 1.0f);
+	glCallList(this->cubeList);
+	// this->octree->renderGround(1.0f, 1.0f, 1.0f);
 	glFlush();
 }
 
@@ -222,6 +223,7 @@ void
 Engine::update(Uint32 const &elapsed_time)
 {
 	this->camera->animate(elapsed_time);
+	// std::cout << *this->camera << std::endl;
 }
 
 void

@@ -42,6 +42,8 @@ public:
 	void									animate(Uint32 timeStep);
 	void									look(void);
 
+	Vec3<float> const						&getPosition(void) const;
+
 	Camera									&operator=(Camera const &rhs);
 
 private:
