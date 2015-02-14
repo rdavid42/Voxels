@@ -34,7 +34,7 @@ public:
 	float				perlin(float x, float y, float z);
 	float				fractal(int const ci, float const &x, float const &y, float const &z);
 
-	Noise				&operator=(Noise const &rhs);
+	Noise &				operator=(Noise const &rhs);
 
 private:
 	float				fade(float const &t);
@@ -44,6 +44,6 @@ private:
 	Noise(Noise const &src);
 };
 
-std::ostream			&operator<<(std::ostream &o, Noise const &i);
+std::ostream &			operator<<(std::ostream &o, Noise const &i);
 
 #endif

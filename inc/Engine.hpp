@@ -7,17 +7,23 @@
 # include "Octree.hpp"
 # include "Noise.hpp"
 
+class Camera;
+class Octree;
+
 class Engine
 {
 public:
-	SDL_Window			*window;
+	SDL_Window *		window;
 	SDL_GLContext		context;
 	uint32_t			window_width;
 	uint32_t			window_height;
-	Octree				*octree;
-	Camera				*camera;
+	Octree *			octree;
+	Camera *			camera;
 	GLuint				cubeList;
-	Noise				*noise;
+	Noise *				noise;
+	int					gen_dist;
+	int					number_chunks; // number of chunks within distance (gen_dist)
+	Octree **			chunks;
 
 	Engine(void);
 	~Engine(void);
@@ -31,14 +37,20 @@ public:
 	void				render(void);
 	void				renderAxes(void);
 	void				loop(void);
-	void				generateTerrain(void);
 	void				generateFractalTerrain(void);
-	Engine				&operator=(Engine const &rhs);
+	void				initChunks(void);
+	void				generateChunks(void);
+	void				insertChunks(void);
+	void				onMouseButton(SDL_MouseButtonEvent const &e);
+	void				onMouseMotion(SDL_MouseMotionEvent const &e);
+	void				onMouseWheel(SDL_MouseWheelEvent const &e);
+	void				onKeyboard(SDL_KeyboardEvent const &e);
+	Engine &			operator=(Engine const &rhs);
 
 private:
 	Engine(Engine const &src);
 };
 
-std::ostream				&operator<<(std::ostream &o, Engine const &i);
+std::ostream &			operator<<(std::ostream &o, Engine const &i);
 
 #endif

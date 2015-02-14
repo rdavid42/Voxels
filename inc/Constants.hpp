@@ -34,12 +34,16 @@
 # define MASK_31		0x7FFFFFFF
 # define MASK_32		0xFFFFFFFF
 
-# define GROUND			-1
-# define WATER_FULL		1000
-# define WATER_MIN		100
-# define EMPTY			0
-# define MAX_DEPTH		6
-# define UPDATE_DELAY	1
-# define RAIN_RATE		1
+// Octree states
+# define EMPTY				0
+# define GROUND				1
+# define CHUNK				2
+
+# define GROUND_DEPTH		6
+# define CHUNK_DEPTH		2
+
+# define GEN_DIST			5
+
+# define OCTREE_SIZE		2.0f
 
 #endif

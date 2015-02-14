@@ -23,10 +23,13 @@
 #  include <SDL.h>
 # endif
 
+# include "Engine.hpp"
 # include "Vec3.hpp"
 
 typedef std::map<SDL_Keycode, bool>				t_keyStates;
 typedef std::map<std::string, SDL_Keycode>		t_keyConfig;
+
+class Engine;
 
 class Camera
 {
@@ -39,7 +42,7 @@ public:
 	void									onKeyboard(SDL_KeyboardEvent const &e);
 	void									onMouseWheel(SDL_MouseWheelEvent const &e);
 
-	void									animate(Uint32 timeStep);
+	void									animate(Uint32 timeStep, Engine &e);
 	void									look(void);
 
 	Vec3<float> const						&getPosition(void) const;

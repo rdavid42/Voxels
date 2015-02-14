@@ -4,8 +4,6 @@
 #include <ctime>
 #include "Engine.hpp"
 
-#define OCTREE_SIZE			2.0f
-
 Engine::Engine(void)
 {
 	return ;
@@ -15,6 +13,7 @@ Engine::~Engine(void)
 {
 	SDL_Quit();
 	delete this->octree;
+	delete [] chunks;
 	glDeleteLists(this->cubeList, 1);
 	return ;
 }
@@ -50,53 +49,6 @@ Engine::compileDisplayList(void)
 }
 
 void
-Engine::generateTerrain(void)
-{
-	float const			val[8] = {1.0f, -0.4f, 0.6f, 1.4f , -0.4f, -0.4f, -0.4f, -0.4f};
-	float const			posx[8] = {0, 0.5f, 1.0f, 1.0f, -0.5f, 0.5f, 0.5f, -0.5f};
-	float const			posy[8] = {0, 0, 0.2f, 1.0f, -0.5f, -0.5f, 0.5f, 0.5f};
-	float				tmpWeight = 0;
-	float				result = 0;
-	float				pond = 0;
-	int					i = 0;
-	float				x;
-	float				y;
-	float				dis;
-	int					b = 0;
-	int32_t				state = GROUND;
-
-	x = -this->octree->getCube()->getS() / 2;
-	while (x <= this->octree->getCube()->getS())
-	{
-		y = -this->octree->getCube()->getS() / 2;
-		while (y <= this->octree->getCube()->getS())
-		{
-			i = 0;
-			b = 0;
-			pond = 0;
-			tmpWeight = 0;
-			while (i < 8)
-			{
-				dis = sqrtf((x - posx[i]) * (x - posx[i]) + (y - posy[i]) * (y - posy[i]));
-				pond += 1.0 / (dis * dis);
-				tmpWeight += (val[i] + 0.4f) / (dis * dis);
-				if (posx[i] == x && posy[i] == y)
-					b = (val[i] + 0.4f);
-				i++;
-			}
-			result = tmpWeight / pond;
-			if (b != 0)
-				result = b;
-			if (isnan(result))
-				result = 0;
-			this->octree->insert(x, y, result, Octree::max_depth, state);
-			y += this->octree->getCube()->getS() / 1000;
-		}
-		x += this->octree->getCube()->getS() / 1000;
-	}
-}
-
-void
 Engine::generateFractalTerrain(void)
 {
 	float				x;
@@ -108,8 +60,90 @@ Engine::generateFractalTerrain(void)
 	{
 		for (x = -this->octree->getCube()->getS() / 2; x < this->octree->getCube()->getS(); x += i)
 		{
-			n = noise->fractal(0, x, y, 0) * 10;
-			this->octree->insert(x, y, n, Octree::max_depth, GROUND);
+			n = noise->fractal(0, x, y, 1.5) + noise->fractal(0, x, y, 1.5) * sin(y);// + this->octree->getCube()->getS() / 2;
+			this->octree->insert(x, y, n, this->octree->ground_depth, GROUND);
+		}
+	}
+}
+
+void
+Engine::generateChunks(void)
+{
+	float				x = camera->getPosition().x;
+	float				y = camera->getPosition().y;
+	float				z = camera->getPosition().z;
+	Octree *			current = octree->insert(x, y, z, octree->chunk_depth, CHUNK);
+	int					i; // index
+
+	(void)i;
+	std::cerr << "current: " << current << std::endl;
+/*	if (current != NULL && current != chunks[0])
+	{
+		for (i = 0; i < number_chunks; ++i)
+			chunks[0] = NULL;
+		chunks[0] = current;
+		this->insertChunks();
+	}*/
+}
+
+void
+Engine::initChunks(void)
+{
+	int			i; // index
+
+	// add 4 lines of chunks (4 * distance) and central chunk to number_chunks
+	number_chunks = (gen_dist << 2) + 1;
+	// get number of size (number_chunks) using triangular sequence
+	for (i = 0; i < gen_dist;)
+		number_chunks += i++ << 2;
+
+	chunks = new Octree *[number_chunks];
+	for (i = 0; i < number_chunks; ++i)
+		chunks[i] = NULL;
+
+	// Create initial chunk
+	chunks[0] = octree->insert(camera->getPosition().x,
+								camera->getPosition().y,
+								camera->getPosition().z,
+								octree->chunk_depth, CHUNK);
+
+	// std::cerr << "receives: " << chunks[0] << std::endl;
+	this->insertChunks();
+}
+
+void
+Engine::insertChunks(void)
+{
+	int			i;
+	int			x;
+	int			y;
+	float		j[3];
+
+	i = 1;
+	j[2] = chunks[0]->getCube()->getZ();
+	for (x = -gen_dist; x < 0; ++x)
+	{
+		j[0] = chunks[0]->getCube()->getX() + x * chunks[0]->getCube()->getS();
+		chunks[i++] = octree->insert(j[0], chunks[0]->getCube()->getY(), j[2], octree->chunk_depth, CHUNK);
+		for (y = 1; y < gen_dist + x + 1; ++y)
+		{
+			// std::cerr << "x: " << x << ", y: " << y << std::endl;
+			j[1] = chunks[0]->getCube()->getY() + y * chunks[0]->getCube()->getS();
+			chunks[i++] = octree->insert(j[0], j[1], j[2], octree->chunk_depth, CHUNK);
+			chunks[i++] = octree->insert(j[0], -j[1], j[2], octree->chunk_depth, CHUNK);
+		}
+	}
+	for (x = 0; x < gen_dist + 1; ++x)
+	{
+		j[0] = chunks[0]->getCube()->getX() + x * chunks[0]->getCube()->getS();
+		if (x != 0)
+			chunks[i++] = octree->insert(j[0], chunks[0]->getCube()->getY(), j[2], octree->chunk_depth, CHUNK);
+		for (y = 1; y < gen_dist - x + 1; ++y)
+		{
+			// std::cerr << "x: " << x << ", y: " << y << std::endl;
+			j[1] = chunks[0]->getCube()->getY() + y * chunks[0]->getCube()->getS();
+			chunks[i++] = octree->insert(j[0], j[1], j[2], octree->chunk_depth, CHUNK);
+			chunks[i++] = octree->insert(j[0], -j[1], j[2], octree->chunk_depth, CHUNK);
 		}
 	}
 }
@@ -151,6 +185,7 @@ Engine::init(void)
 	this->octree = NULL;
 	this->window_width = 1400;
 	this->window_height = 1400;
+	gen_dist = GEN_DIST;
 	SDL_ShowCursor(SDL_DISABLE);
 	this->window = SDL_CreateWindow("Mod1",
 									SDL_WINDOWPOS_UNDEFINED,
@@ -164,11 +199,7 @@ Engine::init(void)
 		return (sdlError(0));
 	this->noise = new Noise(42, 256);
 	srandom(time(NULL));
-	this->noise->configs.emplace_back(	1 + random() % 4,
-										(1 + random() % 2) * (double(1 + random() % 60) / 100.0),
-										(1 + random() % 2) * (double(1 + random() % 100) / 100.0),
-										(1 + random() % 2) * (double(1 + random() % 100) / 100.0),
-										(1 + random() % 2) * (double(1 + random() % 100) / 100.0));
+	this->noise->configs.emplace_back(1, 0.5, 0.2, 0.4, 0.1);
 	std::cout	<< "layers:     " << this->noise->configs.at(0).layers << std::endl
 				<< "frequency:  " << this->noise->configs.at(0).frequency << std::endl
 				<< "lacunarity: " << this->noise->configs.at(0).lacunarity << std::endl
@@ -181,19 +212,19 @@ Engine::init(void)
 	gluPerspective(70, (float)(this->window_width / this->window_height), 0.01, 1000000);
 	glEnable(GL_DEPTH_TEST);
 	// glEnable(GL_BLEND);
+	this->camera = new Camera(Vec3<float>(0, 0, 0));
 	clock_t startTime = clock();
 	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
-	this->octree->grow(4);
+	this->octree->grow(3);
 	this->octree = this->octree->getParent();
 	this->octree->grow(4);
 	this->octree = this->octree->getParent();
-	// this->generateTerrain();
-	this->generateFractalTerrain();
+	// this->generateFractalTerrain();
+	initChunks();
 	std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-	// startTime = clock();
-	this->compileDisplayList();
-	// std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-	this->camera = new Camera(Vec3<float>(-3.65569, -1.27185, 4.55836));
+	startTime = clock();
+	// this->compileDisplayList();
+	std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 	return (1);
 }
 
@@ -225,22 +256,46 @@ Engine::render(void)
 	this->camera->look();
 	this->renderAxes();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
-	glCallList(this->cubeList);
-	// this->octree->renderGround(1.0f, 1.0f, 1.0f);
+	// glCallList(this->cubeList);
+	this->octree->renderGround(1.0f, 1.0f, 1.0f);
 	glFlush();
 }
 
 void
 Engine::update(Uint32 const &elapsed_time)
 {
-	this->camera->animate(elapsed_time);
+	this->camera->animate(elapsed_time, *this);
 	// std::cout << *this->camera << std::endl;
+}
+
+void
+Engine::onMouseButton(SDL_MouseButtonEvent const &e)
+{
+	this->camera->onMouseButton(e);
+}
+
+void
+Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
+{
+	this->camera->onMouseMotion(e);
+}
+
+void
+Engine::onMouseWheel(SDL_MouseWheelEvent const &e)
+{
+	this->camera->onMouseWheel(e);
+}
+
+void
+Engine::onKeyboard(SDL_KeyboardEvent const &e)
+{
+	this->camera->onKeyboard(e);
 }
 
 void
 Engine::loop(void)
 {
-	SDL_Event		event;
+	SDL_Event		e;
 	int32_t			quit;
 	Uint32			current_time = 0;
 	Uint32			elapsed_time = 0;
@@ -249,30 +304,30 @@ Engine::loop(void)
 	quit = 0;
 	while (!quit)
 	{
-		while (SDL_PollEvent(&event))
+		while (SDL_PollEvent(&e))
 		{
-			switch (event.type)
+			switch (e.type)
 			{
 				case SDL_QUIT:
 					quit = 1;
 					break;
 				case SDL_MOUSEBUTTONDOWN:
-					camera->onMouseButton(event.button);
+					this->onMouseButton(e.button);
 					break;
 				case SDL_MOUSEBUTTONUP:
-					camera->onMouseButton(event.button);
+					this->onMouseButton(e.button);
 				case SDL_MOUSEMOTION:
-					camera->onMouseMotion(event.motion);
+					this->onMouseMotion(e.motion);
 					break;
 				case SDL_MOUSEWHEEL:
-					camera->onMouseWheel(event.wheel);
+					this->onMouseWheel(e.wheel);
 					break;
 				case SDL_KEYUP:
-					camera->onKeyboard(event.key);
+					this->onKeyboard(e.key);
 					break;
 				case SDL_KEYDOWN:
-					camera->onKeyboard(event.key);
-					if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+					this->onKeyboard(e.key);
+					if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
 						quit = 1;
 					break;
 			}
@@ -287,8 +342,8 @@ Engine::loop(void)
 	}
 }
 
-Engine
-&Engine::operator=(Engine const &rhs)
+Engine &
+Engine::operator=(Engine const &rhs)
 {
 	if (this != &rhs)
 	{
@@ -297,8 +352,8 @@ Engine
 	return (*this);
 }
 
-std::ostream
-&operator<<(std::ostream &o, Engine const &i)
+std::ostream &
+operator<<(std::ostream &o, Engine const &i)
 {
 	o	<< "Engine: " << &i;
 	return (o);

@@ -104,25 +104,38 @@ Camera::onKeyboard(SDL_KeyboardEvent const &e)
 }
 
 void
-Camera::animate(Uint32 timeStep)
+Camera::animate(Uint32 timeStep, Engine &e)
 {
-	double			realSpeed = (_keyStates[_keyConfig["boost"]]) ? 10 * _speed : _speed;
+	double			speed = (_keyStates[_keyConfig["boost"]]) ? 10 * _speed : _speed;
 
 	if (_keyStates[_keyConfig["forward"]])
-		_position += _forward * (realSpeed * timeStep);
+	{
+		e.generateChunks();
+		_position += _forward * (speed * timeStep);
+	}
 	if (_keyStates[_keyConfig["backward"]])
-		_position -= _forward * (realSpeed * timeStep);
+	{
+		e.generateChunks();
+		_position -= _forward * (speed * timeStep);
+	}
 	if (_keyStates[_keyConfig["strafe_left"]])
-		_position += _left * (realSpeed * timeStep);
+	{
+		e.generateChunks();
+		_position += _left * (speed * timeStep);
+	}
 	if (_keyStates[_keyConfig["strafe_right"]])
-		_position -= _left * (realSpeed * timeStep);
+	{
+		e.generateChunks();
+		_position -= _left * (speed * timeStep);
+	}
 	if (_verticalMotionActive)
 	{
+		e.generateChunks();
 		if (timeStep > _verticalMotionDelay)
 			_verticalMotionActive = false;
 		else
 			_verticalMotionDelay -= timeStep;
-		_position += Vec3<float>(0, 0, _verticalMotionDir * realSpeed * timeStep);
+		_position += Vec3<float>(0, 0, _verticalMotionDir * speed * timeStep);
 	}
 	_target = _position + _forward;
 }

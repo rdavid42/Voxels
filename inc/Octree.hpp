@@ -12,13 +12,15 @@
 class Octree
 {
 private:
+	bool				_generated;
 	int32_t				_state;
 	Cube				_cube;
 	Octree				*_parent;
 	Octree				*_children[CHD_MAX];
 
 public:
-	static uint32_t		max_depth;
+	static uint32_t		ground_depth;
+	static uint32_t		chunk_depth;
 
 	Octree(void);
 	Octree(Cube const &c);
@@ -27,12 +29,12 @@ public:
 	virtual ~Octree(void);
 
 	int					subdivide(void);
-	Octree				*getNeighbor(void);
+	Octree *			getNeighbor(void);
 	int					createChild(uint32_t const &i);
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s);
 	void				grow(uint32_t const &i);
-	void				insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state);
-	Octree				*search(float const &x, float const &y, float const &z);
+	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state);
+	Octree *			search(float const &x, float const &y, float const &z);
 	void				renderGround(float const &r, float const &g, float const &b) const;
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;
 	void				drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const;
@@ -40,11 +42,11 @@ public:
 	void				setState(int32_t const &state);
 	void				setParent(Octree *parent);
 	void				setChild(uint32_t const &i, Octree *const child);
-	Cube const			&getCube(void) const;
-	Cube				*getCube(void);
-	int32_t const		&getState(void) const;
-	Octree				*getChild(uint32_t const &i) const;
-	Octree				*getParent(void);
+	Cube const &		getCube(void) const;
+	Cube *				getCube(void);
+	int32_t const &		getState(void) const;
+	Octree *			getChild(uint32_t const &i) const;
+	Octree *			getParent(void);
 	uint32_t			getDepth(void);
 
 	Octree				&operator=(Octree const &rhs);

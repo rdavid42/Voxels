@@ -3,10 +3,13 @@
 #include "Octree.hpp"
 
 uint32_t
-Octree::max_depth = MAX_DEPTH;
+Octree::ground_depth = GROUND_DEPTH;
+
+uint32_t
+Octree::chunk_depth = CHUNK_DEPTH;
 
 Octree::Octree(void)
-	: _state(0), _cube(), _parent(NULL)
+	: _generated(false), _state(0), _cube(), _parent(NULL)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
@@ -14,7 +17,7 @@ Octree::Octree(void)
 }
 
 Octree::Octree(Octree const &src)
-	: _state(src.getState()), _cube(src.getCube()), _parent(NULL)
+	: _generated(false), _state(src.getState()), _cube(src.getCube()), _parent(NULL)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
@@ -22,7 +25,7 @@ Octree::Octree(Octree const &src)
 }
 
 Octree::Octree(float const &x, float const &y, float const &z, float const &s)
-	: _state(0), _cube(x, y, z, s), _parent(NULL)
+	: _generated(false), _state(0), _cube(x, y, z, s), _parent(NULL)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
@@ -35,8 +38,8 @@ Octree::~Octree(void)
 		delete this->_children[i];
 }
 
-Octree
-&Octree::operator=(Octree const &rhs)
+Octree &
+Octree::operator=(Octree const &rhs)
 {
 	if (this != &rhs)
 	{
@@ -60,7 +63,7 @@ Octree::createChild(uint32_t const &i)
 {
 	if (this->_children[i] == NULL)
 	{
-		float const		s = this->_cube.getS() / 2.0f;
+		float const     s = this->_cube.getS() / 2.0f;
 
 		this->_children[i] = new Octree(this->_cube.getX() + ((i >> 0) & MASK_1) * s,
 										this->_cube.getY() + ((i >> 1) & MASK_1) * s,
@@ -77,11 +80,12 @@ Octree::grow(uint32_t const &gd) // gd : grow direction [0, 1, 2, 3, 4, 5, 6, 7]
 {
 	if (this->_parent != NULL)
 		return ;
-	this->max_depth++;
-	this->_parent = new Octree(	this->_cube.getX() - (~(gd >> 0) & MASK_1)	* this->_cube.getS(),
-								this->_cube.getY() - (~(gd >> 1) & MASK_1)	* this->_cube.getS(),
-								this->_cube.getZ() - (~(gd >> 2) & MASK_1)	* this->_cube.getS(),
-								this->_cube.getS()							* 2);
+	this->ground_depth++;
+	this->chunk_depth++;
+	this->_parent = new Octree( this->_cube.getX() - (~(gd >> 0) & MASK_1)  * this->_cube.getS(),
+								this->_cube.getY() - (~(gd >> 1) & MASK_1)  * this->_cube.getS(),
+								this->_cube.getZ() - (~(gd >> 2) & MASK_1)  * this->_cube.getS(),
+								this->_cube.getS()                          * 2);
 	this->_parent->setChild(~gd & 3, this);
 }
 
@@ -93,20 +97,21 @@ Octree::createChild(uint32_t const &i, float const &x, float const &y, float con
 	this->_children[i]->setParent(this);
 }
 
-Octree
-*Octree::search(float const &x, float const &y, float const &z)
+Octree *
+Octree::search(float const &x, float const &y, float const &z)
 {
-	Octree			*child;
+	Octree *		child;
+	int				i;
 
 	if (this->_cube.vertexInside(x, y, z))
 	{
 		child = NULL;
-		for (int i = 0; i < CHD_MAX; ++i)
+		for (i = 0; i < CHD_MAX; ++i)
 		{
 			if (this->_children[i] != NULL)
 			{
 				if ((child = this->_children[i]->search(x, y, z)) != NULL)
-					break ;
+					break;
 			}
 		}
 		return (child == NULL ? this : child);
@@ -115,18 +120,22 @@ Octree
 		return (NULL);
 }
 
-void
+Octree *
 Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state)
 {
 	// size never changes for children.
-	float const		s = this->_cube.getS() / 2.0f;
-	float			nx;
-	float			ny;
-	float			nz;
+	float const     s = this->_cube.getS() / 2.0f;
+	float           nx;
+	float           ny;
+	float           nz;
 
 	if (depth > 0)
 	{
-		for (int i = 0; i < CHD_MAX; ++i)
+		int				i;
+
+		if (depth == this->ground_depth - this->chunk_depth)
+			this->setState(CHUNK);
+		for (i = 0; i < CHD_MAX; ++i)
 		{
 			if (this->_children[i] == NULL)
 			{
@@ -140,64 +149,64 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 				if (x >= nx && x < nx + s && y >= ny && y < ny + s && z >= nz && z < nz + s)
 				{
 					this->createChild(i, nx, ny, nz, s);
-					this->_children[i]->insert(x, y, z, depth - 1, state);
-					break ;
+					return (this->_children[i]->insert(x, y, z, depth - 1, state));
 				}
 			}
 			else if (this->_children[i]->getCube()->vertexInside(x, y, z))
-			{
-				this->_children[i]->insert(x, y, z, depth - 1, state);
-				 break ;
-			}
+				return (this->_children[i]->insert(x, y, z, depth - 1, state));
 		}
 	}
 	else if (depth == 0)
 	{
 		// max depth reached, put values here
 		this->setState(state);
+		// std::cerr << "insert and returns what i want: " << this << std::endl; 
+		return (this);
 	}
+	// std::cerr << "returns what i don't want: " << 0 << std::endl;
+	return (NULL);
 }
 
 void
 Octree::drawCube(float const &x, float const &y, float const &z, float const &s) const
 {
 	glBegin(GL_TRIANGLES);
-		glVertex3f(x,		y,		z);		// 0
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x,		y + s,	z);		// 2
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x,		y + s,	z);		// 2
-		glVertex3f(x + s,	y + s,	z);		// 3
-		glVertex3f(x,		y,		z + s);	// 4
-		glVertex3f(x + s,	y,		z + s);	// 5
-		glVertex3f(x,		y + s,	z + s);	// 6
-		glVertex3f(x + s,	y,		z + s);	// 5
-		glVertex3f(x,		y + s,	z + s);	// 6
-		glVertex3f(x + s,	y + s,	z + s);	// 7
-		glVertex3f(x,		y,		z);		// 0
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x,		y,		z + s);	// 4
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x,		y,		z + s);	// 4
-		glVertex3f(x + s,	y,		z + s);	// 5
-		glVertex3f(x,		y + s,	z);		// 2
-		glVertex3f(x + s,	y + s,	z);		// 3
-		glVertex3f(x,		y + s,	z + s);	// 6
-		glVertex3f(x + s,	y + s,	z);		// 3
-		glVertex3f(x,		y + s,	z + s);	// 6
-		glVertex3f(x + s,	y + s,	z + s);	// 7
-		glVertex3f(x + s,	y + s,	z);		// 3
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x + s,	y + s,	z + s);	// 7
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x + s,	y + s,	z + s);	// 7
-		glVertex3f(x + s,	y,		z + s);	// 5
-		glVertex3f(x,		y + s,	z);		// 2
-		glVertex3f(x,		y,		z);		// 0
-		glVertex3f(x,		y + s,	z + s);	// 6
-		glVertex3f(x,		y,		z);		// 0
-		glVertex3f(x,		y + s,	z + s);	// 6
-		glVertex3f(x,		y,		z + s);	// 4
+		glVertex3f(x,       y,      z);     // 0
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x,       y + s,  z);     // 2
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x,       y + s,  z);     // 2
+		glVertex3f(x + s,   y + s,  z);     // 3
+		glVertex3f(x,       y,      z + s); // 4
+		glVertex3f(x + s,   y,      z + s); // 5
+		glVertex3f(x,       y + s,  z + s); // 6
+		glVertex3f(x + s,   y,      z + s); // 5
+		glVertex3f(x,       y + s,  z + s); // 6
+		glVertex3f(x + s,   y + s,  z + s); // 7
+		glVertex3f(x,       y,      z);     // 0
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x,       y,      z + s); // 4
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x,       y,      z + s); // 4
+		glVertex3f(x + s,   y,      z + s); // 5
+		glVertex3f(x,       y + s,  z);     // 2
+		glVertex3f(x + s,   y + s,  z);     // 3
+		glVertex3f(x,       y + s,  z + s); // 6
+		glVertex3f(x + s,   y + s,  z);     // 3
+		glVertex3f(x,       y + s,  z + s); // 6
+		glVertex3f(x + s,   y + s,  z + s); // 7
+		glVertex3f(x + s,   y + s,  z);     // 3
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x + s,   y + s,  z + s); // 7
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x + s,   y + s,  z + s); // 7
+		glVertex3f(x + s,   y,      z + s); // 5
+		glVertex3f(x,       y + s,  z);     // 2
+		glVertex3f(x,       y,      z);     // 0
+		glVertex3f(x,       y + s,  z + s); // 6
+		glVertex3f(x,       y,      z);     // 0
+		glVertex3f(x,       y + s,  z + s); // 6
+		glVertex3f(x,       y,      z + s); // 4
 	glEnd();
 }
 
@@ -205,54 +214,63 @@ void
 Octree::drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const
 {
 	glBegin(GL_LINES);
-		glVertex3f(x,		y,		z);		// 0
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x + s,	y + s,	z);		// 3
-		glVertex3f(x + s,	y + s,	z);		// 3
-		glVertex3f(x,		y + s,	z);		// 2
-		glVertex3f(x,		y + s,	z);		// 2
-		glVertex3f(x,		y,		z);		// 0
+		glVertex3f(x,       y,      z);     // 0
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x + s,   y + s,  z);     // 3
+		glVertex3f(x + s,   y + s,  z);     // 3
+		glVertex3f(x,       y + s,  z);     // 2
+		glVertex3f(x,       y + s,  z);     // 2
+		glVertex3f(x,       y,      z);     // 0
 
-		glVertex3f(x,		y,		z);		// 0
-		glVertex3f(x,		y,		z + s);	// 4
-		glVertex3f(x + s,	y,		z);		// 1
-		glVertex3f(x + s,	y,		z + s);	// 5
-		glVertex3f(x + s,	y + s,	z);		// 3
-		glVertex3f(x + s,	y + s,	z + s);	// 7
-		glVertex3f(x,		y + s,	z);		// 2
-		glVertex3f(x,		y + s,	z + s);	// 6
+		glVertex3f(x,       y,      z);     // 0
+		glVertex3f(x,       y,      z + s); // 4
+		glVertex3f(x + s,   y,      z);     // 1
+		glVertex3f(x + s,   y,      z + s); // 5
+		glVertex3f(x + s,   y + s,  z);     // 3
+		glVertex3f(x + s,   y + s,  z + s); // 7
+		glVertex3f(x,       y + s,  z);     // 2
+		glVertex3f(x,       y + s,  z + s); // 6
 
-		glVertex3f(x,		y,		z + s);	// 4
-		glVertex3f(x + s,	y,		z + s);	// 5
-		glVertex3f(x + s,	y,		z + s);	// 5
-		glVertex3f(x + s,	y + s,	z + s);	// 7
-		glVertex3f(x + s,	y + s,	z + s);	// 7
-		glVertex3f(x,		y + s,	z + s);	// 6
-		glVertex3f(x,		y + s,	z + s);	// 6
-		glVertex3f(x,		y,		z + s);	// 4
+		glVertex3f(x,       y,      z + s); // 4
+		glVertex3f(x + s,   y,      z + s); // 5
+		glVertex3f(x + s,   y,      z + s); // 5
+		glVertex3f(x + s,   y + s,  z + s); // 7
+		glVertex3f(x + s,   y + s,  z + s); // 7
+		glVertex3f(x,       y + s,  z + s); // 6
+		glVertex3f(x,       y + s,  z + s); // 6
+		glVertex3f(x,       y,      z + s); // 4
 	glEnd();
 }
 
 void
 Octree::renderGround(float const &r, float const &g, float const &b) const
 {
-	float const		&z = this->_cube.getZ();
+	float const &	z = this->_cube.getZ();
+	float			tmp;
 
 	if (this->_state == GROUND)
 	{
-		if (z >= 0.0f)
-			glColor3f(z / 3, z / 3, z / 3);
-		else if (z < 0.0f)
-			glColor3f(-z + ((double)random() / (double)RAND_MAX) / 30, -z / 1.5 + ((double)random() / (double)RAND_MAX) / 30, 0.0f);
-		// glColor3f(1.0f, 1.0f, 1.0f);
+		tmp = ((double)random() / (double)RAND_MAX) / 30;
+		if (z >= 0.2f)
+			glColor3f(0.2f - tmp, 0.5f - tmp, 0.2f);
+		else if (z >= 0.0f)
+			glColor3f(0.7f - tmp, 0.5f - tmp, 0.2f);
+		else if (z <= -0.1f)
+			glColor3f(0.4f - tmp, 0.4f - tmp, 0.4f - tmp);
+		else if (z <= 0.0f)
+			glColor3f(0.5f - tmp, 0.5f - tmp, 0.5f - tmp);
 		drawCube(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 		glColor3f(0.0f, 0.0f, 0.0f);
-		// drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 	}
 	else if (this->_parent == NULL)
 	{
 		glColor3f(1.0f, 1.0f, 1.0f);
+		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
+	}
+	else if (this->_state == CHUNK)
+	{
+		glColor3f(1.0f, 0.5f, 0.0f);
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 	}
 	for (int i = 0; i < CHD_MAX; ++i)
@@ -288,32 +306,32 @@ Octree::setChild(uint32_t const &i, Octree *const child)
 	this->_children[i] = child;
 }
 
-Cube const
-&Octree::getCube(void) const
+Cube const &
+Octree::getCube(void) const
 {
 	return (this->_cube);
 }
 
-Cube
-*Octree::getCube(void)
+Cube *
+Octree::getCube(void)
 {
 	return (&this->_cube);
 }
 
-int32_t const
-&Octree::getState(void) const
+int32_t const &
+Octree::getState(void) const
 {
 	return (this->_state);
 }
 
-Octree
-*Octree::getChild(uint32_t const &i) const
+Octree *
+Octree::getChild(uint32_t const &i) const
 {
 	return (this->_children[i]);
 }
 
-Octree
-*Octree::getParent(void)
+Octree *
+Octree::getParent(void)
 {
 	return (this->_parent);
 }
@@ -321,8 +339,8 @@ Octree
 uint32_t
 Octree::getDepth(void)
 {
-	Octree			*tmp = this->_parent;
-	uint32_t		depth = 0;
+	Octree          *tmp = this->_parent;
+	uint32_t        depth = 0;
 
 	while (tmp != NULL)
 	{
@@ -332,14 +350,14 @@ Octree::getDepth(void)
 	return (depth);
 }
 
-std::ostream
-&operator<<(std::ostream &o, Octree &t)
+std::ostream &
+operator<<(std::ostream &o, Octree &t)
 {
-	uint32_t const		depth = t.getDepth();
+	uint32_t const      depth = t.getDepth();
 
 	if (t.getParent() == &t)
 		o << "Octree: ";
-	o	<< "state = "
+	o   << "state = "
 		<< t.getState()
 		<< ", "
 		<< t.getCube();
@@ -350,7 +368,7 @@ std::ostream
 			o << std::endl;
 			for (uint32_t i = 0; i < depth; i++)
 				o << "-";
-			o	<< "- child "
+			o   << "- child "
 				<< it
 				<< ": "
 				<< *(t.getChild(it));
