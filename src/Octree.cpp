@@ -244,7 +244,7 @@ Octree::renderGround(float const &r, float const &g, float const &b) const
 		if (z >= 0.0f)
 			glColor3f(z / 3, z / 3, z / 3);
 		else if (z < 0.0f)
-			glColor3f(-z + ((double)random() / (double)RAND_MAX) / 2, -z + ((double)random() / (double)RAND_MAX), 0.3f);
+			glColor3f(-z + ((double)random() / (double)RAND_MAX) / 30, -z / 1.5 + ((double)random() / (double)RAND_MAX) / 30, 0.0f);
 		// glColor3f(1.0f, 1.0f, 1.0f);
 		drawCube(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 		glColor3f(0.0f, 0.0f, 0.0f);

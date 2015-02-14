@@ -4,7 +4,7 @@
 #include <ctime>
 #include "Engine.hpp"
 
-#define OCTREE_SIZE			16.0f
+#define OCTREE_SIZE			2.0f
 
 Engine::Engine(void)
 {
@@ -65,11 +65,11 @@ Engine::generateTerrain(void)
 	int					b = 0;
 	int32_t				state = GROUND;
 
-	x = -OCTREE_SIZE / 2;
-	while (x <= OCTREE_SIZE)
+	x = -this->octree->getCube()->getS() / 2;
+	while (x <= this->octree->getCube()->getS())
 	{
-		y = -OCTREE_SIZE / 2;
-		while (y <= OCTREE_SIZE)
+		y = -this->octree->getCube()->getS() / 2;
+		while (y <= this->octree->getCube()->getS())
 		{
 			i = 0;
 			b = 0;
@@ -90,9 +90,9 @@ Engine::generateTerrain(void)
 			if (isnan(result))
 				result = 0;
 			this->octree->insert(x, y, result, Octree::max_depth, state);
-			y += OCTREE_SIZE / 1000;
+			y += this->octree->getCube()->getS() / 1000;
 		}
-		x += OCTREE_SIZE / 1000;
+		x += this->octree->getCube()->getS() / 1000;
 	}
 }
 
@@ -102,11 +102,11 @@ Engine::generateFractalTerrain(void)
 	float				x;
 	float				y;
 	float				n;
-	float const			i = OCTREE_SIZE / powf(2.0f, 9);
+	float const			i = this->octree->getCube()->getS() / powf(2.0f, 11);
 
-	for (y = -OCTREE_SIZE / 2; y < OCTREE_SIZE; y += i)
+	for (y = -this->octree->getCube()->getS() / 2; y < this->octree->getCube()->getS(); y += i)
 	{
-		for (x = -OCTREE_SIZE / 2; x < OCTREE_SIZE; x += i)
+		for (x = -this->octree->getCube()->getS() / 2; x < this->octree->getCube()->getS(); x += i)
 		{
 			n = noise->fractal(0, x, y, 0) * 10;
 			this->octree->insert(x, y, n, Octree::max_depth, GROUND);
@@ -163,8 +163,17 @@ Engine::init(void)
 	if (!(this->context = SDL_GL_CreateContext(this->window)))
 		return (sdlError(0));
 	this->noise = new Noise(42, 256);
-	this->noise->configs.emplace_back(20, 0.3, 4.0, 0.3, 0.1);
 	srandom(time(NULL));
+	this->noise->configs.emplace_back(	1 + random() % 4,
+										(1 + random() % 2) * (double(1 + random() % 60) / 100.0),
+										(1 + random() % 2) * (double(1 + random() % 100) / 100.0),
+										(1 + random() % 2) * (double(1 + random() % 100) / 100.0),
+										(1 + random() % 2) * (double(1 + random() % 100) / 100.0));
+	std::cout	<< "layers:     " << this->noise->configs.at(0).layers << std::endl
+				<< "frequency:  " << this->noise->configs.at(0).frequency << std::endl
+				<< "lacunarity: " << this->noise->configs.at(0).lacunarity << std::endl
+				<< "amplitude:  " << this->noise->configs.at(0).amplitude << std::endl
+				<< "gain:       " << this->noise->configs.at(0).gain << std::endl;
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
@@ -174,6 +183,10 @@ Engine::init(void)
 	// glEnable(GL_BLEND);
 	clock_t startTime = clock();
 	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
+	this->octree->grow(4);
+	this->octree = this->octree->getParent();
+	this->octree->grow(4);
+	this->octree = this->octree->getParent();
 	// this->generateTerrain();
 	this->generateFractalTerrain();
 	std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
@@ -181,8 +194,6 @@ Engine::init(void)
 	this->compileDisplayList();
 	// std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 	this->camera = new Camera(Vec3<float>(-3.65569, -1.27185, 4.55836));
-	this->octree->grow(0);
-	this->octree = this->octree->getParent();
 	return (1);
 }
 
