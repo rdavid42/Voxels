@@ -13,7 +13,6 @@ Engine::~Engine(void)
 {
 	SDL_Quit();
 	delete this->octree;
-	delete [] chunks;
 	glDeleteLists(this->cubeList, 1);
 	return ;
 }
@@ -61,7 +60,42 @@ Engine::generateFractalTerrain(void)
 		for (x = -this->octree->getCube()->getS() / 2; x < this->octree->getCube()->getS(); x += i)
 		{
 			n = noise->fractal(0, x, y, 1.5) + noise->fractal(0, x, y, 1.5) * sin(y);// + this->octree->getCube()->getS() / 2;
-			this->octree->insert(x, y, n, this->octree->ground_depth, GROUND);
+			this->octree->insert(x, y, n, this->octree->block_depth, GROUND, Vec3<float>(0.0f, 0.0f, 0.0f));
+		}
+	}
+}
+
+void
+Engine::generation(void)
+{
+	int					cx, cy, cz;
+	float				x, y;
+	float				ax, ay;
+	float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
+	float				n;
+
+	// std::cerr << "x: " << chunks[1][1][1]->getCube()->getX() << ", s: " << s << std::endl;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (!chunks[cz][cy][cx]->generated)
+				{
+					for (x = -chunk_size / 2; x < chunk_size; x += inc)
+					{
+						for (y = -chunk_size / 2; y < chunk_size; y += inc)
+						{
+							ax = chunks[cz][cy][cx]->getCube()->getX() + x;
+							ay = chunks[cz][cy][cx]->getCube()->getY() + y;
+							n = noise->fractal(0, ax, ay, 1.5) + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+							chunks[cz][cy][cx]->insert(ax, ay, n, this->octree->block_depth, GROUND, Vec3<float>(0.0f, 0.0f, 0.0f));
+						}
+					}
+					chunks[cz][cy][cx]->generated = true;
+				}
+			}
 		}
 	}
 }
@@ -69,83 +103,71 @@ Engine::generateFractalTerrain(void)
 void
 Engine::generateChunks(void)
 {
-	float				x = camera->getPosition().x;
-	float				y = camera->getPosition().y;
-	float				z = camera->getPosition().z;
-	Octree *			current = octree->insert(x, y, z, octree->chunk_depth, CHUNK);
-	int					i; // index
-
-	(void)i;
-	std::cerr << "current: " << current << std::endl;
-/*	if (current != NULL && current != chunks[0])
+	Octree *			current = this->octree->insert(camera->getPosition().x,
+														camera->getPosition().y,
+														camera->getPosition().z,
+														octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+	if (current != NULL)
 	{
-		for (i = 0; i < number_chunks; ++i)
-			chunks[0] = NULL;
-		chunks[0] = current;
-		this->insertChunks();
-	}*/
-}
-
-void
-Engine::initChunks(void)
-{
-	int			i; // index
-
-	// add 4 lines of chunks (4 * distance) and central chunk to number_chunks
-	number_chunks = (gen_dist << 2) + 1;
-	// get number of size (number_chunks) using triangular sequence
-	for (i = 0; i < gen_dist;)
-		number_chunks += i++ << 2;
-
-	chunks = new Octree *[number_chunks];
-	for (i = 0; i < number_chunks; ++i)
-		chunks[i] = NULL;
-
-	// Create initial chunk
-	chunks[0] = octree->insert(camera->getPosition().x,
-								camera->getPosition().y,
-								camera->getPosition().z,
-								octree->chunk_depth, CHUNK);
-
-	// std::cerr << "receives: " << chunks[0] << std::endl;
-	this->insertChunks();
+		if (current != chunks[center][center][center])
+		{
+			std::cerr << "current: " << current << std::endl;
+			chunks[center][center][center]->remove();
+			chunks[center][center][center] = current;
+			this->insertChunks();
+			this->generation();
+		}
+	}
 }
 
 void
 Engine::insertChunks(void)
 {
-	int			i;
-	int			x;
-	int			y;
-	float		j[3];
+	int					cx, cy, cz;
+	Octree *			new_chunk;
 
-	i = 1;
-	j[2] = chunks[0]->getCube()->getZ();
-	for (x = -gen_dist; x < 0; ++x)
+	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
-		j[0] = chunks[0]->getCube()->getX() + x * chunks[0]->getCube()->getS();
-		chunks[i++] = octree->insert(j[0], chunks[0]->getCube()->getY(), j[2], octree->chunk_depth, CHUNK);
-		for (y = 1; y < gen_dist + x + 1; ++y)
+		for (cy = 0; cy < GEN_SIZE; ++cy)
 		{
-			// std::cerr << "x: " << x << ", y: " << y << std::endl;
-			j[1] = chunks[0]->getCube()->getY() + y * chunks[0]->getCube()->getS();
-			chunks[i++] = octree->insert(j[0], j[1], j[2], octree->chunk_depth, CHUNK);
-			chunks[i++] = octree->insert(j[0], -j[1], j[2], octree->chunk_depth, CHUNK);
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (cz != center || cy != center || cx != center)
+				{
+					new_chunk = octree->insert(camera->getPosition().x + (cx - center) * chunk_size,
+												camera->getPosition().y + (cy - center) * chunk_size,
+												camera->getPosition().z + (cz - center) * chunk_size,
+												octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 1.0f, 0.0f));
+					if (neighbour != chunks[cz][cy][cx])
+					{
+						
+					}
+				}
+			}
 		}
 	}
-	for (x = 0; x < gen_dist + 1; ++x)
-	{
-		j[0] = chunks[0]->getCube()->getX() + x * chunks[0]->getCube()->getS();
-		if (x != 0)
-			chunks[i++] = octree->insert(j[0], chunks[0]->getCube()->getY(), j[2], octree->chunk_depth, CHUNK);
-		for (y = 1; y < gen_dist - x + 1; ++y)
-		{
-			// std::cerr << "x: " << x << ", y: " << y << std::endl;
-			j[1] = chunks[0]->getCube()->getY() + y * chunks[0]->getCube()->getS();
-			chunks[i++] = octree->insert(j[0], j[1], j[2], octree->chunk_depth, CHUNK);
-			chunks[i++] = octree->insert(j[0], -j[1], j[2], octree->chunk_depth, CHUNK);
-		}
-	}
+}
+
+void
+Engine::initChunks(void)
+{
+	int				i; // index
+	int				x, y, z;
+
+	for (y = 0; y < GEN_SIZE; ++y)
+		for (x = 0; x < GEN_SIZE; ++x)
+			for (z = 0; z < GEN_SIZE; ++z)
+				chunks[z][y][x] = NULL;
+	center = (GEN_SIZE - 1) / 2;
+	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
+	block_size = chunk_size / powf(2, BLOCK_DEPTH);
+	// Create initial chunk
+	chunks[1][1][1] = octree->insert(camera->getPosition().x,
+								camera->getPosition().y,
+								camera->getPosition().z,
+								octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+	this->insertChunks();
+	this->generation();
 }
 
 int
@@ -185,7 +207,6 @@ Engine::init(void)
 	this->octree = NULL;
 	this->window_width = 1400;
 	this->window_height = 1400;
-	gen_dist = GEN_DIST;
 	SDL_ShowCursor(SDL_DISABLE);
 	this->window = SDL_CreateWindow("Mod1",
 									SDL_WINDOWPOS_UNDEFINED,
@@ -212,19 +233,15 @@ Engine::init(void)
 	gluPerspective(70, (float)(this->window_width / this->window_height), 0.01, 1000000);
 	glEnable(GL_DEPTH_TEST);
 	// glEnable(GL_BLEND);
-	this->camera = new Camera(Vec3<float>(0, 0, 0));
-	clock_t startTime = clock();
+	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
+	// clock_t startTime = clock();
 	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
-	this->octree->grow(3);
-	this->octree = this->octree->getParent();
-	this->octree->grow(4);
-	this->octree = this->octree->getParent();
 	// this->generateFractalTerrain();
 	initChunks();
-	std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-	startTime = clock();
+	// std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+	// startTime = clock();
 	// this->compileDisplayList();
-	std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+	// std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 	return (1);
 }
 

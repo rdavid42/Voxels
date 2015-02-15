@@ -1,5 +1,5 @@
 
-#include <Cube.hpp>
+#include "Cube.hpp"
 
 Cube::Cube(void)
 	: _x(0), _y(0), _z(0), _s(0)

@@ -21,9 +21,12 @@ public:
 	Camera *			camera;
 	GLuint				cubeList;
 	Noise *				noise;
-	int					gen_dist;
-	int					number_chunks; // number of chunks within distance (gen_dist)
-	Octree **			chunks;
+	float				chunk_size; // number of chunks within distance (gen_dist)
+	float				block_size;
+	int					center;
+	Octree				*chunks[GEN_SIZE]
+							   [GEN_SIZE]
+							   [GEN_SIZE]; // camera chunk in the center
 
 	Engine(void);
 	~Engine(void);
@@ -39,8 +42,9 @@ public:
 	void				loop(void);
 	void				generateFractalTerrain(void);
 	void				initChunks(void);
-	void				generateChunks(void);
 	void				insertChunks(void);
+	void				generation(void);
+	void				generateChunks(void);
 	void				onMouseButton(SDL_MouseButtonEvent const &e);
 	void				onMouseMotion(SDL_MouseMotionEvent const &e);
 	void				onMouseWheel(SDL_MouseWheelEvent const &e);

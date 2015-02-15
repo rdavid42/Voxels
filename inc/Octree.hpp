@@ -6,20 +6,22 @@
 # include "Cube.hpp"
 # include "Camera.hpp"
 # include "Constants.hpp"
+# include "Vec3.hpp"
 
 # define CHD_MAX		8
 
 class Octree
 {
 private:
-	bool				_generated;
 	int32_t				_state;
 	Cube				_cube;
 	Octree				*_parent;
 	Octree				*_children[CHD_MAX];
 
 public:
-	static uint32_t		ground_depth;
+	Vec3<float>			c; // to debug
+	bool				generated;
+	static uint32_t		block_depth;
 	static uint32_t		chunk_depth;
 
 	Octree(void);
@@ -33,8 +35,9 @@ public:
 	int					createChild(uint32_t const &i);
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s);
 	void				grow(uint32_t const &i);
-	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state);
+	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c);
 	Octree *			search(float const &x, float const &y, float const &z);
+	void				remove(void);
 	void				renderGround(float const &r, float const &g, float const &b) const;
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;
 	void				drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const;

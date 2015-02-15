@@ -39,11 +39,11 @@
 # define GROUND				1
 # define CHUNK				2
 
-# define GROUND_DEPTH		6
-# define CHUNK_DEPTH		2
+# define OCTREE_SIZE		20000.0f
 
-# define GEN_DIST			5
-
-# define OCTREE_SIZE		2.0f
+# define CHUNK_DEPTH		15 // insert directly in octree
+# define BLOCK_DEPTH		5 // insert from chunk depth
+// [1, 3, 5, 7, 9, ...]
+# define GEN_SIZE			3 // (n * n * n) must be odd in order to place camera in the center all the time
 
 #endif

@@ -3,39 +3,40 @@
 #include "Octree.hpp"
 
 uint32_t
-Octree::ground_depth = GROUND_DEPTH;
+Octree::block_depth = BLOCK_DEPTH;
 
 uint32_t
 Octree::chunk_depth = CHUNK_DEPTH;
 
 Octree::Octree(void)
-	: _generated(false), _state(0), _cube(), _parent(NULL)
+	: _state(0), _cube(), _parent(NULL), c(), generated(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
-	return ;
 }
 
 Octree::Octree(Octree const &src)
-	: _generated(false), _state(src.getState()), _cube(src.getCube()), _parent(NULL)
+	: _state(src.getState()), _cube(src.getCube()), _parent(NULL), c(), generated(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
-	return ;
 }
 
 Octree::Octree(float const &x, float const &y, float const &z, float const &s)
-	: _generated(false), _state(0), _cube(x, y, z, s), _parent(NULL)
+	: _state(0), _cube(x, y, z, s), _parent(NULL), c(), generated(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
-	return ;
 }
 
 Octree::~Octree(void)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
-		delete this->_children[i];
+	{
+		if (this->_children[i] != NULL)
+			delete this->_children[i];
+		this->_children[i] = NULL;
+	}
 }
 
 Octree &
@@ -80,12 +81,12 @@ Octree::grow(uint32_t const &gd) // gd : grow direction [0, 1, 2, 3, 4, 5, 6, 7]
 {
 	if (this->_parent != NULL)
 		return ;
-	this->ground_depth++;
+	this->block_depth++;
 	this->chunk_depth++;
-	this->_parent = new Octree( this->_cube.getX() - (~(gd >> 0) & MASK_1)  * this->_cube.getS(),
-								this->_cube.getY() - (~(gd >> 1) & MASK_1)  * this->_cube.getS(),
-								this->_cube.getZ() - (~(gd >> 2) & MASK_1)  * this->_cube.getS(),
-								this->_cube.getS()                          * 2);
+	this->_parent = new Octree( this->_cube.getX() - (~(gd >> 0) & MASK_1)	* this->_cube.getS(),
+								this->_cube.getY() - (~(gd >> 1) & MASK_1)	* this->_cube.getS(),
+								this->_cube.getZ() - (~(gd >> 2) & MASK_1)	* this->_cube.getS(),
+								this->_cube.getS()							* 2);
 	this->_parent->setChild(~gd & 3, this);
 }
 
@@ -120,8 +121,27 @@ Octree::search(float const &x, float const &y, float const &z)
 		return (NULL);
 }
 
+void
+Octree::remove(void)
+{
+	int			i;
+	Octree *	parent = this->_parent;
+
+	if (parent != NULL)
+	{
+		for (i = 0; i < CHD_MAX; ++i)
+		{
+			if (parent->getChild(i) == this)
+			{
+				delete parent->getChild(i);
+				parent->setChild(i, NULL);
+			}
+		}
+	}
+}
+
 Octree *
-Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state)
+Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c)
 {
 	// size never changes for children.
 	float const     s = this->_cube.getS() / 2.0f;
@@ -129,12 +149,18 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 	float           ny;
 	float           nz;
 
-	if (depth > 0)
+	if (depth == 0)
+	{
+		// max depth reached, put values here
+		this->setState(state);
+		this->c = c;
+		// std::cerr << "insert deepest: " << this << std::endl;
+		return (this);
+	}
+	else if (depth > 0)
 	{
 		int				i;
 
-		if (depth == this->ground_depth - this->chunk_depth)
-			this->setState(CHUNK);
 		for (i = 0; i < CHD_MAX; ++i)
 		{
 			if (this->_children[i] == NULL)
@@ -149,21 +175,14 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 				if (x >= nx && x < nx + s && y >= ny && y < ny + s && z >= nz && z < nz + s)
 				{
 					this->createChild(i, nx, ny, nz, s);
-					return (this->_children[i]->insert(x, y, z, depth - 1, state));
+					return (this->_children[i]->insert(x, y, z, depth - 1, state, c));
 				}
 			}
 			else if (this->_children[i]->getCube()->vertexInside(x, y, z))
-				return (this->_children[i]->insert(x, y, z, depth - 1, state));
+				return (this->_children[i]->insert(x, y, z, depth - 1, state, c));
 		}
 	}
-	else if (depth == 0)
-	{
-		// max depth reached, put values here
-		this->setState(state);
-		// std::cerr << "insert and returns what i want: " << this << std::endl; 
-		return (this);
-	}
-	// std::cerr << "returns what i don't want: " << 0 << std::endl;
+	// std::cerr << "not created, depth: " << depth << std::endl;
 	return (NULL);
 }
 
@@ -247,38 +266,40 @@ void
 Octree::renderGround(float const &r, float const &g, float const &b) const
 {
 	float const &	z = this->_cube.getZ();
-	float			tmp;
+	// float			tmp;
 
+	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
+	{
+		glColor3f(c.x, c.y, c.z);
+		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
+	}
 	if (this->_state == GROUND)
 	{
-		tmp = ((double)random() / (double)RAND_MAX) / 30;
+		// static float tmp = ((double)random() / (double)RAND_MAX) / 30;
 		if (z >= 0.2f)
-			glColor3f(0.2f - tmp, 0.5f - tmp, 0.2f);
+			glColor3f(0.2f, 0.5f, 0.2f);
 		else if (z >= 0.0f)
-			glColor3f(0.7f - tmp, 0.5f - tmp, 0.2f);
+			glColor3f(0.7f, 0.5f, 0.2f);
 		else if (z <= -0.1f)
-			glColor3f(0.4f - tmp, 0.4f - tmp, 0.4f - tmp);
+			glColor3f(0.4f, 0.4f, 0.4f);
 		else if (z <= 0.0f)
-			glColor3f(0.5f - tmp, 0.5f - tmp, 0.5f - tmp);
+			glColor3f(0.5f, 0.5f, 0.5f);
 		drawCube(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
-		glColor3f(0.0f, 0.0f, 0.0f);
 	}
 	else if (this->_parent == NULL)
 	{
 		glColor3f(1.0f, 1.0f, 1.0f);
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 	}
-	else if (this->_state == CHUNK)
+/*	else if (this->_state == CHUNK)
 	{
 		glColor3f(1.0f, 0.5f, 0.0f);
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
-	}
+	}*/
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (this->_children[i] != NULL)
-		{
 			this->_children[i]->renderGround(r, g, b);
-		}
 	}
 }
 
