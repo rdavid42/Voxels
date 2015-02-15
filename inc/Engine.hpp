@@ -43,6 +43,7 @@ public:
 	void				generateFractalTerrain(void);
 	void				initChunks(void);
 	void				insertChunks(void);
+	void				renderChunks(void);
 	void				generation(void);
 	void				generateChunks(void);
 	void				onMouseButton(SDL_MouseButtonEvent const &e);

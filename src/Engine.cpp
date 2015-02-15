@@ -43,10 +43,10 @@ Engine::compileDisplayList(void)
 		return ;
 	}
 	glNewList(this->cubeList, GL_COMPILE);
-	this->octree->renderGround(1.0f, 1.0f, 1.0f);
+	this->octree->renderGround();
 	glEndList();
 }
-
+/*
 void
 Engine::generateFractalTerrain(void)
 {
@@ -64,7 +64,7 @@ Engine::generateFractalTerrain(void)
 		}
 	}
 }
-
+*/
 void
 Engine::generation(void)
 {
@@ -83,17 +83,17 @@ Engine::generation(void)
 			{
 				if (!chunks[cz][cy][cx]->generated)
 				{
+					chunks[cz][cy][cx]->generated = true;
 					for (x = -chunk_size / 2; x < chunk_size; x += inc)
 					{
 						for (y = -chunk_size / 2; y < chunk_size; y += inc)
 						{
 							ax = chunks[cz][cy][cx]->getCube()->getX() + x;
 							ay = chunks[cz][cy][cx]->getCube()->getY() + y;
-							n = noise->fractal(0, ax, ay, 1.5) + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+							n = noise->fractal(0, ax, ay, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
 							chunks[cz][cy][cx]->insert(ax, ay, n, this->octree->block_depth, GROUND, Vec3<float>(0.0f, 0.0f, 0.0f));
 						}
 					}
-					chunks[cz][cy][cx]->generated = true;
 				}
 			}
 		}
@@ -107,16 +107,23 @@ Engine::generateChunks(void)
 														camera->getPosition().y,
 														camera->getPosition().z,
 														octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+
 	if (current != NULL)
 	{
+		// only try to generate if the camera moved to another chunk
 		if (current != chunks[center][center][center])
 		{
-			std::cerr << "current: " << current << std::endl;
-			chunks[center][center][center]->remove();
+			// std::cerr << "current: " << current << std::endl;
+			// chunks[center][center][center]->remove();
 			chunks[center][center][center] = current;
 			this->insertChunks();
 			this->generation();
 		}
+	}
+	else
+	{
+		// this happens if the camera moves out of the world
+		std::cerr << "Camera out ! x: " << camera->getPosition().x << ", y: " << camera->getPosition().y << ", z: " << camera->getPosition().z << std::endl;
 	}
 }
 
@@ -132,15 +139,16 @@ Engine::insertChunks(void)
 		{
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
+				// place new chunks in the camera perimeter, ignoring the central chunk
 				if (cz != center || cy != center || cx != center)
 				{
 					new_chunk = octree->insert(camera->getPosition().x + (cx - center) * chunk_size,
 												camera->getPosition().y + (cy - center) * chunk_size,
 												camera->getPosition().z + (cz - center) * chunk_size,
 												octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 1.0f, 0.0f));
-					if (neighbour != chunks[cz][cy][cx])
+					if (new_chunk != chunks[cz][cy][cx])
 					{
-						
+						chunks[cz][cy][cx] = new_chunk;
 					}
 				}
 			}
@@ -162,12 +170,29 @@ Engine::initChunks(void)
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
 	// Create initial chunk
-	chunks[1][1][1] = octree->insert(camera->getPosition().x,
-								camera->getPosition().y,
-								camera->getPosition().z,
-								octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+	chunks[center][center][center] = octree->insert(camera->getPosition().x,
+													camera->getPosition().y,
+													camera->getPosition().z,
+													octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 	this->insertChunks();
 	this->generation();
+}
+
+void
+Engine::renderChunks(void)
+{
+	int				cx, cy, cz;
+
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				chunks[cz][cy][cx]->renderGround();
+			}
+		}
+	}
 }
 
 int
@@ -227,6 +252,7 @@ Engine::init(void)
 				<< "amplitude:  " << this->noise->configs.at(0).amplitude << std::endl
 				<< "gain:       " << this->noise->configs.at(0).gain << std::endl;
 	SDL_SetRelativeMouseMode(SDL_TRUE);
+	glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -274,7 +300,8 @@ Engine::render(void)
 	this->renderAxes();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
 	// glCallList(this->cubeList);
-	this->octree->renderGround(1.0f, 1.0f, 1.0f);
+	this->renderChunks();
+	// this->octree->renderGround(1.0f, 1.0f, 1.0f);
 	glFlush();
 }
 

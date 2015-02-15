@@ -38,7 +38,7 @@ public:
 	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c);
 	Octree *			search(float const &x, float const &y, float const &z);
 	void				remove(void);
-	void				renderGround(float const &r, float const &g, float const &b) const;
+	void				renderGround(void) const;
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;
 	void				drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const;
 	void				setCube(float const &x, float const &y, float const &z, float const &s);

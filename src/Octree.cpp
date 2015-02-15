@@ -263,23 +263,32 @@ Octree::drawCubeRidges(float const &x, float const &y, float const &z, float con
 }
 
 void
-Octree::renderGround(float const &r, float const &g, float const &b) const
+Octree::renderGround(void) const
 {
 	float const &	z = this->_cube.getZ();
 	// float			tmp;
 
-	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
+/*	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
 	{
 		glColor3f(c.x, c.y, c.z);
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
-	}
+	}*/
 	if (this->_state == GROUND)
 	{
 		// static float tmp = ((double)random() / (double)RAND_MAX) / 30;
+		// glColor3f(z, z, z);
 		if (z >= 0.2f)
 			glColor3f(0.2f, 0.5f, 0.2f);
 		else if (z >= 0.0f)
 			glColor3f(0.7f, 0.5f, 0.2f);
+		else if (z <= -0.7f)
+			glColor3f(0.3f, 0.3f, 0.5f);
+		else if (z <= -0.6f)
+			glColor3f(0.3f, 0.3f, 0.7f);
+		else if (z <= -0.5f)
+			glColor3f(0.3f, 0.3f, 0.8f);
+		else if (z <= -0.4f)
+			glColor3f(0.96f, 0.894f, 0.647f);
 		else if (z <= -0.1f)
 			glColor3f(0.4f, 0.4f, 0.4f);
 		else if (z <= 0.0f)
@@ -299,7 +308,7 @@ Octree::renderGround(float const &r, float const &g, float const &b) const
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (this->_children[i] != NULL)
-			this->_children[i]->renderGround(r, g, b);
+			this->_children[i]->renderGround();
 	}
 }
 
