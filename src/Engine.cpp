@@ -297,7 +297,7 @@ Engine::render(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	this->camera->look();
-	this->renderAxes();
+	// this->renderAxes();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
 	// glCallList(this->cubeList);
 	this->renderChunks();
