@@ -37,6 +37,7 @@ public:
 	void				grow(uint32_t const &i);
 	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c);
 	Octree *			search(float const &x, float const &y, float const &z);
+	Octree *			search(float const &x, float const &y, float const &z, int const &state);
 	void				remove(void);
 	void				renderGround(void) const;
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;

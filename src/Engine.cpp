@@ -163,7 +163,7 @@ Engine::generation(void)
 
 // --------------------------------------------------------------------------------
 // MULTI-THREADED CHUNK GENERATION
-// POSIX threads for more portability
+// POSIX threads for portability
 // --------------------------------------------------------------------------------
 inline static void *
 generateChunkInThread(void *args)
@@ -202,7 +202,7 @@ generateChunkInThread(void *args)
 					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 				else if (n <= 0.0f)
 					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, GROUND, r);
+				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r);
 			}
 		}
 	}
@@ -489,6 +489,26 @@ Engine::update(Uint32 const &elapsed_time)
 void
 Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 {
+	Vec3<float>			inc = this->camera->getForward();
+	Octree *			hit; // block
+	int					i;
+
+	inc.x *= this->chunk_size;
+	inc.y *= this->chunk_size;
+	inc.z *= this->chunk_size;
+	i = 0;
+	while (i < TARGET_DIST)
+	{
+		hit = this->octree->search(inc.x, inc.y, inc.z, BLOCK);
+		if (hit != NULL)
+		{
+			hit->c.x = 1.0f;
+			hit->c.y = 0.0f;
+			hit->c.z = 0.0f;
+			break;
+		}
+		++i;
+	}
 	this->camera->onMouseButton(e);
 }
 

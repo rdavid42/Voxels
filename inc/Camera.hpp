@@ -46,6 +46,7 @@ public:
 	void									look(void);
 
 	Vec3<float> const						&getPosition(void) const;
+	Vec3<float> const						&getForward(void) const;
 
 	Camera									&operator=(Camera const &rhs);
 

@@ -55,6 +55,7 @@ Camera::calcVectors(void)
 	_forward.z = sin(_phi * M_PI / 180);
 	_left = up.crossProduct(_forward);
 	_left.normalize();
+	_forward.normalize();
 	_target = _position + _forward;
 }
 
@@ -153,6 +154,12 @@ Vec3<float> const &
 Camera::getPosition(void) const
 {
 	return (this->_position);
+}
+
+Vec3<float> const &
+Camera::getForward(void) const
+{
+	return (this->_forward);
 }
 
 Camera &

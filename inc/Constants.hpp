@@ -36,7 +36,7 @@
 
 // Octree states
 # define EMPTY				0
-# define GROUND				1
+# define BLOCK				1
 # define CHUNK				2
 
 # define OCTREE_SIZE		20000.0f
@@ -47,6 +47,7 @@
 // [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE			15 // (n * n * n) must be odd in order to place camera in the center all the time
 
+# define TARGET_DIST		7
 
 // Noises bounds
 

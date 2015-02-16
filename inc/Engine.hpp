@@ -15,6 +15,7 @@ class Octree;
 class Engine
 {
 public:
+	// FPS calculation structure (ty Gundz)
 	typedef struct		s_timer
 	{
 		int				fps;
@@ -23,6 +24,7 @@ public:
 		char			title[128];
 	}					t_timer;
 
+	// Chunk thread argument, should be replaced by a more generic structure in the future
 	typedef struct		s_chunkThreadArgs
 	{
 		Noise			*noise;
@@ -31,6 +33,7 @@ public:
 		float const		*chunk_size;
 	}					t_chunkThreadArgs;
 
+	// POSIX thread arguments and initialization structure (templated structure or class planned)
 	typedef struct		s_thread
 	{
 		pthread_t			init;
