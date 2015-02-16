@@ -23,6 +23,18 @@ Engine::sdlError(int code)
 	return (code);
 }
 
+void
+Engine::setFPSTitle(void)
+{
+	if ((this->fps.update = SDL_GetTicks()) - this->fps.current >= 1000)
+	{
+		this->fps.current = this->fps.update;
+		sprintf(this->fps.title, "%d fps", this->fps.fps);
+		SDL_SetWindowTitle(this->window, this->fps.title);
+		this->fps.fps = 0;
+	}
+	this->fps.fps++;
+}
 /*
 void
 Engine::generation(void)
@@ -82,7 +94,7 @@ Engine::generation(void)
 	std::cerr << "(Single threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 }
 */
-inline static void
+/*inline static void
 generateChunkInThread(Noise &noise, Octree &chunk, float const &inc, float const &chunk_size)
 {
 	float						x, y;
@@ -145,8 +157,85 @@ Engine::generation(void)
 															std::ref(this->chunk_size));
 				t[i++].detach();
 			}
-	std::cerr << "(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+	std::cerr << "(std::thread)(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 }
+*/
+
+// --------------------------------------------------------------------------------
+// MULTI-THREADED CHUNK GENERATION
+// POSIX threads for more portability
+// --------------------------------------------------------------------------------
+inline static void *
+generateChunkInThread(void *args)
+{
+	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
+	float						x, y;
+	float						n;
+	Vec3<float>					r;
+	float						t;
+
+	if (!d->chunk->generated)
+	{
+		d->chunk->generated = true;
+		for (x = -(*d->chunk_size) / 2; x < (*d->chunk_size); x += *d->inc)
+		{
+			for (y = -(*d->chunk_size) / 2; y < (*d->chunk_size); y += *d->inc)
+			{
+				n = d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+				t = ((float)random() / (float)RAND_MAX) / 30;
+				if (n >= 0.3f)
+					r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
+				else if (n >= 0.2f)
+					r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
+				else if (n >= 0.0f)
+					r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
+				else if (n <= -0.7f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
+				else if (n <= -0.6f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
+				else if (n <= -0.5f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
+				else if (n <= -0.4f)
+					r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+				else if (n <= -0.1f)
+					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
+				else if (n <= 0.0f)
+					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, GROUND, r);
+			}
+		}
+	}
+	return (NULL);
+}
+
+void
+Engine::generation(void)
+{
+	clock_t						startTime = clock();
+	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
+	int							cz;
+	int							cx, cy;
+	int							i;
+
+	i = 0;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (this->chunks[cz][cy][cx] != NULL)
+				{
+					thread_pool[i].args.noise = this->noise;
+					thread_pool[i].args.chunk = this->chunks[cz][cy][cx];
+					thread_pool[i].args.inc = &inc;
+					thread_pool[i].args.chunk_size = &chunk_size;
+					pthread_create(&thread_pool[i].init, NULL, generateChunkInThread, &thread_pool[i].args);
+					pthread_detach(thread_pool[i].init);
+				}
+				++i;
+			}
+	std::cerr << "(pthread)(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+}
+// --------------------------------------------------------------------------------
 
 void
 Engine::generateChunks(void)
@@ -179,6 +268,7 @@ void
 Engine::insertChunks(void)
 {
 	int					cx, cy, cz;
+	float				px, py, pz;
 	Octree *			new_chunk;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
@@ -190,18 +280,50 @@ Engine::insertChunks(void)
 				// place new chunks in the camera perimeter, ignoring the central chunk
 				if (cz != center || cy != center || cx != center)
 				{
-					new_chunk = octree->insert(camera->getPosition().x + (cx - center) * chunk_size,
-												camera->getPosition().y + (cy - center) * chunk_size,
-												camera->getPosition().z + (cz - center) * chunk_size,
-												octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 1.0f, 0.0f));
-					if (new_chunk != chunks[cz][cy][cx])
+					px = camera->getPosition().x + (cx - center) * chunk_size;
+					py = camera->getPosition().y + (cy - center) * chunk_size;
+					pz = camera->getPosition().z + (cz - center) * chunk_size;
+					// check for terrain bounds
+					if (pz < this->noise_max && pz > this->noise_min)
 					{
-						chunks[cz][cy][cx] = new_chunk;
+						new_chunk = octree->insert(px, py, pz, octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 1.0f, 0.0f));
+						if (new_chunk != chunks[cz][cy][cx])
+						{
+							chunks[cz][cy][cx] = new_chunk;
+						}
+					}
+					else
+					{
+						// terrain generation out of bounds, no chunk insertion here !
+						chunks[cz][cy][cx] = NULL;
 					}
 				}
 			}
 		}
 	}
+}
+
+void
+Engine::printNoiseMinMaxApproximation(void)
+{
+	float			n;
+	float			max;
+	float			min;
+	float			x, y;
+	float const		inc = 0.01;
+
+	max = 0.0f;
+	min = 300000.0f;
+	for (x = -10; x < 10; x += inc)
+		for (y = -10; y < 10; y += inc)
+		{
+			n = noise->fractal(0, x, y, 1.5);
+			if (n > max)
+				max = n;
+			if (n < min)
+				min = n;
+		}
+	std::cerr << "Fractal noise - min: " << min << ", max: " << max << std::endl;
 }
 
 void
@@ -217,6 +339,9 @@ Engine::initChunks(void)
 	center = (GEN_SIZE - 1) / 2;
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
+	this->printNoiseMinMaxApproximation();
+	this->noise_min = -1.0f;
+	this->noise_max = 1.0f;
 	// Create initial chunk
 	chunks[center][center][center] = octree->insert(camera->getPosition().x,
 													camera->getPosition().y,
@@ -234,7 +359,10 @@ Engine::renderChunks(void)
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 		for (cy = 0; cy < GEN_SIZE; ++cy)
 			for (cx = 0; cx < GEN_SIZE; ++cx)
-				chunks[cz][cy][cx]->renderGround();
+			{
+				if (chunks[cz][cy][cx] != NULL)
+					chunks[cz][cy][cx]->renderGround();
+			}
 }
 
 int
@@ -271,6 +399,9 @@ Engine::init(void)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 		return (sdlError(0));
+	this->fps.fps = 0;
+	this->fps.current = 0;
+	this->fps.update = 0;
 	this->octree = NULL;
 	this->window_width = 1400;
 	this->window_height = 1400;
@@ -419,9 +550,9 @@ Engine::loop(void)
 		current_time = SDL_GetTicks();
 		elapsed_time = current_time - last_time;
 		last_time = current_time;
+		this->setFPSTitle();
 		this->update(elapsed_time);
 		this->render();
-		// SDL_Delay(1000 / 60);
 		SDL_GL_SwapWindow(this->window);
 	}
 }

@@ -1,4 +1,4 @@
-/*
+
 #include "Chunk.hpp"
 
 Chunk::Chunk(void) : Octree()
@@ -37,4 +37,3 @@ std::ostream
 	o	<< "Chunk: " << &i;
 	return (o);
 }
-*/

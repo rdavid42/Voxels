@@ -5,6 +5,7 @@
 # include <iostream>
 # include <stdint.h>
 # include <thread>
+# include <pthread.h>
 # include "Octree.hpp"
 # include "Noise.hpp"
 
@@ -14,6 +15,29 @@ class Octree;
 class Engine
 {
 public:
+	typedef struct		s_timer
+	{
+		int				fps;
+		int				current;
+		int				update;
+		char			title[128];
+	}					t_timer;
+
+	typedef struct		s_chunkThreadArgs
+	{
+		Noise			*noise;
+		Octree			*chunk;
+		float const		*inc;
+		float const		*chunk_size;
+	}					t_chunkThreadArgs;
+
+	typedef struct		s_thread
+	{
+		pthread_t			init;
+		t_chunkThreadArgs	args;
+	}					t_thread;
+
+	t_timer				fps;
 	SDL_Window *		window;
 	SDL_GLContext		context;
 	uint32_t			window_width;
@@ -27,11 +51,14 @@ public:
 	Octree				*chunks[GEN_SIZE]
 								[GEN_SIZE]
 								[GEN_SIZE]; // camera chunk in the center
-	std::thread			thread_pool[16];
+	t_thread			thread_pool[GEN_SIZE * GEN_SIZE * GEN_SIZE];
+	float				noise_min;
+	float				noise_max;
 
 	Engine(void);
 	~Engine(void);
 
+	void				setFPSTitle(void);
 	int					sdlError(int code);
 	int					getDisplayMode(void);
 	int					init(void);
@@ -53,6 +80,8 @@ public:
 
 private:
 	Engine(Engine const &src);
+
+	void				printNoiseMinMaxApproximation(void);
 };
 
 std::ostream &			operator<<(std::ostream &o, Engine const &i);

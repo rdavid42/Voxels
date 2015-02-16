@@ -1,8 +1,10 @@
-/*
+
 #ifndef		CHUNK_HPP
 # define	CHUNK_HPP
 
 # include <iostream>
+# include "Constants.hpp"
+# include "Octree.hpp"
 
 class Chunk : public Octree
 {
@@ -18,4 +20,3 @@ public:
 std::ostream				&operator<<(std::ostream &o, Chunk const &i);
 
 #endif
-*/
