@@ -188,7 +188,8 @@ generateChunkInThread(void *args)
 				else if (n >= 0.2f)
 					r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
 				else if (n >= 0.0f)
-					r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
+					// r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
+					r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
 				else if (n <= -0.7f)
 					r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
 				else if (n <= -0.6f)
@@ -436,10 +437,6 @@ Engine::init(void)
 	// clock_t startTime = clock();
 	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	initChunks();
-	// std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-	// startTime = clock();
-	// this->compileDisplayList();
-	// std::cout << "Cube list compilation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 	return (1);
 }
 
