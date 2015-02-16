@@ -66,7 +66,7 @@ Engine::generateFractalTerrain(void)
 	}
 }
 */
-
+/*
 void
 Engine::generation(void)
 {
@@ -122,7 +122,79 @@ Engine::generation(void)
 			}
 		}
 	}
-	std::cerr << "Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+	std::cerr << "(Single threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+}
+*/
+static void
+generateChunksInThread(Engine &e, Octree &chunk, float const &inc)
+{
+	float						x, y;
+	float						ax, ay;
+	float						n;
+	Vec3<float>					r;
+	float						t;
+
+	if (!chunk.generated)
+	{
+		chunk.generated = true;
+		for (x = -e.chunk_size / 2; x < e.chunk_size; x += inc)
+		{
+			for (y = -e.chunk_size / 2; y < e.chunk_size; y += inc)
+			{
+				ax = chunk.getCube()->getX() + x;
+				ay = chunk.getCube()->getY() + y;
+				n = e.noise->fractal(0, ax, ay, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+				t = ((float)random() / (float)RAND_MAX) / 30;
+				if (n >= 0.3f)
+					r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
+				else if (n >= 0.2f)
+					r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
+				else if (n >= 0.0f)
+					r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
+				else if (n <= -0.7f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
+				else if (n <= -0.6f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
+				else if (n <= -0.5f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
+				else if (n <= -0.4f)
+					r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+				else if (n <= -0.1f)
+					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
+				else if (n <= 0.0f)
+					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+				chunk.insert(ax, ay, n, e.octree->block_depth, GROUND, r);
+			}
+		}
+	}
+}
+
+void
+Engine::generation(void)
+{
+	clock_t						startTime = clock();
+	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
+	int							cz;
+	int							cx, cy;
+	std::thread					t[GEN_SIZE * GEN_SIZE * GEN_SIZE];
+	int							i;
+
+	i = 0;
+	// std::cerr << "x: " << chunks[1][1][1]->getCube()->getX() << ", s: " << s << std::endl;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				t[i++] = std::thread(generateChunksInThread, std::ref(*this),
+															std::ref(*chunks[cz][cy][cx]),
+															std::ref(inc));
+			}
+	i = 0;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+				t[i++].detach();
+	std::cerr << "(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 }
 
 void
