@@ -275,9 +275,9 @@ Octree::renderGround(void) const
 	}*/
 	if (this->_state == GROUND)
 	{
-		// static float tmp = ((double)random() / (double)RAND_MAX) / 30;
-		// glColor3f(z, z, z);
-		if (z >= 0.2f)
+/*		if (z >= 0.3f)
+			glColor3f(0.1f, 0.4f, 0.1f);
+		else if (z >= 0.2f)
 			glColor3f(0.2f, 0.5f, 0.2f);
 		else if (z >= 0.0f)
 			glColor3f(0.7f, 0.5f, 0.2f);
@@ -292,7 +292,8 @@ Octree::renderGround(void) const
 		else if (z <= -0.1f)
 			glColor3f(0.4f, 0.4f, 0.4f);
 		else if (z <= 0.0f)
-			glColor3f(0.5f, 0.5f, 0.5f);
+			glColor3f(0.5f, 0.5f, 0.5f);*/
+		glColor3f(c.x, c.y, c.z);
 		drawCube(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
 	}
 	else if (this->_parent == NULL)

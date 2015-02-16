@@ -23,6 +23,11 @@ public:
 		return ;
 	}
 
+	Vec3(Vec3<TYPE> const &src) : x(src.x), y(src.y), z(src.z)
+	{
+		return ;
+	}
+
 	~Vec3(void)
 	{
 		return ;
@@ -103,9 +108,6 @@ public:
 		this->z -= rhs.z;
 		return (*this);
 	}
-
-private:
-	Vec3(Vec3<TYPE> const &src);
 };
 
 template<typename TYPE> std::ostream

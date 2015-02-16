@@ -43,6 +43,7 @@
 
 # define CHUNK_DEPTH		15 // insert directly in octree
 # define BLOCK_DEPTH		5 // insert from chunk depth
+# define PLANT_DEPTH		8 // insert from chunk depth
 // [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE			7 // (n * n * n) must be odd in order to place camera in the center all the time
 

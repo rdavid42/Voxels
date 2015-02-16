@@ -2,6 +2,7 @@
 #include <math.h>
 #include <cstdlib>
 #include <ctime>
+#include <thread>
 #include "Engine.hpp"
 
 Engine::Engine(void)
@@ -65,14 +66,18 @@ Engine::generateFractalTerrain(void)
 	}
 }
 */
+
 void
 Engine::generation(void)
 {
-	int					cx, cy, cz;
-	float				x, y;
-	float				ax, ay;
-	float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
-	float				n;
+	clock_t						startTime = clock();
+	float						x, y;
+	float						ax, ay;
+	float						n;
+	Vec3<float>					r;
+	float						t;
+	int							cx, cy, cz;
+	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
 
 	// std::cerr << "x: " << chunks[1][1][1]->getCube()->getX() << ", s: " << s << std::endl;
 	for (cz = 0; cz < GEN_SIZE; ++cz)
@@ -91,13 +96,33 @@ Engine::generation(void)
 							ax = chunks[cz][cy][cx]->getCube()->getX() + x;
 							ay = chunks[cz][cy][cx]->getCube()->getY() + y;
 							n = noise->fractal(0, ax, ay, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
-							chunks[cz][cy][cx]->insert(ax, ay, n, this->octree->block_depth, GROUND, Vec3<float>(0.0f, 0.0f, 0.0f));
+							t = ((float)random() / (float)RAND_MAX) / 30;
+							if (n >= 0.3f)
+								r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
+							else if (n >= 0.2f)
+								r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
+							else if (n >= 0.0f)
+								r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
+							else if (n <= -0.7f)
+								r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
+							else if (n <= -0.6f)
+								r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
+							else if (n <= -0.5f)
+								r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
+							else if (n <= -0.4f)
+								r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+							else if (n <= -0.1f)
+								r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
+							else if (n <= 0.0f)
+								r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+							chunks[cz][cy][cx]->insert(ax, ay, n, this->octree->block_depth, GROUND, r);
 						}
 					}
 				}
 			}
 		}
 	}
+	std::cerr << "Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 }
 
 void
