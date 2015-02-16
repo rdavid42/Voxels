@@ -4,6 +4,7 @@
 
 # include <iostream>
 # include <stdint.h>
+# include <thread>
 # include "Octree.hpp"
 # include "Noise.hpp"
 
@@ -19,20 +20,18 @@ public:
 	uint32_t			window_height;
 	Octree *			octree;
 	Camera *			camera;
-	GLuint				cubeList;
 	Noise *				noise;
 	float				chunk_size; // number of chunks within distance (gen_dist)
 	float				block_size;
 	int					center;
 	Octree				*chunks[GEN_SIZE]
-							   [GEN_SIZE]
-							   [GEN_SIZE]; // camera chunk in the center
+								[GEN_SIZE]
+								[GEN_SIZE]; // camera chunk in the center
+	std::thread			thread_pool[16];
 
 	Engine(void);
 	~Engine(void);
 
-	void				compileDisplayList(void);
-	void				reshape(int const &x, int const &y);
 	int					sdlError(int code);
 	int					getDisplayMode(void);
 	int					init(void);

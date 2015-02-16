@@ -41,8 +41,9 @@
 
 # define OCTREE_SIZE		20000.0f
 
-# define CHUNK_DEPTH		15 // insert directly in octree
-# define BLOCK_DEPTH		5 // insert from chunk depth
+# define BIOME_DEPTH		10 // insert directly in octree (not implemented)
+# define CHUNK_DEPTH		15 // insert directly in octree (from biome soon)
+# define BLOCK_DEPTH		4 // insert from chunk depth
 # define PLANT_DEPTH		8 // insert from chunk depth
 // [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE			13 // (n * n * n) must be odd in order to place camera in the center all the time

@@ -2,7 +2,6 @@
 #include <math.h>
 #include <cstdlib>
 #include <ctime>
-#include <thread>
 #include "Engine.hpp"
 
 Engine::Engine(void)
@@ -14,7 +13,6 @@ Engine::~Engine(void)
 {
 	SDL_Quit();
 	delete this->octree;
-	glDeleteLists(this->cubeList, 1);
 	return ;
 }
 
@@ -25,47 +23,6 @@ Engine::sdlError(int code)
 	return (code);
 }
 
-void
-Engine::reshape(int const &x, int const &y)
-{
-	if (x < y)
-		glViewport(0, (y - x) / 2, x, x);
-	if (y < x)
-		glViewport((x - y) / 2, 0, y, y);
-}
-
-void
-Engine::compileDisplayList(void)
-{
-	this->cubeList = glGenLists(1);
-	if (this->cubeList == 0)
-	{
-		std::cerr << "List error." << std::endl;
-		return ;
-	}
-	glNewList(this->cubeList, GL_COMPILE);
-	this->octree->renderGround();
-	glEndList();
-}
-/*
-void
-Engine::generateFractalTerrain(void)
-{
-	float				x;
-	float				y;
-	float				n;
-	float const			i = this->octree->getCube()->getS() / powf(2.0f, 11);
-
-	for (y = -this->octree->getCube()->getS() / 2; y < this->octree->getCube()->getS(); y += i)
-	{
-		for (x = -this->octree->getCube()->getS() / 2; x < this->octree->getCube()->getS(); x += i)
-		{
-			n = noise->fractal(0, x, y, 1.5) + noise->fractal(0, x, y, 1.5) * sin(y);// + this->octree->getCube()->getS() / 2;
-			this->octree->insert(x, y, n, this->octree->block_depth, GROUND, Vec3<float>(0.0f, 0.0f, 0.0f));
-		}
-	}
-}
-*/
 /*
 void
 Engine::generation(void)
@@ -125,11 +82,10 @@ Engine::generation(void)
 	std::cerr << "(Single threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 }
 */
-static void
-generateChunksInThread(Engine &e, Octree &chunk, float const &inc)
+inline static void
+generateChunkInThread(Noise &noise, Octree &chunk, float const &inc, float const &chunk_size)
 {
 	float						x, y;
-	float						ax, ay;
 	float						n;
 	Vec3<float>					r;
 	float						t;
@@ -137,13 +93,11 @@ generateChunksInThread(Engine &e, Octree &chunk, float const &inc)
 	if (!chunk.generated)
 	{
 		chunk.generated = true;
-		for (x = -e.chunk_size / 2; x < e.chunk_size; x += inc)
+		for (x = -chunk_size / 2; x < chunk_size; x += inc)
 		{
-			for (y = -e.chunk_size / 2; y < e.chunk_size; y += inc)
+			for (y = -chunk_size / 2; y < chunk_size; y += inc)
 			{
-				ax = chunk.getCube()->getX() + x;
-				ay = chunk.getCube()->getY() + y;
-				n = e.noise->fractal(0, ax, ay, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+				n = noise.fractal(0, chunk.getCube()->getX() + x, chunk.getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
 				t = ((float)random() / (float)RAND_MAX) / 30;
 				if (n >= 0.3f)
 					r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
@@ -163,7 +117,7 @@ generateChunksInThread(Engine &e, Octree &chunk, float const &inc)
 					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 				else if (n <= 0.0f)
 					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-				chunk.insert(ax, ay, n, e.octree->block_depth, GROUND, r);
+				chunk.insert(chunk.getCube()->getX() + x, chunk.getCube()->getY() + y, n, Octree::block_depth, GROUND, r);
 			}
 		}
 	}
@@ -176,7 +130,7 @@ Engine::generation(void)
 	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
 	int							cz;
 	int							cx, cy;
-	std::thread					t[GEN_SIZE * GEN_SIZE * GEN_SIZE];
+	static std::thread			t[GEN_SIZE * GEN_SIZE * GEN_SIZE];
 	int							i;
 
 	i = 0;
@@ -185,15 +139,12 @@ Engine::generation(void)
 		for (cy = 0; cy < GEN_SIZE; ++cy)
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
-				t[i++] = std::thread(generateChunksInThread, std::ref(*this),
+				t[i] = std::thread(generateChunkInThread, std::ref(*noise),
 															std::ref(*chunks[cz][cy][cx]),
-															std::ref(inc));
-			}
-	i = 0;
-	for (cz = 0; cz < GEN_SIZE; ++cz)
-		for (cy = 0; cy < GEN_SIZE; ++cy)
-			for (cx = 0; cx < GEN_SIZE; ++cx)
+															std::ref(inc),
+															std::ref(this->chunk_size));
 				t[i++].detach();
+			}
 	std::cerr << "(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 }
 
@@ -281,15 +232,9 @@ Engine::renderChunks(void)
 	int				cx, cy, cz;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
-	{
 		for (cy = 0; cy < GEN_SIZE; ++cy)
-		{
 			for (cx = 0; cx < GEN_SIZE; ++cx)
-			{
 				chunks[cz][cy][cx]->renderGround();
-			}
-		}
-	}
 }
 
 int
@@ -350,16 +295,15 @@ Engine::init(void)
 				<< "gain:       " << this->noise->configs.at(0).gain << std::endl;
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
-	// glViewport(0, 0, this->window_width, this->window_height);
+	glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (float)(this->window_width / this->window_height), 0.01, 1000000);
+	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, 1000000);
 	glEnable(GL_DEPTH_TEST);
 	// glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
 	// clock_t startTime = clock();
 	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
-	// this->generateFractalTerrain();
 	initChunks();
 	// std::cout << "Octree initialization: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 	// startTime = clock();
@@ -396,7 +340,6 @@ Engine::render(void)
 	this->camera->look();
 	// this->renderAxes();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
-	// glCallList(this->cubeList);
 	this->renderChunks();
 	// this->octree->renderGround(1.0f, 1.0f, 1.0f);
 	glFlush();
@@ -478,7 +421,7 @@ Engine::loop(void)
 		last_time = current_time;
 		this->update(elapsed_time);
 		this->render();
-		SDL_Delay(1000 / 60);
+		// SDL_Delay(1000 / 60);
 		SDL_GL_SwapWindow(this->window);
 	}
 }
