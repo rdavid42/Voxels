@@ -277,11 +277,11 @@ Octree::renderGround(void) const
 		glColor3f(c.x, c.y, c.z);
 		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
-/*	else if (this->_state == CHUNK)
+	else if (this->_state == CHUNK)
 	{
 		glColor3f(0.7f, 0.5f, 0.0f);
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
-	}*/
+	}
 	else if (this->_parent == NULL)
 	{
 		glColor3f(1.0f, 1.0f, 1.0f);

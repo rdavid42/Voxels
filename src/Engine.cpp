@@ -285,7 +285,7 @@ Engine::insertChunks(void)
 					py = camera->getPosition().y + (cy - center) * chunk_size;
 					pz = camera->getPosition().z + (cz - center) * chunk_size;
 					// check for terrain bounds
-					if (pz < this->noise_max && pz > this->noise_min)
+					if (pz <= this->noise_max && pz >= this->noise_min)
 					{
 						new_chunk = octree->insert(px, py, pz, octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 1.0f, 0.0f));
 						if (new_chunk != chunks[cz][cy][cx])
