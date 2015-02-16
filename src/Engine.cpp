@@ -312,13 +312,19 @@ Engine::printNoiseMinMaxApproximation(void)
 	float			min;
 	float			x, y;
 	float const		inc = 0.01;
+	float			i;
 
+	i = 0.01f;
 	max = 0.0f;
 	min = 300000.0f;
 	for (x = -10; x < 10; x += inc)
 		for (y = -10; y < 10; y += inc)
 		{
-			n = noise->fractal(0, x, y, 1.5);
+			while (i < FRAC_LIMIT)
+			{
+				n += noise->fractal(0, x, y, 1.5);
+				i++;
+			}
 			if (n > max)
 				max = n;
 			if (n < min)
@@ -341,8 +347,8 @@ Engine::initChunks(void)
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
 	this->printNoiseMinMaxApproximation();
-	this->noise_min = -1.0f;
-	this->noise_max = 1.0f;
+	this->noise_min = -FRAC_LIMIT;
+	this->noise_max = FRAC_LIMIT;
 	// Create initial chunk
 	chunks[center][center][center] = octree->insert(camera->getPosition().x,
 													camera->getPosition().y,
@@ -419,7 +425,7 @@ Engine::init(void)
 		return (sdlError(0));
 	this->noise = new Noise(42, 256);
 	srandom(time(NULL));
-	this->noise->configs.emplace_back(1, 0.5, 0.2, 0.4, 0.1);
+	this->noise->configs.emplace_back(FRAC_LIMIT, 0.5, 0.2, 0.4, 0.1);
 	std::cout	<< "layers:     " << this->noise->configs.at(0).layers << std::endl
 				<< "frequency:  " << this->noise->configs.at(0).frequency << std::endl
 				<< "lacunarity: " << this->noise->configs.at(0).lacunarity << std::endl
