@@ -363,6 +363,7 @@ Engine::init(void)
 	this->player->name = "[MCSTF]Korky";
 	this->window_width = 1400;
 	this->window_height = 1400;
+	this->highlight = NULL;
 	SDL_ShowCursor(SDL_DISABLE);
 	this->window = SDL_CreateWindow("Mod1",
 									SDL_WINDOWPOS_UNDEFINED,
@@ -422,11 +423,12 @@ Engine::glEnable2D(int cam_x, int cam_y)
 {
 	int			vPort[4];
 
+	glDisable(GL_DEPTH_TEST);
 	glGetIntegerv(GL_VIEWPORT, vPort);
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	glOrtho(cam_x, vPort[2] + cam_x, vPort[3] + cam_y, cam_y, -1, 1);
+	glOrtho(cam_x, vPort[2] + cam_x, vPort[3] + cam_y, cam_y, -0.001, 0.001);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
@@ -439,6 +441,7 @@ Engine::glDisable2D(void)
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
+	glEnable(GL_DEPTH_TEST);
 }
 
 void
@@ -463,6 +466,8 @@ void
 Engine::drawUI(void)
 {
 	std::stringstream	position;
+	int			w2 = this->window_width / 2;
+	int			h2 = this->window_height / 2;
 
 	glColor3f(1.0f, 0.0f, 0.0f);
 	position << "x = ";
@@ -478,6 +483,14 @@ Engine::drawUI(void)
 	position << "z = ";
 	position << this->camera->getPosition().z;
 	drawText(10, 110, position.str().c_str());
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glBegin(GL_LINES);
+	glVertex2i(w2 - 10, h2);
+	glVertex2i(w2 + 10, h2);
+	glVertex2i(w2, h2 - 10);
+	glVertex2i(w2, h2 + 10);
+	glEnd();
 }
 
 void
@@ -497,6 +510,14 @@ Engine::render(void)
 	this->renderAxes();
 #endif
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
+	if (this->highlight != NULL)
+	{
+		glColor3f(1.0f, 1.0f, 1.0f);
+		this->highlight->drawCubeRidges(this->highlight->getCube()->getX(),
+										this->highlight->getCube()->getY(),
+										this->highlight->getCube()->getZ(),
+										this->highlight->getCube()->getS());
+	}
 	this->renderChunks();
 	// this->octree->renderGround();
 	//this->renderHUD();
@@ -587,6 +608,31 @@ Engine::addBlock(void)
 void
 Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
 {
+	Vec3<float>			inc = this->camera->getForward();
+	Octree *			hit; // block
+	Octree *			chunk;
+	float				i;
+
+	inc.x *= this->chunk_size;
+	inc.y *= this->chunk_size;
+	inc.z *= this->chunk_size;
+	this->highlight = NULL;
+	i = 0.0f;
+	while (i < TARGET_DIST)
+	{
+		chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
+									this->camera->getPosition().y + inc.y * i,
+									this->camera->getPosition().z + inc.z * i, CHUNK);
+		hit = chunk->search(this->camera->getPosition().x + inc.x * i,
+							this->camera->getPosition().y + inc.y * i,
+							this->camera->getPosition().z + inc.z * i, BLOCK);
+		if (hit != NULL && hit->getState() == BLOCK)
+		{
+			this->highlight = hit;
+			break;
+		}
+		i += 0.01f;
+	}
 	this->camera->onMouseMotion(e);
 }
 
