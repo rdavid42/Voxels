@@ -3,6 +3,7 @@
 #include "Octree.hpp"
 #include "Chunk.hpp"
 #include "Block.hpp"
+#include "Biome.hpp"
 
 uint32_t
 Octree::block_depth = BLOCK_DEPTH;
@@ -54,7 +55,6 @@ Octree::operator=(Octree const &rhs)
 
 // -------------------------------------------------------------------
 // Divides the current octree into four children
-// It's better practice to create only useful children
 // -------------------------------------------------------------------
 int
 Octree::subdivide(void)
@@ -133,6 +133,9 @@ Octree::createChild(uint32_t const &i, float const &x, float const &y, float con
 		case BLOCK:
 			this->_children[i] = new Block(x, y, z, s);
 			break;
+		case BIOME:
+			this->_children[i] = new Biome(x, y, z, s);
+			break;
 		default:
 			this->_children[i] = new Octree(x, y, z, s);
 	}
@@ -196,7 +199,7 @@ Octree::search(float const &x, float const &y, float const &z, int const &state)
 // -------------------------------------------------------------------
 // Remove current octree from his parent,
 // and set it to NULL in the parent.
-// You should never call delete on an octree (ex: delete this->octree;)
+// You should never call delete on an Octree (ex: delete this->octree;)
 // because it doesn't set it to NULL in his parent
 // -------------------------------------------------------------------
 void
@@ -220,7 +223,7 @@ Octree::remove(void)
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
-// Insert an octree in an another
+// Insert an Octree in an another
 // -------------------------------------------------------------------
 Octree *
 Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c)

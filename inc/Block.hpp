@@ -12,7 +12,7 @@ public:
 	Block(void);
 	Block(float const &x, float const &y, float const &z, float const &s);
 	Block(Block const &src);
-	~Block(void);
+	virtual ~Block(void);
 
 	Block				&operator=(Block const &rhs);
 };
