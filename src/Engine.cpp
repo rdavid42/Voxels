@@ -456,9 +456,21 @@ Engine::drawText(int const x, int const y, char const *text)
 }
 
 void
+Engine::drawUI(void)
+{
+	
+}
+
+void
 Engine::render(void)
 {
+// --------------------------------------
+// Clear screen, see glClearColor in init for clear color
+// --------------------------------------
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+// --------------------------------------
+// 3D
+// --------------------------------------
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	this->camera->look();
@@ -468,13 +480,18 @@ Engine::render(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
 	this->renderChunks();
 	glMatrixMode(GL_MODELVIEW);
+// --------------------------------------
+// 2D
+// --------------------------------------
 	glEnable2D(0, 0);
-	// Draw UI here
+	drawUI();
 #ifdef DEBUG
 	this->drawDebugInfo();
 #endif
 	glDisable2D();
-	// this->octree->renderGround();
+// --------------------------------------
+// force gl draw
+// --------------------------------------
 	glFlush();
 }
 

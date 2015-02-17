@@ -67,6 +67,7 @@ public:
 	void				glEnable2D(int cam_x, int cam_y);
 	void				glDisable2D(void);
 	void				drawDebugInfo(void);
+	void				drawUI(void);
 	void				calcFPS(void);
 	void				drawText(int const x, int const y, char const *text);
 	int					sdlError(int code);
