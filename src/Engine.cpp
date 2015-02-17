@@ -235,8 +235,8 @@ cleanChunksThread(void *args)
 							}
 						}
 					}
+					usleep(500);
 				}
-				usleep(500);
 			}
 		}
 	}
@@ -279,7 +279,7 @@ Engine::initChunks(void)
 {
 	int				i; // index
 	int				x, y, z;
-	pthread_t		init_cleanupThread;
+	// pthread_t		init_cleanupThread;
 
 	for (y = 0; y < GEN_SIZE; ++y)
 		for (x = 0; x < GEN_SIZE; ++x)
@@ -298,8 +298,8 @@ Engine::initChunks(void)
 													octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 	this->insertChunks();
 	this->generation();
-	pthread_create(&init_cleanupThread, NULL, cleanChunksThread, this);
-	pthread_detach(init_cleanupThread);
+	// pthread_create(&init_cleanupThread, NULL, cleanChunksThread, this);
+	// pthread_detach(init_cleanupThread);
 }
 
 void
@@ -443,6 +443,7 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 	{
 		Vec3<float>			inc = this->camera->getForward();
 		Octree *			hit; // block
+		Octree *			chunk;
 		int					i;
 
 		inc.x *= this->chunk_size;
@@ -451,11 +452,32 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 		i = 0;
 		while (i < TARGET_DIST)
 		{
-			hit = this->octree->search(this->camera->getPosition().x + inc.x,
-										this->camera->getPosition().y + inc.y,
-										this->camera->getPosition().z + inc.z, BLOCK);
-			if (hit != NULL)
+/*			chunk = this->octree->insert(this->camera->getPosition().x + inc.x * i,
+										this->camera->getPosition().y + inc.y * i,
+										this->camera->getPosition().z + inc.z * i, CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 0.0f));
+			hit = chunk->insert(this->camera->getPosition().x + inc.x * i,
+								this->camera->getPosition().y + inc.y * i,
+								this->camera->getPosition().z + inc.z * i, BLOCK_DEPTH, BLOCK, Vec3<float>(1.0f, 0.0f, 0.0f));*/
+			chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
+										this->camera->getPosition().y + inc.y * i,
+										this->camera->getPosition().z + inc.z * i, CHUNK);
+			hit = chunk->search(this->camera->getPosition().x + inc.x * i,
+								this->camera->getPosition().y + inc.y * i,
+								this->camera->getPosition().z + inc.z * i, BLOCK);
+
+			std::cerr << std::endl;
+			std::cerr << "hit: x=" << hit->getCube()->getX()
+									<< ", y=" << hit->getCube()->getY()
+									<< ", z=" << hit->getCube()->getZ()
+									<< ", s=" << hit->getCube()->getS()
+									<< ", state=" << hit->getState()
+									<< std::endl;
+			std::cerr << "cam: " << this->camera->getPosition() << std::endl;
+			std::cerr << "inc: " << inc << std::endl;
+			std::cerr << "target: " << this->camera->getTarget() << std::endl;
+			if (hit != NULL && hit->getState() == BLOCK)
 			{
+				std::cerr << "break de la boucle avec i =" << i  << std::endl;
 				hit->c.x = 1.0f;
 				hit->c.y = 0.0f;
 				hit->c.z = 0.0f;

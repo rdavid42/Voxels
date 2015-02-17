@@ -113,7 +113,7 @@ public:
 template<typename TYPE> std::ostream
 &operator<<(std::ostream &o, Vec3<TYPE> const &i)
 {
-	o	<< "Vec3 - " << &i << " - x: " << i.x << ", y: " << i.y << ", z: " << i.z;
+	o	<< "x: " << i.x << ", y: " << i.y << ", z: " << i.z;
 	return (o);
 }
 

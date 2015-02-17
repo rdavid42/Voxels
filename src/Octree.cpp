@@ -335,11 +335,11 @@ Octree::renderGround(void) const
 {
 	// float			tmp;
 
-/*	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
+	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
 	{
 		glColor3f(c.x, c.y, c.z);
-		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
-	}*/
+		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+	}
 	if (this->_state == BLOCK)
 	{
 		glColor3f(c.x, c.y, c.z);
