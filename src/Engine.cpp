@@ -2,6 +2,7 @@
 #include <math.h>
 #include <cstdlib>
 #include <ctime>
+#include <sstream>
 #include "Engine.hpp"
 #include "BlockItem.hpp"
 
@@ -31,8 +32,6 @@ Engine::calcFPS(void)
 	{
 		this->fps.current = this->fps.update;
 		sprintf(this->fps.title, "%d fps", this->fps.fps);
-		//SDL_SetWindowTitle(this->window, this->player->name.c_str());
-		SDL_SetWindowTitle(this->window, this->fps.title);
 		this->fps.fps = 0;
 	}
 	this->fps.fps++;
@@ -457,13 +456,28 @@ Engine::drawText(int const x, int const y, char const *text)
 
 	glRasterPos2i(x, y);
 	for (i = 0; i < len; ++i)
-		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, text[i]);
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
 }
 
 void
 Engine::drawUI(void)
 {
+	std::stringstream	position;
 
+	glColor3f(1.0f, 0.0f, 0.0f);
+	position << "x = ";
+	position << this->camera->getPosition().x;
+	drawText(10, 50, position.str().c_str());
+	position.clear();
+	position.str("");
+	position << "y = ";
+	position << this->camera->getPosition().y;
+	drawText(10, 80, position.str().c_str());
+	position.clear();
+	position.str("");
+	position << "z = ";
+	position << this->camera->getPosition().z;
+	drawText(10, 110, position.str().c_str());
 }
 
 void
@@ -559,13 +573,14 @@ Engine::addBlock(void)
 	inc.z *= this->chunk_size;
 	if (this->player->inventory->stock[0] != NULL)
 	{
-		blockColor = this->player->inventory->getFirstBlock();
 	//		chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
 	//									this->camera->getPosition().y + inc.y * i,
 	//									this->camera->getPosition().z + inc.z * i, CHUNK);
 		hit = this->octree->insert(this->camera->getPosition().x + inc.x,
 							this->camera->getPosition().y + inc.y,
-							this->camera->getPosition().z + inc.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK, blockColor);
+							this->camera->getPosition().z + inc.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK,
+							this->player->inventory->stock[0]->color);
+		this->player->inventory->deleteFirst();
 	}
 }
 

@@ -8,11 +8,8 @@ BlockItem::BlockItem(void) : Item()
 }
 
 
-BlockItem::BlockItem(Vec3<float> color) : Item()
+BlockItem::BlockItem(Vec3<float> color) : Item(), color(color)
 {
-	this->color = color;
-	std::cout << "BLOCK ITEM CREATION" << std::endl;
-	std::cout << color << std::endl;
 	return ;
 }
 
