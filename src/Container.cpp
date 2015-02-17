@@ -1,5 +1,6 @@
 
 #include "Container.hpp"
+#include "Camera.hpp"
 
 Container::Container(void)
 {
@@ -67,6 +68,42 @@ Container::add(BlockItem const & item)
 }
 
 void
+Container::drawInventory(void)
+{
+	int		i;
+	int		j;
+	int		tab;
+	int		size;
+
+	size = 35;
+	tab = 10;
+	i = 0;
+	j = 1;
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glBegin(GL_TRIANGLES);
+	glVertex2i(10, 120);
+	glVertex2i(10, 1030);
+	glVertex2i(140, 120);
+	glVertex2i(140, 120);
+	glVertex2i(140, 1030);
+	glVertex2i(10, 1030);
+
+	while (i < 20 && this->stock[i] != NULL)
+	{
+		glColor3f(this->stock[i]->color.x, this->stock[i]->color.y, this->stock[i]->color.z);
+		glVertex2i(20, 120 + (i * (size + tab) + tab));
+		glVertex2i(20, 120 + (j * (size + tab)));
+		glVertex2i(130, 120 + (i * (size + tab) + tab));
+		glVertex2i(130, 120 + (i * (size + tab) + tab));
+		glVertex2i(130, 120 + (j * (size + tab)));
+		glVertex2i(20, 120 + (j * (size + tab)));
+		i++;
+		j++;
+	}
+	glEnd();
+}
+
+void
 Container::deleteFirst(void)
 {
 	int		i;
@@ -74,7 +111,7 @@ Container::deleteFirst(void)
 
 	i = 0;
 	j = 1;
-	while (i < 20 && this->stock[j] != NULL && this->stock[i] != NULL)
+	while (j < 20 && this->stock[j] && this->stock[i])
 	{
 		this->stock[i] = this->stock[j];
 		i++;

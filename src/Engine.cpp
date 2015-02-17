@@ -491,6 +491,7 @@ Engine::drawUI(void)
 	glVertex2i(w2, h2 - 10);
 	glVertex2i(w2, h2 + 10);
 	glEnd();
+	this->player->inventory->drawInventory();
 }
 
 void
@@ -587,19 +588,18 @@ Engine::addBlock(void)
 	Vec3<float>			inc = this->camera->getForward();
 	Octree *			hit; // block
 	Octree *			chunk;
-	Vec3<float>			blockColor;
+	float				chunkS;
 
-	inc.x *= this->chunk_size;
-	inc.y *= this->chunk_size;
-	inc.z *= this->chunk_size;
+	chunkS = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
+	Vec3<float>	blockPos(chunkS * inc.x, chunkS * inc.y, chunkS * inc.z);
 	if (this->player->inventory->stock[0] != NULL)
 	{
 	//		chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
 	//									this->camera->getPosition().y + inc.y * i,
 	//									this->camera->getPosition().z + inc.z * i, CHUNK);
-		hit = this->octree->insert(this->camera->getPosition().x + inc.x,
-							this->camera->getPosition().y + inc.y,
-							this->camera->getPosition().z + inc.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK,
+		hit = this->octree->insert(this->camera->getPosition().x + blockPos.x,
+							this->camera->getPosition().y + blockPos.y,
+							this->camera->getPosition().z + blockPos.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK,
 							this->player->inventory->stock[0]->color);
 		this->player->inventory->deleteFirst();
 	}

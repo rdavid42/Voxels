@@ -20,6 +20,7 @@ class Container
 
 		void			add(BlockItem const & item);
 		void			deleteFirst(void);
+		void			drawInventory(void);
 		Vec3<float>		getFirstBlock(void);
 
 	private:
