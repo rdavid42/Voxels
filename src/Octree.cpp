@@ -1,6 +1,8 @@
 
 #include "Constants.hpp"
 #include "Octree.hpp"
+#include "Chunk.hpp"
+#include "Block.hpp"
 
 uint32_t
 Octree::block_depth = BLOCK_DEPTH;
@@ -115,6 +117,30 @@ Octree::createChild(uint32_t const &i, float const &x, float const &y, float con
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
+// Creates a child with octree state specified
+// -------------------------------------------------------------------
+void
+Octree::createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, uint32_t const &state)
+{
+	switch (state)
+	{
+		case EMPTY:
+			this->_children[i] = new Octree(x, y, z, s);
+			break;
+		case CHUNK:
+			this->_children[i] = new Chunk(x, y, z, s);
+			break;
+		case BLOCK:
+			this->_children[i] = new Block(x, y, z, s);
+			break;
+		default:
+			this->_children[i] = new Octree(x, y, z, s);
+	}
+	this->_children[i]->setParent(this);
+}
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
 // Search the octree with a point and returns a pointer
 // on the deepest child found.
 // -------------------------------------------------------------------
@@ -194,7 +220,7 @@ Octree::remove(void)
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
-// no comment yet
+// Insert an octree in an another
 // -------------------------------------------------------------------
 Octree *
 Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c)
@@ -230,7 +256,10 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 				nz = this->_cube.getZ() + ((i >> 2) & MASK_1) * s;
 				if (x >= nx && x < nx + s && y >= ny && y < ny + s && z >= nz && z < nz + s)
 				{
-					this->createChild(i, nx, ny, nz, s);
+					if ((depth - 1) == 0)
+						this->createChild(i, nx, ny, nz, s, state);
+					else
+						this->createChild(i, nx, ny, nz, s);
 					return (this->_children[i]->insert(x, y, z, depth - 1, state, c));
 				}
 			}

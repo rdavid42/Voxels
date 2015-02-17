@@ -25,7 +25,7 @@ Engine::sdlError(int code)
 }
 
 void
-Engine::setFPSTitle(void)
+Engine::calcFPS(void)
 {
 	if ((this->fps.update = SDL_GetTicks()) - this->fps.current >= 1000)
 	{
@@ -385,7 +385,7 @@ Engine::init(void)
 				<< "gain:       " << this->noise->configs.at(0).gain << std::endl;
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
-	glViewport(0, 0, this->window_width, this->window_height);
+	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, 1000000);
@@ -395,6 +395,7 @@ Engine::init(void)
 	// clock_t startTime = clock();
 	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	initChunks();
+	glMatrixMode(GL_PROJECTION);
 	return (1);
 }
 
@@ -418,9 +419,63 @@ Engine::renderAxes(void)
 }
 
 void
+Engine::glEnable2D(int cam_x, int cam_y)
+{
+	int			vPort[4];
+
+	glGetIntegerv(GL_VIEWPORT, vPort);
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho(cam_x, vPort[2] + cam_x, vPort[3] + cam_y, cam_y, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+}
+
+void
+Engine::glDisable2D(void)
+{
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+}
+
+void
+Engine::drawDebugInfo(void)
+{
+	glColor3f(1.0f, 0.0f, 0.0f);
+	this->drawText(10, 20, fps.title);
+}
+
+void
+Engine::drawText(int const x, int const y, char const *text)
+{
+	int			i;
+	int	const	len = strlen(text);
+
+	glRasterPos2i(x, y);
+	for (i = 0; i < len; ++i)
+		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, text[i]);
+}
+
+void
+Engine::drawUI(void)
+{
+	
+}
+
+void
 Engine::render(void)
 {
+// --------------------------------------
+// Clear screen, see glClearColor in init for clear color
+// --------------------------------------
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+// --------------------------------------
+// 3D
+// --------------------------------------
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	this->camera->look();
@@ -431,6 +486,20 @@ Engine::render(void)
 	this->renderChunks();
 	// this->octree->renderGround();
 	//this->renderHUD();
+	glMatrixMode(GL_MODELVIEW);
+// --------------------------------------
+// 2D
+// --------------------------------------
+	glEnable2D(0, 0);
+	drawUI();
+#ifdef DEBUG
+	this->drawDebugInfo();
+#endif
+	glDisable2D();
+// --------------------------------------
+// force gl draw
+// --------------------------------------
+>>>>>>> 04ab547ec84d8eae1550cef7c10c4336f578434e
 	glFlush();
 }
 
@@ -568,7 +637,8 @@ Engine::loop(void)
 		current_time = SDL_GetTicks();
 		elapsed_time = current_time - last_time;
 		last_time = current_time;
-		this->setFPSTitle();
+		this->calcFPS();
+		SDL_SetWindowTitle(this->window, fps.title);
 		this->update(elapsed_time);
 		this->render();
 		SDL_GL_SwapWindow(this->window);
