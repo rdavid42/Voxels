@@ -9,21 +9,21 @@ uint32_t
 Octree::chunk_depth = CHUNK_DEPTH;
 
 Octree::Octree(void)
-	: _state(0), _cube(), _parent(NULL), c(), generated(false)
+	: _state(0), _cube(), _parent(NULL), c(), generated(false), iterated(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
 }
 
 Octree::Octree(Octree const &src)
-	: _state(src.getState()), _cube(src.getCube()), _parent(NULL), c(), generated(false)
+	: _state(src.getState()), _cube(src.getCube()), _parent(NULL), c(), generated(false), iterated(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
 }
 
 Octree::Octree(float const &x, float const &y, float const &z, float const &s)
-	: _state(0), _cube(x, y, z, s), _parent(NULL), c(), generated(false)
+	: _state(0), _cube(x, y, z, s), _parent(NULL), c(), generated(false), iterated(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
@@ -345,11 +345,13 @@ Octree::renderGround(void) const
 		glColor3f(c.x, c.y, c.z);
 		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
+#ifdef DEBUG
 	else if (this->_state == CHUNK)
 	{
-		glColor3f(0.7f, 0.5f, 0.0f);
+		glColor3f(c.x, c.y, c.z);		
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
+#endif
 	else if (this->_parent == NULL)
 	{
 		glColor3f(1.0f, 1.0f, 1.0f);

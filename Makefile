@@ -10,7 +10,7 @@ OBJS		=	$(patsubst %.cpp, $(OBJ_PATH)%.o,$(SRCS))
 PLATFORM	:=	$(shell uname)
 CC			=	g++
 HEADER		=	-I./$(INC_PATH)
-FLAGS		=	 -lpthread -g -O3 -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused -D_REENTRANT -D_THREAD_SAFE
+FLAGS		=	 -lpthread -g -O3 -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused -D_REENTRANT -D_THREAD_SAFE -DDEBUG
 NAME		=	vbe
 
 ifeq "$(PLATFORM)" "WIN32"

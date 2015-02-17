@@ -70,12 +70,12 @@ public:
 	void				render(void);
 	void				renderAxes(void);
 	void				loop(void);
-	void				generateFractalTerrain(void);
 	void				initChunks(void);
 	void				insertChunks(void);
 	void				renderChunks(void);
 	void				generation(void);
 	void				generateChunks(void);
+	void				cleanChunks(void);
 	void				onMouseButton(SDL_MouseButtonEvent const &e);
 	void				onMouseMotion(SDL_MouseMotionEvent const &e);
 	void				onMouseWheel(SDL_MouseWheelEvent const &e);

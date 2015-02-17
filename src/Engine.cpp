@@ -35,132 +35,6 @@ Engine::setFPSTitle(void)
 	}
 	this->fps.fps++;
 }
-/*
-void
-Engine::generation(void)
-{
-	clock_t						startTime = clock();
-	float						x, y;
-	float						ax, ay;
-	float						n;
-	Vec3<float>					r;
-	float						t;
-	int							cx, cy, cz;
-	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
-
-	// std::cerr << "x: " << chunks[1][1][1]->getCube()->getX() << ", s: " << s << std::endl;
-	for (cz = 0; cz < GEN_SIZE; ++cz)
-	{
-		for (cy = 0; cy < GEN_SIZE; ++cy)
-		{
-			for (cx = 0; cx < GEN_SIZE; ++cx)
-			{
-				if (!chunks[cz][cy][cx]->generated)
-				{
-					chunks[cz][cy][cx]->generated = true;
-					for (x = -chunk_size / 2; x < chunk_size; x += inc)
-					{
-						for (y = -chunk_size / 2; y < chunk_size; y += inc)
-						{
-							ax = chunks[cz][cy][cx]->getCube()->getX() + x;
-							ay = chunks[cz][cy][cx]->getCube()->getY() + y;
-							n = noise->fractal(0, ax, ay, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
-							t = ((float)random() / (float)RAND_MAX) / 30;
-							if (n >= 0.3f)
-								r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
-							else if (n >= 0.2f)
-								r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
-							else if (n >= 0.0f)
-								r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
-							else if (n <= -0.7f)
-								r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
-							else if (n <= -0.6f)
-								r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
-							else if (n <= -0.5f)
-								r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
-							else if (n <= -0.4f)
-								r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-							else if (n <= -0.1f)
-								r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
-							else if (n <= 0.0f)
-								r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-							chunks[cz][cy][cx]->insert(ax, ay, n, this->octree->block_depth, GROUND, r);
-						}
-					}
-				}
-			}
-		}
-	}
-	std::cerr << "(Single threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-}
-*/
-/*inline static void
-generateChunkInThread(Noise &noise, Octree &chunk, float const &inc, float const &chunk_size)
-{
-	float						x, y;
-	float						n;
-	Vec3<float>					r;
-	float						t;
-
-	if (!chunk.generated)
-	{
-		chunk.generated = true;
-		for (x = -chunk_size / 2; x < chunk_size; x += inc)
-		{
-			for (y = -chunk_size / 2; y < chunk_size; y += inc)
-			{
-				n = noise.fractal(0, chunk.getCube()->getX() + x, chunk.getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
-				t = ((float)random() / (float)RAND_MAX) / 30;
-				if (n >= 0.3f)
-					r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
-				else if (n >= 0.2f)
-					r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
-				else if (n >= 0.0f)
-					r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
-				else if (n <= -0.7f)
-					r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
-				else if (n <= -0.6f)
-					r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
-				else if (n <= -0.5f)
-					r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
-				else if (n <= -0.4f)
-					r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-				else if (n <= -0.1f)
-					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
-				else if (n <= 0.0f)
-					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-				chunk.insert(chunk.getCube()->getX() + x, chunk.getCube()->getY() + y, n, Octree::block_depth, GROUND, r);
-			}
-		}
-	}
-}
-
-void
-Engine::generation(void)
-{
-	clock_t						startTime = clock();
-	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
-	int							cz;
-	int							cx, cy;
-	static std::thread			t[GEN_SIZE * GEN_SIZE * GEN_SIZE];
-	int							i;
-
-	i = 0;
-	// std::cerr << "x: " << chunks[1][1][1]->getCube()->getX() << ", s: " << s << std::endl;
-	for (cz = 0; cz < GEN_SIZE; ++cz)
-		for (cy = 0; cy < GEN_SIZE; ++cy)
-			for (cx = 0; cx < GEN_SIZE; ++cx)
-			{
-				t[i] = std::thread(generateChunkInThread, std::ref(*noise),
-															std::ref(*chunks[cz][cy][cx]),
-															std::ref(inc),
-															std::ref(this->chunk_size));
-				t[i++].detach();
-			}
-	std::cerr << "(std::thread)(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
-}
-*/
-
 // --------------------------------------------------------------------------------
 // MULTI-THREADED CHUNK GENERATION
 // POSIX threads for portability
@@ -173,22 +47,35 @@ generateChunkInThread(void *args)
 	float						n;
 	Vec3<float>					r;
 	float						t;
+	int							i;
 
 	if (!d->chunk->generated)
 	{
-		d->chunk->generated = true;
+		d->chunk->iterated = true;
+#ifdef DEBUG
+		d->chunk->c.x = 1.0f;
+		d->chunk->c.y = 0.0f;
+		d->chunk->c.z = 0.0f;
+#endif
 		for (x = -(*d->chunk_size) / 2; x < (*d->chunk_size); x += *d->inc)
 		{
 			for (y = -(*d->chunk_size) / 2; y < (*d->chunk_size); y += *d->inc)
 			{
-				n = d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+				n = 0.0f;
+				for (i = 0; i < FRAC_LIMIT; i++)
+					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
 				t = ((float)random() / (float)RAND_MAX) / 30;
-				if (n >= 0.3f)
+				if (n >= 1.5f - t * 5)
+					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
+				else if (n >= 1.2f - t * 5)
+					r = Vec3<float>(0.9f - t, 0.9f - t, 0.9f - t);
+				else if (n >= 1.1f - t * 5)
+					r = Vec3<float>(0.8f, 0.8f + t, 0.8f);
+				else if (n >= 0.3f)
 					r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
 				else if (n >= 0.2f)
 					r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
 				else if (n >= 0.0f)
-					// r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
 					r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
 				else if (n <= -0.7f)
 					r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
@@ -198,13 +85,21 @@ generateChunkInThread(void *args)
 					r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
 				else if (n <= -0.4f)
 					r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+				else if (!(random() % 1000) && n <= 0.0f && n >= -0.4f)
+					r = Vec3<float>(0.1f + t, 0.1 + t, 0.1f + t);
 				else if (n <= -0.1f)
 					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
-				else if (n <= 0.0f)
+				else if (n <= 0.0f + t * 5)
 					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
 				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r);
 			}
 		}
+		d->chunk->generated = true;
+#ifdef DEBUG
+		d->chunk->c.x = 0.0f;
+		d->chunk->c.y = 1.0f;
+		d->chunk->c.z = 0.0f;
+#endif
 	}
 	return (NULL);
 }
@@ -230,10 +125,10 @@ Engine::generation(void)
 					thread_pool[i].args.inc = &inc;
 					thread_pool[i].args.chunk_size = &chunk_size;
 					pthread_create(&thread_pool[i].init, NULL, generateChunkInThread, &thread_pool[i].args);
-/*#ifdef linux // On linux, threads are canceling themself when the thread pool is full so we join them
-					pthread_join(thread_pool[i].init, NULL);
-#endif
-#ifdef __APPLE__ // Apparently on Mac we can detach the threads because there is some kind of thread stack*/
+// #ifdef linux // On linux, threads are canceling themself when the thread pool is full so we join them
+// 					pthread_join(thread_pool[i].init, NULL);
+// #endif
+// #ifdef __APPLE__ // Apparently on Mac we can detach the threads because there is some kind of thread stack
 					
 					// We can also just make a huge pool of threads... a bit dirty but it will do the trick for now.
 					pthread_detach(thread_pool[i].init);
@@ -294,11 +189,9 @@ Engine::insertChunks(void)
 					// check for terrain bounds
 					if (pz <= this->noise_max && pz >= this->noise_min)
 					{
-						new_chunk = octree->insert(px, py, pz, octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 1.0f, 0.0f));
+						new_chunk = octree->insert(px, py, pz, octree->chunk_depth, CHUNK, Vec3<float>(0.7f, 0.5f, 0.0f));
 						if (new_chunk != chunks[cz][cy][cx])
-						{
 							chunks[cz][cy][cx] = new_chunk;
-						}
 					}
 					else
 					{
@@ -311,6 +204,23 @@ Engine::insertChunks(void)
 	}
 }
 
+void *
+cleanChunksThread(void *args)
+{
+	Engine *		e = (Engine *)args;
+	int				cx, cy, cz;
+
+/*	while (42)
+	{
+		for (cz = 0; cz < GEN_SIZE; ++cz)
+			for (cy = 0; cy < GEN_SIZE; ++cy)
+				for (cx = 0; cx < GEN_SIZE; ++cx)
+					if (e->chunks[cz][cy][cx]->iterated && !e->chunks[cz][cy][cx]->generated)
+						e->chunks[cz][cy][cx]->remove();
+	}*/
+	return (NULL);
+}
+
 void
 Engine::printNoiseMinMaxApproximation(void)
 {
@@ -321,12 +231,13 @@ Engine::printNoiseMinMaxApproximation(void)
 	float const		inc = 0.01;
 	float			i;
 
-	i = 0.01f;
 	max = 0.0f;
 	min = 300000.0f;
 	for (x = -10; x < 10; x += inc)
 		for (y = -10; y < 10; y += inc)
 		{
+			i = 0.0f;
+			n = 0.0f;
 			while (i < FRAC_LIMIT)
 			{
 				n += noise->fractal(0, x, y, 1.5);
@@ -345,6 +256,7 @@ Engine::initChunks(void)
 {
 	int				i; // index
 	int				x, y, z;
+	pthread_t		init_cleanupThread;
 
 	for (y = 0; y < GEN_SIZE; ++y)
 		for (x = 0; x < GEN_SIZE; ++x)
@@ -353,7 +265,7 @@ Engine::initChunks(void)
 	center = (GEN_SIZE - 1) / 2;
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
-	this->printNoiseMinMaxApproximation();
+	// this->printNoiseMinMaxApproximation();
 	this->noise_min = -FRAC_LIMIT;
 	this->noise_max = FRAC_LIMIT;
 	// Create initial chunk
@@ -363,6 +275,7 @@ Engine::initChunks(void)
 													octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 	this->insertChunks();
 	this->generation();
+	pthread_create(&init_cleanupThread, NULL, cleanChunksThread, this);
 }
 
 void
@@ -482,7 +395,7 @@ Engine::render(void)
 	// this->renderAxes();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
 	this->renderChunks();
-	// this->octree->renderGround(1.0f, 1.0f, 1.0f);
+	// this->octree->renderGround();
 	glFlush();
 }
 
@@ -613,3 +526,196 @@ operator<<(std::ostream &o, Engine const &i)
 	o	<< "Engine: " << &i;
 	return (o);
 }
+
+/*
+void
+Engine::generation(void)
+{
+	clock_t						startTime = clock();
+	float						x, y;
+	float						ax, ay;
+	float						n;
+	Vec3<float>					r;
+	float						t;
+	int							cx, cy, cz;
+	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
+
+	// std::cerr << "x: " << chunks[1][1][1]->getCube()->getX() << ", s: " << s << std::endl;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (!chunks[cz][cy][cx]->generated)
+				{
+					chunks[cz][cy][cx]->generated = true;
+					for (x = -chunk_size / 2; x < chunk_size; x += inc)
+					{
+						for (y = -chunk_size / 2; y < chunk_size; y += inc)
+						{
+							ax = chunks[cz][cy][cx]->getCube()->getX() + x;
+							ay = chunks[cz][cy][cx]->getCube()->getY() + y;
+							n = noise->fractal(0, ax, ay, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+							t = ((float)random() / (float)RAND_MAX) / 30;
+							if (n >= 0.3f)
+								r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
+							else if (n >= 0.2f)
+								r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
+							else if (n >= 0.0f)
+								r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
+							else if (n <= -0.7f)
+								r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
+							else if (n <= -0.6f)
+								r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
+							else if (n <= -0.5f)
+								r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
+							else if (n <= -0.4f)
+								r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+							else if (n <= -0.1f)
+								r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
+							else if (n <= 0.0f)
+								r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+							chunks[cz][cy][cx]->insert(ax, ay, n, this->octree->block_depth, GROUND, r);
+						}
+					}
+				}
+			}
+		}
+	}
+	std::cerr << "(Single threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+}
+*/
+/*inline static void
+generateChunkInThread(Noise &noise, Octree &chunk, float const &inc, float const &chunk_size)
+{
+	float						x, y;
+	float						n;
+	Vec3<float>					r;
+	float						t;
+
+	if (!chunk.generated)
+	{
+		chunk.generated = true;
+		for (x = -chunk_size / 2; x < chunk_size; x += inc)
+		{
+			for (y = -chunk_size / 2; y < chunk_size; y += inc)
+			{
+				n = noise.fractal(0, chunk.getCube()->getX() + x, chunk.getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+				t = ((float)random() / (float)RAND_MAX) / 30;
+				if (n >= 0.3f)
+					r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
+				else if (n >= 0.2f)
+					r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
+				else if (n >= 0.0f)
+					r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
+				else if (n <= -0.7f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
+				else if (n <= -0.6f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
+				else if (n <= -0.5f)
+					r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
+				else if (n <= -0.4f)
+					r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+				else if (n <= -0.1f)
+					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
+				else if (n <= 0.0f)
+					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+				chunk.insert(chunk.getCube()->getX() + x, chunk.getCube()->getY() + y, n, Octree::block_depth, GROUND, r);
+			}
+		}
+	}
+}
+
+void
+Engine::generation(void)
+{
+	clock_t						startTime = clock();
+	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
+	int							cz;
+	int							cx, cy;
+	static std::thread			t[GEN_SIZE * GEN_SIZE * GEN_SIZE];
+	int							i;
+
+	i = 0;
+	// std::cerr << "x: " << chunks[1][1][1]->getCube()->getX() << ", s: " << s << std::endl;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				t[i] = std::thread(generateChunkInThread, std::ref(*noise),
+															std::ref(*chunks[cz][cy][cx]),
+															std::ref(inc),
+															std::ref(this->chunk_size));
+				t[i++].detach();
+			}
+	std::cerr << "(std::thread)(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+}
+*/
+
+// --------------------------------------------------------------------------------
+// EXPERIMENTAL - single POSIX thread generating everything in an infinite loop
+// --------------------------------------------------------------------------------
+/*static void *
+singleThreadedGeneration(void *args)
+{
+	Engine						*e = (Engine *)args;
+	static float const			inc = e->chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
+	int							cz;
+	int							cx, cy;
+	float						x, y;
+	float						n;
+	Vec3<float>					r;
+	float						t;
+	int							i;
+
+	(void)args;
+	while (42)
+	{
+		for (cz = 0; cz < GEN_SIZE; ++cz)
+		{
+			for (cy = 0; cy < GEN_SIZE; ++cy)
+			{
+				for (cx = 0; cx < GEN_SIZE; ++cx)
+				{
+					if (e->chunks[cz][cy][cx] != NULL && !e->chunks[cz][cy][cx]->generated)
+					{
+						e->chunks[cz][cy][cx]->generated = true;
+						for (x = -e->chunk_size / 2; x < e->chunk_size; x += inc)
+						{
+							for (y = -e->chunk_size / 2; y < e->chunk_size; y += inc)
+							{
+								n = 0.0f;
+								for (i = 0; i < FRAC_LIMIT; i++)
+									n += e->noise->fractal(0, e->chunks[cz][cy][cx]->getCube()->getX() + x, e->chunks[cz][cy][cx]->getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+								t = ((float)random() / (float)RAND_MAX) / 30;
+								if (n >= 0.3f)
+									r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
+								else if (n >= 0.2f)
+									r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
+								else if (n >= 0.0f)
+									// r = Vec3<float>(0.7f - t, 0.5f - t, 0.2f - t);
+									r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
+								else if (n <= -0.7f)
+									r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
+								else if (n <= -0.6f)
+									r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
+								else if (n <= -0.5f)
+									r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
+								else if (n <= -0.4f)
+									r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+								else if (n <= -0.1f)
+									r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
+								else if (n <= 0.0f)
+									r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+								e->chunks[cz][cy][cx]->insert(e->chunks[cz][cy][cx]->getCube()->getX() + x, e->chunks[cz][cy][cx]->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return (NULL);
+}*/
+// --------------------------------------------------------------------------------

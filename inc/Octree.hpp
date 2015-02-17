@@ -21,6 +21,7 @@ private:
 public:
 	Vec3<float>			c; // to debug
 	bool				generated;
+	bool				iterated;
 	static uint32_t		block_depth;
 	static uint32_t		chunk_depth;
 
