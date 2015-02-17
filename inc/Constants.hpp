@@ -47,9 +47,11 @@
 // [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE			15 // (n * n * n) must be odd in order to place camera in the center all the time
 
-# define TARGET_DIST		7
+# define TARGET_DIST		700
 
 // Noises bounds
 
 # define FRAC_LIMIT			1.0f
+
+# define THREAD_POOL_SIZE	8192
 #endif

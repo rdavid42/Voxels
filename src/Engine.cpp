@@ -216,9 +216,9 @@ Engine::generation(void)
 	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
 	int							cz;
 	int							cx, cy;
-	int							i;
+	static int					i = 0;
 
-	i = 0;
+	// pthread_setcanceltype(PTHREAD_CANCEL_DISABLE, NULL);
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 		for (cy = 0; cy < GEN_SIZE; ++cy)
 			for (cx = 0; cx < GEN_SIZE; ++cx)
@@ -230,9 +230,16 @@ Engine::generation(void)
 					thread_pool[i].args.inc = &inc;
 					thread_pool[i].args.chunk_size = &chunk_size;
 					pthread_create(&thread_pool[i].init, NULL, generateChunkInThread, &thread_pool[i].args);
+/*#ifdef linux // On linux, threads are canceling themself when the thread pool is full so we join them
+					pthread_join(thread_pool[i].init, NULL);
+#endif
+#ifdef __APPLE__ // Apparently on Mac we can detach the threads because there is some kind of thread stack*/
+					
+					// We can also just make a huge pool of threads... a bit dirty but it will do the trick for now.
 					pthread_detach(thread_pool[i].init);
+					(++i) &= (THREAD_POOL_SIZE - 1);
+// #endif
 				}
-				++i;
 			}
 	std::cerr << "(pthread)(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 }
@@ -489,27 +496,33 @@ Engine::update(Uint32 const &elapsed_time)
 void
 Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 {
-	Vec3<float>			inc = this->camera->getForward();
-	Octree *			hit; // block
-	int					i;
-
-	inc.x *= this->chunk_size;
-	inc.y *= this->chunk_size;
-	inc.z *= this->chunk_size;
-	i = 0;
-	while (i < TARGET_DIST)
+	if (e.type == SDL_MOUSEBUTTONDOWN)
 	{
-		hit = this->octree->search(inc.x, inc.y, inc.z, BLOCK);
-		if (hit != NULL)
+		Vec3<float>			inc = this->camera->getForward();
+		Octree *			hit; // block
+		int					i;
+
+		inc.x *= this->chunk_size;
+		inc.y *= this->chunk_size;
+		inc.z *= this->chunk_size;
+		i = 0;
+		while (i < TARGET_DIST)
 		{
-			hit->c.x = 1.0f;
-			hit->c.y = 0.0f;
-			hit->c.z = 0.0f;
-			break;
+			hit = this->octree->search(this->camera->getPosition().x + inc.x,
+										this->camera->getPosition().y + inc.y,
+										this->camera->getPosition().z + inc.z, BLOCK);
+			if (hit != NULL)
+			{
+				hit->c.x = 1.0f;
+				hit->c.y = 0.0f;
+				hit->c.z = 0.0f;
+				break;
+			}
+			++i;
 		}
-		++i;
 	}
-	this->camera->onMouseButton(e);
+	else
+		this->camera->onMouseButton(e);
 }
 
 void
@@ -539,6 +552,7 @@ Engine::loop(void)
 	Uint32			elapsed_time = 0;
 	Uint32			last_time = 0;
 
+	mouse_button = false;
 	quit = 0;
 	while (!quit)
 	{
@@ -550,12 +564,15 @@ Engine::loop(void)
 					quit = 1;
 					break;
 				case SDL_MOUSEBUTTONDOWN:
+					mouse_button = true;
 					this->onMouseButton(e.button);
 					break;
 				case SDL_MOUSEBUTTONUP:
+					mouse_button = false;
 					this->onMouseButton(e.button);
 				case SDL_MOUSEMOTION:
-					this->onMouseMotion(e.motion);
+					if (!mouse_button)
+						this->onMouseMotion(e.motion);
 					break;
 				case SDL_MOUSEWHEEL:
 					this->onMouseWheel(e.wheel);

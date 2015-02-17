@@ -54,9 +54,10 @@ public:
 	Octree				*chunks[GEN_SIZE]
 								[GEN_SIZE]
 								[GEN_SIZE]; // camera chunk in the center
-	t_thread			thread_pool[GEN_SIZE * GEN_SIZE * GEN_SIZE];
+	t_thread			thread_pool[THREAD_POOL_SIZE];
 	float				noise_min;
 	float				noise_max;
+	bool				mouse_button;
 
 	Engine(void);
 	~Engine(void);
