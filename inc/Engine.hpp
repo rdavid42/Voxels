@@ -12,6 +12,7 @@
 
 class Camera;
 class Octree;
+class Chunk;
 
 class Engine
 {
@@ -63,7 +64,11 @@ public:
 	Engine(void);
 	~Engine(void);
 
-	void				setFPSTitle(void);
+	void				glEnable2D(int cam_x, int cam_y);
+	void				glDisable2D(void);
+	void				drawDebugInfo(void);
+	void				calcFPS(void);
+	void				drawText(int const x, int const y, char const *text);
 	int					sdlError(int code);
 	int					getDisplayMode(void);
 	int					init(void);

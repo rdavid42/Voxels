@@ -35,6 +35,7 @@ public:
 	Octree *			getNeighbor(void);
 	int					createChild(uint32_t const &i);
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s);
+	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, uint32_t const &state);
 	void				grow(uint32_t const &i);
 	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c);
 	Octree *			search(float const &x, float const &y, float const &z);

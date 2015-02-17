@@ -14,6 +14,7 @@
 # ifdef __APPLE__
 #  include <openGL/glu.h>
 #  include <openGL/gl.h>
+#  include <GLUT/glut.h>
 #  include <SDL.h>
 # endif
 
