@@ -5,7 +5,7 @@
 # include <iostream>
 # include <stdint.h>
 
-class Cube
+class Cube 
 {
 private:
 	float	_x;

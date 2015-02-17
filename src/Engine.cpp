@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <ctime>
 #include "Engine.hpp"
+#include "BlockItem.hpp"
 
 Engine::Engine(void)
 {
@@ -30,6 +31,7 @@ Engine::setFPSTitle(void)
 	{
 		this->fps.current = this->fps.update;
 		sprintf(this->fps.title, "%d fps", this->fps.fps);
+		//SDL_SetWindowTitle(this->window, this->player->name.c_str());
 		SDL_SetWindowTitle(this->window, this->fps.title);
 		this->fps.fps = 0;
 	}
@@ -358,6 +360,8 @@ Engine::init(void)
 	this->fps.current = 0;
 	this->fps.update = 0;
 	this->octree = NULL;
+	this->player = new Player;
+	this->player->name = "[MCSTF]Korky";
 	this->window_width = 1400;
 	this->window_height = 1400;
 	SDL_ShowCursor(SDL_DISABLE);
@@ -426,6 +430,7 @@ Engine::render(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
 	this->renderChunks();
 	// this->octree->renderGround();
+	//this->renderHUD();
 	glFlush();
 }
 
@@ -444,50 +449,56 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 		Vec3<float>			inc = this->camera->getForward();
 		Octree *			hit; // block
 		Octree *			chunk;
-		int					i;
+		float				i;
+		float				j;
 
 		inc.x *= this->chunk_size;
 		inc.y *= this->chunk_size;
 		inc.z *= this->chunk_size;
-		i = 0;
+		i = 0.0f;
 		while (i < TARGET_DIST)
 		{
-/*			chunk = this->octree->insert(this->camera->getPosition().x + inc.x * i,
-										this->camera->getPosition().y + inc.y * i,
-										this->camera->getPosition().z + inc.z * i, CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 0.0f));
-			hit = chunk->insert(this->camera->getPosition().x + inc.x * i,
-								this->camera->getPosition().y + inc.y * i,
-								this->camera->getPosition().z + inc.z * i, BLOCK_DEPTH, BLOCK, Vec3<float>(1.0f, 0.0f, 0.0f));*/
 			chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
 										this->camera->getPosition().y + inc.y * i,
 										this->camera->getPosition().z + inc.z * i, CHUNK);
 			hit = chunk->search(this->camera->getPosition().x + inc.x * i,
 								this->camera->getPosition().y + inc.y * i,
 								this->camera->getPosition().z + inc.z * i, BLOCK);
-
-			std::cerr << std::endl;
-			std::cerr << "hit: x=" << hit->getCube()->getX()
-									<< ", y=" << hit->getCube()->getY()
-									<< ", z=" << hit->getCube()->getZ()
-									<< ", s=" << hit->getCube()->getS()
-									<< ", state=" << hit->getState()
-									<< std::endl;
-			std::cerr << "cam: " << this->camera->getPosition() << std::endl;
-			std::cerr << "inc: " << inc << std::endl;
-			std::cerr << "target: " << this->camera->getTarget() << std::endl;
 			if (hit != NULL && hit->getState() == BLOCK)
 			{
-				std::cerr << "break de la boucle avec i =" << i  << std::endl;
-				hit->c.x = 1.0f;
-				hit->c.y = 0.0f;
-				hit->c.z = 0.0f;
+				BlockItem			block(Vec3<float>(hit->c.x, hit->c.y, hit->c.z));
+				hit->remove();
+				this->player->inventory->add(block);
 				break;
 			}
-			++i;
+			i += 0.01f;
 		}
 	}
-	else
-		this->camera->onMouseButton(e);
+//	else
+//		this->camera->onMouseButton(e);
+}
+
+void
+Engine::addBlock(void)
+{
+	Vec3<float>			inc = this->camera->getForward();
+	Octree *			hit; // block
+	Octree *			chunk;
+	Vec3<float>			blockColor;
+
+	inc.x *= this->chunk_size;
+	inc.y *= this->chunk_size;
+	inc.z *= this->chunk_size;
+	if (this->player->inventory->stock[0] != NULL)
+	{
+		blockColor = this->player->inventory->getFirstBlock();
+	//		chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
+	//									this->camera->getPosition().y + inc.y * i,
+	//									this->camera->getPosition().z + inc.z * i, CHUNK);
+		hit = this->octree->insert(this->camera->getPosition().x + inc.x,
+							this->camera->getPosition().y + inc.y,
+							this->camera->getPosition().z + inc.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK, blockColor);
+	}
 }
 
 void
@@ -506,6 +517,8 @@ void
 Engine::onKeyboard(SDL_KeyboardEvent const &e)
 {
 	this->camera->onKeyboard(e);
+	if (e.keysym.scancode == SDL_SCANCODE_Z)
+		this->addBlock();
 }
 
 void

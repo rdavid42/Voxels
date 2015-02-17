@@ -9,6 +9,7 @@
 # include <unistd.h>
 # include "Octree.hpp"
 # include "Noise.hpp"
+# include "Player.hpp"
 
 class Camera;
 class Octree;
@@ -49,6 +50,7 @@ public:
 	Octree *			octree;
 	Camera *			camera;
 	Noise *				noise;
+	Player *			player;
 	float				chunk_size; // number of chunks within distance (gen_dist)
 	float				block_size;
 	int					center;
@@ -70,7 +72,9 @@ public:
 	void				update(Uint32 const &elapsed_time);
 	void				render(void);
 	void				renderAxes(void);
+	void				addBlock(void);
 	void				loop(void);
+	void				renderHUD(void);
 	void				initChunks(void);
 	void				insertChunks(void);
 	void				renderChunks(void);

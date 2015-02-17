@@ -47,7 +47,7 @@
 // [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE			15 // (n * n * n) must be odd in order to place camera in the center all the time
 
-# define TARGET_DIST		7
+# define TARGET_DIST		1
 
 // Noises bounds
 
