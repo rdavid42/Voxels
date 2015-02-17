@@ -19,7 +19,7 @@ private:
 	Octree				*_children[CHD_MAX];
 
 public:
-	Vec3<float>			c; // to debug
+	Vec3<float>			c;
 	bool				generated;
 	bool				iterated;
 	static uint32_t		block_depth;
