@@ -388,7 +388,7 @@ Engine::init(void)
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, 1000000);
+	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
 	glEnable(GL_DEPTH_TEST);
 	// glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
@@ -406,15 +406,15 @@ Engine::renderAxes(void)
 	// X red
 	glColor3f(1.0f, 0.0f, 0.0f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(1000.0f, 0.0f, 0.0f);
+	glVertex3f(OCTREE_SIZE, 0.0f, 0.0f);
 	// Y green
 	glColor3f(0.0f, 1.0f, 0.0f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 1000.0f, 0.0f);
+	glVertex3f(0.0f, OCTREE_SIZE, 0.0f);
 	// Z blue
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glVertex3f(0.0f, 0.0f, 0.0f);
-	glVertex3f(0.0f, 0.0f, 1000.0f);
+	glVertex3f(0.0f, 0.0f, OCTREE_SIZE);
 	glEnd();
 }
 
@@ -463,7 +463,7 @@ Engine::drawText(int const x, int const y, char const *text)
 void
 Engine::drawUI(void)
 {
-	
+
 }
 
 void

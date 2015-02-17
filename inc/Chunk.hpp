@@ -12,7 +12,7 @@ public:
 	Chunk(void);
 	Chunk(float const &x, float const &y, float const &z, float const &s);
 	Chunk(Chunk const &src);
-	~Chunk(void);
+	virtual ~Chunk(void);
 
 	Chunk				&operator=(Chunk const &rhs);
 };
