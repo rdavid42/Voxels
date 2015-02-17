@@ -6,6 +6,7 @@
 # include <stdint.h>
 # include <thread>
 # include <pthread.h>
+# include <unistd.h>
 # include "Octree.hpp"
 # include "Noise.hpp"
 

@@ -204,22 +204,45 @@ Engine::insertChunks(void)
 	}
 }
 
+// --------------------------------------------------------------------------------
+// EXPERIMENTAL
+// --------------------------------------------------------------------------------
 void *
 cleanChunksThread(void *args)
 {
 	Engine *		e = (Engine *)args;
+	Octree *		c;
 	int				cx, cy, cz;
 
-/*	while (42)
+	while (42)
 	{
 		for (cz = 0; cz < GEN_SIZE; ++cz)
+		{
 			for (cy = 0; cy < GEN_SIZE; ++cy)
+			{
 				for (cx = 0; cx < GEN_SIZE; ++cx)
-					if (e->chunks[cz][cy][cx]->iterated && !e->chunks[cz][cy][cx]->generated)
-						e->chunks[cz][cy][cx]->remove();
-	}*/
+				{
+					c = e->chunks[cz][cy][cx];
+					if (c != NULL)
+					{
+						if (c->iterated && c->generated)
+						{
+							if (!c->getChild(0) && !c->getChild(1) && !c->getChild(2) && !c->getChild(3)
+								&& !c->getChild(4) && !c->getChild(5) && !c->getChild(6) && !c->getChild(7))
+							{
+								c->remove();
+								e->chunks[cz][cy][cx] = NULL;
+							}
+						}
+					}
+				}
+				usleep(500);
+			}
+		}
+	}
 	return (NULL);
 }
+// --------------------------------------------------------------------------------
 
 void
 Engine::printNoiseMinMaxApproximation(void)
@@ -276,6 +299,7 @@ Engine::initChunks(void)
 	this->insertChunks();
 	this->generation();
 	pthread_create(&init_cleanupThread, NULL, cleanChunksThread, this);
+	pthread_detach(init_cleanupThread);
 }
 
 void
@@ -284,12 +308,16 @@ Engine::renderChunks(void)
 	int				cx, cy, cz;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
 		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
 				if (chunks[cz][cy][cx] != NULL)
 					chunks[cz][cy][cx]->renderGround();
 			}
+		}
+	}
 }
 
 int
@@ -392,7 +420,9 @@ Engine::render(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	this->camera->look();
-	// this->renderAxes();
+#ifdef DEBUG
+	this->renderAxes();
+#endif
 	glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
 	this->renderChunks();
 	// this->octree->renderGround();

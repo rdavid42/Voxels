@@ -244,7 +244,7 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
-// no comment yet
+// Draw a cube with 12 triangles
 // -------------------------------------------------------------------
 void
 Octree::drawCube(float const &x, float const &y, float const &z, float const &s) const
@@ -291,7 +291,7 @@ Octree::drawCube(float const &x, float const &y, float const &z, float const &s)
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
-// no comment yet
+// Draw the 16 ridges of a cube, usually for debug purposes
 // -------------------------------------------------------------------
 void
 Octree::drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const
@@ -357,11 +357,6 @@ Octree::renderGround(void) const
 		glColor3f(1.0f, 1.0f, 1.0f);
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
-/*	else if (this->_state == CHUNK)
-	{
-		glColor3f(1.0f, 0.5f, 0.0f);
-		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), z, this->_cube.getS());
-	}*/
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (this->_children[i] != NULL)
