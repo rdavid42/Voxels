@@ -62,6 +62,7 @@ public:
 	float				noise_min;
 	float				noise_max;
 	bool				mouse_button;
+	Octree				*highlight;
 
 	Engine(void);
 	~Engine(void);
