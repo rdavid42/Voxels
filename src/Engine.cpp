@@ -28,10 +28,13 @@ Engine::sdlError(int code)
 void
 Engine::calcFPS(void)
 {
+	std::ostringstream	oss;
+
 	if ((this->fps.update = SDL_GetTicks()) - this->fps.current >= 1000)
 	{
 		this->fps.current = this->fps.update;
-		sprintf(this->fps.title, "%d fps", this->fps.fps);
+		oss << this->fps.fps << " fps";
+		this->fps.title = oss.str();
 		this->fps.fps = 0;
 	}
 	this->fps.fps++;
@@ -40,7 +43,7 @@ Engine::calcFPS(void)
 // MULTI-THREADED CHUNK GENERATION
 // POSIX threads for portability
 // --------------------------------------------------------------------------------
-inline static void *
+static void *
 generateChunkInThread(void *args)
 {
 	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
@@ -102,42 +105,51 @@ generateChunkInThread(void *args)
 		d->chunk->c.z = 0.0f;
 #endif
 	}
+	delete d;
+	return (NULL);
+}
+
+static void *
+launchGeneration(void *args)
+{
+	Engine						*e = (Engine *)args;
+	static float const			inc = e->chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
+	int							cz;
+	int							cx, cy;
+	pthread_t					init;
+	Engine::t_chunkThreadArgs	*thread_args;
+
+	// pthread_setcanceltype(PTHREAD_CANCEL_DISABLE, NULL);
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (e->chunks[cz][cy][cx] != NULL)
+				{
+					thread_args = new Engine::t_chunkThreadArgs();
+					thread_args->noise = e->noise;
+					thread_args->chunk = e->chunks[cz][cy][cx];
+					thread_args->inc = &inc;
+					thread_args->chunk_size = &e->chunk_size;
+					pthread_create(&init, NULL, generateChunkInThread, thread_args);
+					pthread_detach(init);
+					thread_args = NULL;
+				}
+			}
+		}
+	}
 	return (NULL);
 }
 
 void
 Engine::generation(void)
 {
-	clock_t						startTime = clock();
-	static float const			inc = chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
-	int							cz;
-	int							cx, cy;
-	static int					i = 0;
+	pthread_t					init;
 
-	// pthread_setcanceltype(PTHREAD_CANCEL_DISABLE, NULL);
-	for (cz = 0; cz < GEN_SIZE; ++cz)
-		for (cy = 0; cy < GEN_SIZE; ++cy)
-			for (cx = 0; cx < GEN_SIZE; ++cx)
-			{
-				if (this->chunks[cz][cy][cx] != NULL)
-				{
-					thread_pool[i].args.noise = this->noise;
-					thread_pool[i].args.chunk = this->chunks[cz][cy][cx];
-					thread_pool[i].args.inc = &inc;
-					thread_pool[i].args.chunk_size = &chunk_size;
-					pthread_create(&thread_pool[i].init, NULL, generateChunkInThread, &thread_pool[i].args);
-// #ifdef linux // On linux, threads are canceling themself when the thread pool is full so we join them
-// 					pthread_join(thread_pool[i].init, NULL);
-// #endif
-// #ifdef __APPLE__ // Apparently on Mac we can detach the threads because there is some kind of thread stack
-					
-					// We can also just make a huge pool of threads... a bit dirty but it will do the trick for now.
-					pthread_detach(thread_pool[i].init);
-					(++i) &= (THREAD_POOL_SIZE - 1);
-// #endif
-				}
-			}
-	std::cerr << "(pthread)(Multi threaded) Chunks generation: " << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+	pthread_create(&init, NULL, launchGeneration, this);
+	pthread_detach(init);
 }
 // --------------------------------------------------------------------------------
 
@@ -448,7 +460,7 @@ void
 Engine::drawDebugInfo(void)
 {
 	glColor3f(1.0f, 0.0f, 0.0f);
-	this->drawText(10, 20, fps.title);
+	this->drawText(10, 20, fps.title.c_str());
 }
 
 void
@@ -722,7 +734,7 @@ Engine::loop(void)
 		elapsed_time = current_time - last_time;
 		last_time = current_time;
 		this->calcFPS();
-		SDL_SetWindowTitle(this->window, fps.title);
+		SDL_SetWindowTitle(this->window, fps.title.c_str());
 		this->update(elapsed_time);
 		this->render();
 		SDL_GL_SwapWindow(this->window);
@@ -746,28 +758,54 @@ operator<<(std::ostream &o, Engine const &i)
 	return (o);
 }
 
-#if 0
-typedef struct {
-   XYZ p[3];
-} TRIANGLE;
-
-typedef struct {
-   XYZ p[8];
-   double val[8];
-} GRIDCELL;
-
-/*
-   Given a grid cell and an isolevel, calculate the triangular
-   facets required to represent the isosurface through the cell.
-   Return the number of triangular facets, the array "triangles"
-   will be loaded up with the vertices at most 5 triangular facets.
-	0 will be returned if the grid cell is either totally above
-   of totally below the isolevel.
-*/
-int
-Polygonise(GRIDCELL grid, double isolevel, Vec3<float> *triangles)
+inline static double
+dabs(double const &n)
 {
-	int						i, ntriang;
+	if (n < 0.0)
+		return (-n);
+	return (n);
+}
+
+// --------------------------------------------------------------------------------
+// Linearly interpolate the position where an isosurface cuts
+// an edge between two vertices, each with their own scalar value
+// --------------------------------------------------------------------------------
+inline static Vec3<float>
+VertexInterp(double const &isolevel, Vec3<float> p1, Vec3<float> p2, double const &valp1, double const &valp2)
+{
+	double			mu;
+	Vec3<float>		p;
+
+	if (dabs(isolevel - valp1) < 0.00001)
+		return (p1);
+	if (dabs(isolevel - valp2) < 0.00001)
+		return (p2);
+	if (dabs(valp1 - valp2) < 0.00001)
+		return (p1);
+	mu = (isolevel - valp1) / (valp2 - valp1);
+	p.x = p1.x + mu * (p2.x - p1.x);
+	p.y = p1.y + mu * (p2.y - p1.y);
+	p.z = p1.z + mu * (p2.z - p1.z);
+	return (p);
+}
+
+// --------------------------------------------------------------------------------
+// Given a grid cell and an isolevel, calculate the triangular
+// facets required to represent the isosurface through the cell.
+// Return the number of triangular facets, the array "triangles"
+// will be loaded up with the vertices at most 5 triangular facets.
+// 0 will be returned if the grid cell is either totally above
+// of totally below the isolevel.
+// --------------------------------------------------------------------------------
+// isolevel  : noise value
+// grid->p   : block vertices
+// grid->val : block indexes Z values
+// --------------------------------------------------------------------------------
+int
+Engine::Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles)
+{
+	int						i;
+	int						ntriang;
 	int						cubeindex;
 	Vec3<float>				vertlist[12];
 	static int const		edgeTable[256] =
@@ -1101,7 +1139,7 @@ Polygonise(GRIDCELL grid, double isolevel, Vec3<float> *triangles)
 	ntriang = 0;
 	for (i = 0; triTable[cubeindex][i] != -1; i += 3)
 	{
-		triangles[ntriang].p[0] = vertlist[triTable[cubeindex][i    ]];
+		triangles[ntriang].p[0] = vertlist[triTable[cubeindex][i]];
 		triangles[ntriang].p[1] = vertlist[triTable[cubeindex][i + 1]];
 		triangles[ntriang].p[2] = vertlist[triTable[cubeindex][i + 2]];
 		ntriang++;
@@ -1109,27 +1147,3 @@ Polygonise(GRIDCELL grid, double isolevel, Vec3<float> *triangles)
 
 	return (ntriang);
 }
-
-/*
-   Linearly interpolate the position where an isosurface cuts
-   an edge between two vertices, each with their own scalar value
-*/
-Vec3<float>
-VertexInterp(double isolevel, Vec3<float> p1, Vec3<float> p2, double valp1, double valp2)
-{
-	double			mu;
-	Vec3<float>		p;
-
-	if (ABS(isolevel - valp1) < 0.00001)
-		return (p1);
-	if (ABS(isolevel - valp2) < 0.00001)
-		return (p2);
-	if (ABS(valp1 - valp2) < 0.00001)
-		return (p1);
-	mu = (isolevel - valp1) / (valp2 - valp1);
-	p.x = p1.x + mu * (p2.x - p1.x);
-	p.y = p1.y + mu * (p2.y - p1.y);
-	p.z = p1.z + mu * (p2.z - p1.z);
-	return (p);
-}
-#endif
