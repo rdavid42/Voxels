@@ -10,7 +10,11 @@ OBJS		=	$(patsubst %.cpp, $(OBJ_PATH)%.o,$(SRCS))
 PLATFORM	:=	$(shell uname)
 CC			=	g++
 HEADER		=	-I./$(INC_PATH)
-FLAGS		=	 -lpthread -g -O3 -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused -D_REENTRANT -D_THREAD_SAFE -DDEBUG
+FLAGS		=	-lpthread -g -O3 -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
+VARS		=	-D_REENTRANT \
+				-D_THREAD_SAFE \
+				-DDEBUG \
+				#-DMARCHING_CUBES
 NAME		=	vbe
 
 ifeq "$(PLATFORM)" "WIN32"
@@ -31,14 +35,14 @@ all: $(NAME)
 
 $(NAME): $(OBJS)
 ifeq "$(PLATFORM)" "Darwin"
-	@$(CC) $(FLAGS) $(HEADER) $(SDL) $(GL) $(OBJS) -o $(NAME)
+	@$(CC) $(FLAGS) $(VARS) $(HEADER) $(SDL) $(GL) $(OBJS) -o $(NAME)
 else ifeq "$(PLATFORM)" "Linux"
-	@$(CC) $(FLAGS) $(HEADER) $(OBJS) -o $(NAME) $(SDL) $(GL)
+	@$(CC) $(FLAGS) $(VARS) $(HEADER) $(OBJS) -o $(NAME) $(SDL) $(GL)
 endif
 
 $(patsubst %, $(OBJ_PATH)%,%.o): $(SRC_PATH)$(notdir %.cpp)
 	@mkdir -p $(OBJ_PATH)
-	@$(CC) -c $(FLAGS) $(HEADER) $(SDL) $(GL) "$<" -o "$@"
+	@$(CC) -c $(FLAGS) $(VARS) $(HEADER) $(SDL) $(GL) "$<" -o "$@"
 
 clean:
 	@rm -rf $(OBJ_PATH)

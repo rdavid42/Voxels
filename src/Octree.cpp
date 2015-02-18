@@ -365,8 +365,9 @@ Octree::drawCubeRidges(float const &x, float const &y, float const &z, float con
 void
 Octree::renderGround(void) const
 {
-	// float			tmp;
-
+#ifdef MARCHING_CUBES
+	
+#else
 	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
 	{
 		glColor3f(c.x, c.y, c.z);
@@ -377,18 +378,19 @@ Octree::renderGround(void) const
 		glColor3f(c.x, c.y, c.z);
 		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
-#ifdef DEBUG
+# ifdef DEBUG
 	else if (this->_state == CHUNK)
 	{
 		glColor3f(c.x, c.y, c.z);		
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
-#endif
+# endif
 	else if (this->_parent == NULL)
 	{
 		glColor3f(1.0f, 1.0f, 1.0f);
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
+#endif
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (this->_children[i] != NULL)

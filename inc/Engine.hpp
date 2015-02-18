@@ -7,9 +7,13 @@
 # include <thread>
 # include <pthread.h>
 # include <unistd.h>
+# include <sstream>
+# include <string>
 # include "Octree.hpp"
 # include "Noise.hpp"
 # include "Player.hpp"
+# include "Triangle.hpp"
+# include "Struct.hpp"
 
 class Camera;
 class Octree;
@@ -24,7 +28,7 @@ public:
 		int				fps;
 		int				current;
 		int				update;
-		char			title[128];
+		std::string		title;
 	}					t_timer;
 
 	// Chunk thread argument, should be replaced by a more generic structure in the future
@@ -35,13 +39,6 @@ public:
 		float const		*inc;
 		float const		*chunk_size;
 	}					t_chunkThreadArgs;
-
-	// POSIX thread arguments and initialization structure (templated structure or class planned)
-	typedef struct		s_thread
-	{
-		pthread_t			init;
-		t_chunkThreadArgs	args;
-	}					t_thread;
 
 	t_timer				fps;
 	SDL_Window *		window;
@@ -58,7 +55,6 @@ public:
 	Octree				*chunks[GEN_SIZE]
 								[GEN_SIZE]
 								[GEN_SIZE]; // camera chunk in the center
-	t_thread			thread_pool[THREAD_POOL_SIZE];
 	float				noise_min;
 	float				noise_max;
 	bool				mouse_button;
@@ -92,6 +88,9 @@ public:
 	void				onMouseMotion(SDL_MouseMotionEvent const &e);
 	void				onMouseWheel(SDL_MouseWheelEvent const &e);
 	void				onKeyboard(SDL_KeyboardEvent const &e);
+
+	int					Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles);
+
 	Engine &			operator=(Engine const &rhs);
 
 private:

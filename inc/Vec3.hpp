@@ -110,8 +110,8 @@ public:
 	}
 };
 
-template<typename TYPE> std::ostream
-&operator<<(std::ostream &o, Vec3<TYPE> const &i)
+template<typename TYPE> std::ostream &
+operator<<(std::ostream &o, Vec3<TYPE> const &i)
 {
 	o	<< "x: " << i.x << ", y: " << i.y << ", z: " << i.z;
 	return (o);
