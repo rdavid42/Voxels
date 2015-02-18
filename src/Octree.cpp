@@ -132,6 +132,7 @@ Octree::createChild(uint32_t const &i, float const &x, float const &y, float con
 			break;
 		case BLOCK:
 			this->_children[i] = new Block(x, y, z, s);
+			
 			break;
 		case BIOME:
 			this->_children[i] = new Biome(x, y, z, s);
@@ -366,7 +367,7 @@ void
 Octree::renderGround(void) const
 {
 #ifdef MARCHING_CUBES
-	
+
 #else
 	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
 	{

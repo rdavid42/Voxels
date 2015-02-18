@@ -217,46 +217,6 @@ Engine::insertChunks(void)
 	}
 }
 
-// --------------------------------------------------------------------------------
-// EXPERIMENTAL
-// --------------------------------------------------------------------------------
-void *
-cleanChunksThread(void *args)
-{
-	Engine *		e = (Engine *)args;
-	Octree *		c;
-	int				cx, cy, cz;
-
-	while (42)
-	{
-		for (cz = 0; cz < GEN_SIZE; ++cz)
-		{
-			for (cy = 0; cy < GEN_SIZE; ++cy)
-			{
-				for (cx = 0; cx < GEN_SIZE; ++cx)
-				{
-					c = e->chunks[cz][cy][cx];
-					if (c != NULL)
-					{
-						if (c->iterated && c->generated)
-						{
-							if (!c->getChild(0) && !c->getChild(1) && !c->getChild(2) && !c->getChild(3)
-								&& !c->getChild(4) && !c->getChild(5) && !c->getChild(6) && !c->getChild(7))
-							{
-								c->remove();
-								e->chunks[cz][cy][cx] = NULL;
-							}
-						}
-					}
-					usleep(500);
-				}
-			}
-		}
-	}
-	return (NULL);
-}
-// --------------------------------------------------------------------------------
-
 void
 Engine::printNoiseMinMaxApproximation(void)
 {
@@ -292,7 +252,6 @@ Engine::initChunks(void)
 {
 	int				i; // index
 	int				x, y, z;
-	// pthread_t		init_cleanupThread;
 
 	for (y = 0; y < GEN_SIZE; ++y)
 		for (x = 0; x < GEN_SIZE; ++x)
@@ -311,8 +270,6 @@ Engine::initChunks(void)
 													octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 	this->insertChunks();
 	this->generation();
-	// pthread_create(&init_cleanupThread, NULL, cleanChunksThread, this);
-	// pthread_detach(init_cleanupThread);
 }
 
 void
