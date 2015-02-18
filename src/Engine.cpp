@@ -592,7 +592,7 @@ Engine::addBlock(void)
 
 	chunkS = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	Vec3<float>	blockPos(chunkS * inc.x, chunkS * inc.y, chunkS * inc.z);
-	if (this->player->inventory->stock[0] != NULL)
+	if (this->player->inventory->stock[this->player->inventory->selected] != NULL)
 	{
 	//		chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
 	//									this->camera->getPosition().y + inc.y * i,
@@ -600,8 +600,8 @@ Engine::addBlock(void)
 		hit = this->octree->insert(this->camera->getPosition().x + blockPos.x,
 							this->camera->getPosition().y + blockPos.y,
 							this->camera->getPosition().z + blockPos.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK,
-							this->player->inventory->stock[0]->color);
-		this->player->inventory->deleteFirst();
+							this->player->inventory->stock[this->player->inventory->selected]->color);
+		this->player->inventory->deleteSelected();
 	}
 }
 
@@ -646,8 +646,32 @@ void
 Engine::onKeyboard(SDL_KeyboardEvent const &e)
 {
 	this->camera->onKeyboard(e);
-	if (e.keysym.scancode == SDL_SCANCODE_Z)
-		this->addBlock();
+
+	if (e.repeat == 0 && e.type == SDL_KEYDOWN)
+	{
+		if (e.keysym.scancode == SDL_SCANCODE_Z)
+			this->addBlock();
+		if (e.keysym.scancode == SDL_SCANCODE_KP_0)
+			this->player->inventory->selectItem(0);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_1)
+			this->player->inventory->selectItem(1);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_2)
+			this->player->inventory->selectItem(2);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_3)
+			this->player->inventory->selectItem(3);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_4)
+			this->player->inventory->selectItem(4);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_5)
+			this->player->inventory->selectItem(5);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_6)
+			this->player->inventory->selectItem(6);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_7)
+			this->player->inventory->selectItem(7);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_8)
+			this->player->inventory->selectItem(8);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_9)
+			this->player->inventory->selectItem(9);
+	}
 }
 
 void

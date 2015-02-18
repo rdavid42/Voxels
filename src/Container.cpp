@@ -12,6 +12,7 @@ Container::Container(void)
 		this->stock[i] = NULL;
 		i++;
 	}
+	this->selected = 0;
 	return ;
 }
 
@@ -46,6 +47,14 @@ Container::getFirstBlock(void)
 	ret = this->stock[0]->color;
 	this->deleteFirst();
 	return (ret);
+}
+
+void
+Container::selectItem(int selection)
+{
+	if (this->stock[selection] != NULL)
+		this->selected = selection;
+	return ;
 }
 
 void
@@ -88,6 +97,7 @@ Container::drawInventory(void)
 	glVertex2i(140, 1030);
 	glVertex2i(10, 1030);
 
+
 	while (i < 20 && this->stock[i] != NULL)
 	{
 		glColor3f(this->stock[i]->color.x, this->stock[i]->color.y, this->stock[i]->color.z);
@@ -101,6 +111,56 @@ Container::drawInventory(void)
 		j++;
 	}
 	glEnd();
+	glColor3f(0, 0, 0);
+	i = 0;
+	j = 1;
+	glBegin(GL_LINES);
+	while (i < 20 && this->stock[i] != NULL)
+	{
+		if (i == this->selected)
+			glColor3f(1, 0, 0);
+		glVertex2i(20, 120 + (i * (size + tab) + tab));
+		glVertex2i(20, 120 + (j * (size + tab)));
+		glVertex2i(130, 120 + (i * (size + tab) + tab));
+		glVertex2i(130, 120 + (j * (size + tab)));
+		glVertex2i(130, 120 + (j * (size + tab)));
+		glVertex2i(20, 120 + (j * (size + tab)));
+		glVertex2i(130, 120 + (i * (size + tab)) + tab);
+		glVertex2i(20, 120 + (i * (size + tab)) + tab);
+		i++;
+		j++;
+		glColor3f(0, 0, 0);
+	}
+	glVertex2i(10, 120);
+	glVertex2i(10, 1030);
+	glVertex2i(10, 120);
+	glVertex2i(140, 120);
+	glVertex2i(140, 120);
+	glVertex2i(140, 1030);
+	glVertex2i(140, 1030);
+	glVertex2i(10, 1030);
+
+	glEnd();
+	return ;
+}
+
+void
+Container::deleteSelected(void)
+{
+	int		i;
+	int		j;
+
+	i = selected;
+	j = selected + 1;
+	while (j < 20 && this->stock[j] && this->stock[i])
+	{
+		this->stock[i] = this->stock[j];
+		i++;
+		j++;
+	}
+	this->stock[i] = NULL;
+	this->selected = 0;
+	return ;
 }
 
 void
@@ -118,6 +178,7 @@ Container::deleteFirst(void)
 		j++;
 	}
 	this->stock[i] = NULL;
+	return ;
 }
 
 std::ostream&
