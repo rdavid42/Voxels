@@ -133,14 +133,14 @@ generateChunkInThread(void *args)
 					g.p[5] = Vec3<float>(k.x + s, k.y + s, k.z + s);
 					g.p[6] = Vec3<float>(k.x + s, k.y, k.z + s);
 					g.p[7] = Vec3<float>(k.x, k.y, k.z + s);
-					g.val[0] = d->noise->fractal(0, g.p[0].x, g.p[0].y, g.p[0].z);
-					g.val[1] = d->noise->fractal(0, g.p[1].x, g.p[1].y, g.p[1].z);
-					g.val[2] = d->noise->fractal(0, g.p[2].x, g.p[2].y, g.p[2].z);
-					g.val[3] = d->noise->fractal(0, g.p[3].x, g.p[3].y, g.p[3].z);
-					g.val[4] = d->noise->fractal(0, g.p[4].x, g.p[4].y, g.p[4].z);
-					g.val[5] = d->noise->fractal(0, g.p[5].x, g.p[5].y, g.p[5].z);
-					g.val[6] = d->noise->fractal(0, g.p[6].x, g.p[6].y, g.p[6].z);
-					g.val[7] = d->noise->fractal(0, g.p[7].x, g.p[7].y, g.p[7].z);
+					g.val[0] = g.p[0].z;
+					g.val[1] = g.p[1].z;
+					g.val[2] = g.p[2].z;
+					g.val[3] = g.p[3].z;
+					g.val[4] = g.p[4].z;
+					g.val[5] = g.p[5].z;
+					g.val[6] = g.p[6].z;
+					g.val[7] = g.p[7].z;
 					b->n = Polygonise(g, n, b->t);
 					// std::cerr << b->n << std::endl;
 				}
