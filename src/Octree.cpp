@@ -224,16 +224,16 @@ Octree::remove(void)
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
-// Insert an Octree in an another
+// Insert an Octree in another
 // -------------------------------------------------------------------
 Octree *
 Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c)
 {
 	// size never changes for children.
-	float const     s = this->_cube.getS() / 2.0f;
-	float           nx;
-	float           ny;
-	float           nz;
+	float const		s = this->_cube.getS() / 2.0f;
+	float			nx;
+	float			ny;
+	float			nz;
 
 	if (depth == 0)
 	{
@@ -269,6 +269,52 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 			}
 			else if (this->_children[i]->getCube()->vertexInside(x, y, z))
 				return (this->_children[i]->insert(x, y, z, depth - 1, state, c));
+		}
+	}
+	// std::cerr << "not created, depth: " << depth << std::endl;
+	return (NULL);
+}
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+// Insert an Octree in another, no variables declared
+// -------------------------------------------------------------------
+Octree *
+Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c, float *p, int *i)
+{
+	if (depth == 0)
+	{
+		// max depth reached, put values here
+		this->setState(state);
+		this->c = c;
+		// std::cerr << "insert deepest: " << this << std::endl;
+		return (this);
+	}
+	else if (depth > 0)
+	{
+		p[0] = this->_cube.getS() / 2.0f;
+		for (*i = 0; *i < CHD_MAX; ++(*i))
+		{
+			if (this->_children[*i] == NULL)
+			{
+				/*
+				** precomputing child coordinates in order to check if the vertex is inside.
+				** new_dim = dim + coefficient * size;
+				*/
+				p[1] = this->_cube.getX() + ((*i >> 0) & MASK_1) * p[0];
+				p[2] = this->_cube.getY() + ((*i >> 1) & MASK_1) * p[0];
+				p[3] = this->_cube.getZ() + ((*i >> 2) & MASK_1) * p[0];
+				if (x >= p[1] && x < p[1] + p[0] && y >= p[2] && y < p[2] + p[0] && z >= p[3] && z < p[3] + p[0])
+				{
+					if ((depth - 1) == 0)
+						this->createChild(*i, p[1], p[2], p[3], p[0], state);
+					else
+						this->createChild(*i, p[1], p[2], p[3], p[0]);
+					return (this->_children[*i]->insert(x, y, z, depth - 1, state, c));
+				}
+			}
+			else if (this->_children[*i]->getCube()->vertexInside(x, y, z))
+				return (this->_children[*i]->insert(x, y, z, depth - 1, state, c));
 		}
 	}
 	// std::cerr << "not created, depth: " << depth << std::endl;
@@ -366,8 +412,38 @@ Octree::drawCubeRidges(float const &x, float const &y, float const &z, float con
 void
 Octree::renderGround(void) const
 {
-#ifdef MARCHING_CUBES
+	int				i;
 
+#ifdef MARCHING_CUBES
+/*	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
+	{
+		glColor3f(c.x, c.y, c.z);
+		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+	}*/
+	if (this->_state == BLOCK)
+	{
+		glBegin(GL_TRIANGLES);
+		for (i = 0; i < this->n; ++i)
+		{
+			glColor3f(c.x, c.y, c.z);
+			glVertex3f(t[i].p[0].x, t[i].p[0].y, t[i].p[0].z);
+			glVertex3f(t[i].p[1].x, t[i].p[1].y, t[i].p[1].z);
+			glVertex3f(t[i].p[2].x, t[i].p[2].y, t[i].p[2].z);
+		}
+		glEnd();
+	}
+# ifdef DEBUG
+	else if (this->_state == CHUNK)
+	{
+		glColor3f(c.x, c.y, c.z);
+		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+	}
+# endif
+	else if (this->_parent == NULL)
+	{
+		glColor3f(1.0f, 1.0f, 1.0f);
+		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+	}
 #else
 	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
 	{
@@ -382,7 +458,7 @@ Octree::renderGround(void) const
 # ifdef DEBUG
 	else if (this->_state == CHUNK)
 	{
-		glColor3f(c.x, c.y, c.z);		
+		glColor3f(c.x, c.y, c.z);
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
 # endif

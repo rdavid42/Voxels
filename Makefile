@@ -14,7 +14,7 @@ FLAGS		=	-lpthread -g -O3 -Wall -Wextra -Werror -lm -Wno-deprecated-declarations
 VARS		=	-D_REENTRANT \
 				-D_THREAD_SAFE \
 				-DDEBUG \
-				# -DMARCHING_CUBES
+				-DMARCHING_CUBES
 NAME		=	vbe
 
 ifeq "$(PLATFORM)" "WIN32"

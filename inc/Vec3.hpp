@@ -44,6 +44,12 @@ public:
 		return (r);
 	}
 
+	TYPE
+	dotProduct(Vec3<TYPE> const &v) const
+	{
+		return (this->x * v.x + this->y * v.y + this->z * v.z);
+	}
+
 	void
 	normalize(void)
 	{
