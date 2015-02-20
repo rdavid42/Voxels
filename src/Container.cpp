@@ -140,6 +140,7 @@ Container::drawInventory(void)
 	glVertex2i(140, 1030);
 	glVertex2i(10, 1030);
 
+
 	glEnd();
 	return ;
 }

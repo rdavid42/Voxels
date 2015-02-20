@@ -534,6 +534,11 @@ Engine::drawUI(void)
 	glVertex2i(w2, h2 - 10);
 	glVertex2i(w2, h2 + 10);
 	glEnd();
+	if (this->player->creative)
+	{
+		this->displayWheel();
+		this->drawText(650, 30, "Creative Mode");
+	}
 	this->player->inventory->drawInventory();
 }
 
@@ -591,7 +596,7 @@ Engine::update(Uint32 const &elapsed_time)
 void
 Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 {
-	if (e.type == SDL_MOUSEBUTTONDOWN)
+	if (e.type == SDL_MOUSEBUTTONDOWN && !this->player->creative)
 	{
 		Vec3<float>			inc = this->camera->getForward();
 		Octree *			hit; // block
@@ -621,6 +626,22 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 			i += 0.01f;
 		}
 	}
+	else if (e.type == SDL_MOUSEBUTTONDOWN)
+	{
+		int		xpos;
+		int		ypos;
+		int		win_width = 1400;
+		GLfloat		pixel_color[3];
+		float		blockColor[3];
+
+		SDL_GetMouseState(&xpos, &ypos);
+		glReadPixels(xpos, win_width - ypos - 90, 1, 1, GL_RGB, GL_FLOAT, &pixel_color);
+		blockColor[0] = pixel_color[0];
+		blockColor[1] = pixel_color[1];
+		blockColor[2] = pixel_color[2];
+		BlockItem			block(Vec3<float>(blockColor[0], blockColor[1], blockColor[2]));
+		this->player->inventory->add(block);
+	}
 //	else
 //		this->camera->onMouseButton(e);
 }
@@ -647,6 +668,22 @@ Engine::addBlock(void)
 		this->player->inventory->deleteSelected();
 	}
 }
+
+void
+Engine::displayWheel(void)
+{
+	glBegin(GL_QUADS);
+	glColor3f(0.5f, 0.0f, 1.0f);
+	glVertex2i(10, 1040);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex2i(140, 1040);
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex2i(140, 1170);
+	glColor3f(1.0, 1.0f, 0.0f);
+	glVertex2i(10, 1170);
+	glEnd();
+}
+
 
 void
 Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
@@ -694,6 +731,11 @@ Engine::onKeyboard(SDL_KeyboardEvent const &e)
 	{
 		if (e.keysym.scancode == SDL_SCANCODE_Z)
 			this->addBlock();
+		if (e.keysym.scancode == SDL_SCANCODE_C)
+		{
+			this->player->changeMode();
+			this->displayWheel();
+		}
 		if (e.keysym.scancode == SDL_SCANCODE_KP_0)
 			this->player->inventory->selectItem(0);
 		if (e.keysym.scancode == SDL_SCANCODE_KP_1)
@@ -745,7 +787,7 @@ Engine::loop(void)
 					mouse_button = false;
 					this->onMouseButton(e.button);
 				case SDL_MOUSEMOTION:
-					if (!mouse_button)
+					if (!mouse_button && !this->player->creative)
 						this->onMouseMotion(e.motion);
 					break;
 				case SDL_MOUSEWHEEL:

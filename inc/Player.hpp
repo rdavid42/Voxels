@@ -14,6 +14,9 @@ class Player
 
 		std::string		name;
 		Container *		inventory;
+		bool			creative;
+
+		void			changeMode(void);
 
 		Player & operator = (Player const & rhs);
 
