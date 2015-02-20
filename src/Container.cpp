@@ -159,7 +159,8 @@ Container::deleteSelected(void)
 		j++;
 	}
 	this->stock[i] = NULL;
-	this->selected = 0;
+	if (this->stock[this->selected] == NULL)
+		this->selected = this->selected >= 1 ? this->selected - 1 : 0;
 	return ;
 }
 
