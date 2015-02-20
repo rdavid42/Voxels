@@ -445,17 +445,17 @@ Octree::renderGround(void) const
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
 #else
-	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
-	{
-		glColor3f(c.x, c.y, c.z);
-		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
-	}
 	if (this->_state == BLOCK)
 	{
 		glColor3f(c.x, c.y, c.z);
 		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
 # ifdef DEBUG
+	else if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
+	{
+		glColor3f(c.x, c.y, c.z);
+		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+	}
 	else if (this->_state == CHUNK)
 	{
 		glColor3f(c.x, c.y, c.z);

@@ -64,6 +64,9 @@ generateChunkInThread(void *args)
 	Gridcell					g;
 	Vec3<float>					k;
 	float						s;
+	int	const					sfs = (*d->chunk_size) + 2 * *d->block_size; // scalar field size
+	float						scalar_field[sfs][sfs];
+	int							sx, sy;
 
 	if (d->chunk != NULL && !d->chunk->generated)
 	{
@@ -73,13 +76,32 @@ generateChunkInThread(void *args)
 		d->chunk->c.y = 0.0f;
 		d->chunk->c.z = 0.0f;
 #endif
-		for (x = -(*d->chunk_size) / 2; x < (*d->chunk_size); x += *d->inc)
+		// calculates chunk's scalar field
+/*		sy = 0;
+		for (y = -(*d->block_size); y < sfs - 2; y += *d->block_size)
 		{
-			for (y = -(*d->chunk_size) / 2; y < (*d->chunk_size); y += *d->inc)
+			sx = 0;
+			for (x = -(*d->block_size); x < sfs - 2; x += *d->block_size)
 			{
-				n = 0.0f;
-				for (i = 0; i < FRAC_LIMIT; i++)
-					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+				scalar_field[sy][sx] = 0.0f;
+				for (i = 0; i < FRAC_LIMIT; ++i)
+					scalar_field[sy][sx] += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
+				++sx;
+			}
+			++sy;
+		}*/
+		// insert in octree and polygonise block (on gpu later)
+		sy = 1;
+		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
+		{
+			sx = 1;
+			for (x = 0.0f; x < (*d->chunk_size); x += *d->inc)
+			{
+				// std::cerr << "sx: " << sx << ", sy: " << sy << std::endl;
+				n = scalar_field[sy][sx];
+/*				n = 0.0f;
+				for (i = 0; i < FRAC_LIMIT; ++i)
+					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);*/
 				t = ((float)random() / (float)RAND_MAX) / 30;
 				if (n >= 1.5f - t * 5)
 					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
@@ -113,18 +135,11 @@ generateChunkInThread(void *args)
 				insert_p[3] = 0.0f;
 				insert_i = 0;
 				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r, insert_p, &insert_i);
+				// Calculate 0 to 5 triangles based on chunk's scalar field (opti: do it with biome's scalar field directly)(Polygonisation) and store them in the block
 				if (b != NULL)
 				{
 					k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
 					s = b->getCube()->getS();
-/*					g.p[0] = Vec3<float>(k.x, k.y, k.z - s);
-					g.p[1] = Vec3<float>(k.x + s, k.y, k.z - s);
-					g.p[2] = Vec3<float>(k.x + s, k.y + s, k.z - s);
-					g.p[3] = Vec3<float>(k.x, k.y + s, k.z - s);
-					g.p[4] = Vec3<float>(k.x, k.y, k.z);
-					g.p[5] = Vec3<float>(k.x + s, k.y, k.z);
-					g.p[6] = Vec3<float>(k.x + s, k.y + s, k.z);
-					g.p[7] = Vec3<float>(k.x, k.y + s, k.z);*/
 					g.p[0] = Vec3<float>(k.x, k.y, k.z);
 					g.p[1] = Vec3<float>(k.x + s, k.y + s, k.z);
 					g.p[2] = Vec3<float>(k.x + s, k.y, k.z);
@@ -133,18 +148,27 @@ generateChunkInThread(void *args)
 					g.p[5] = Vec3<float>(k.x + s, k.y + s, k.z + s);
 					g.p[6] = Vec3<float>(k.x + s, k.y, k.z + s);
 					g.p[7] = Vec3<float>(k.x, k.y, k.z + s);
-					g.val[0] = g.p[0].z;
+/*					g.val[0] = g.p[0].z;
 					g.val[1] = g.p[1].z;
 					g.val[2] = g.p[2].z;
 					g.val[3] = g.p[3].z;
 					g.val[4] = g.p[4].z;
 					g.val[5] = g.p[5].z;
 					g.val[6] = g.p[6].z;
-					g.val[7] = g.p[7].z;
+					g.val[7] = g.p[7].z;*/
+					g.val[0] = scalar_field[sy - 1][sx - 1];
+					g.val[1] = scalar_field[sy - 1][sx + 1];
+					g.val[2] = scalar_field[sy + 1][sx + 1];
+					g.val[3] = scalar_field[sy + 1][sx - 1];
+					g.val[4] = scalar_field[sy - 1][sx - 1];
+					g.val[5] = scalar_field[sy - 1][sx + 1];
+					g.val[6] = scalar_field[sy + 1][sx + 1];
+					g.val[7] = scalar_field[sy + 1][sx - 1];
 					b->n = Polygonise(g, n, b->t);
-					// std::cerr << b->n << std::endl;
 				}
+				++sx;
 			}
+			++sy;
 		}
 		d->chunk->generated = true;
 #ifdef DEBUG
@@ -161,7 +185,6 @@ static void *
 launchGeneration(void *args)
 {
 	Engine						*e = (Engine *)args;
-	static float const			inc = e->chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
 	int							cz;
 	int							cx, cy;
 	pthread_t					init;
@@ -179,7 +202,8 @@ launchGeneration(void *args)
 					thread_args = new Engine::t_chunkThreadArgs();
 					thread_args->noise = e->noise;
 					thread_args->chunk = e->chunks[cz][cy][cx];
-					thread_args->inc = &inc;
+					thread_args->inc = &e->noise_inc;
+					thread_args->block_size = &e->block_size;
 					thread_args->chunk_size = &e->chunk_size;
 					pthread_create(&init, NULL, generateChunkInThread, thread_args);
 					pthread_detach(init);
@@ -307,6 +331,7 @@ Engine::initChunks(void)
 	center = (GEN_SIZE - 1) / 2;
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
+	noise_inc = chunk_size / powf(2, BLOCK_DEPTH + 2);
 	// this->printNoiseMinMaxApproximation();
 	this->noise_min = -FRAC_LIMIT;
 	this->noise_max = FRAC_LIMIT;
@@ -1115,14 +1140,14 @@ Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triang
 	tells us which vertices are inside of the surface
 	*/
 	cubeindex = 0;
-	if (grid.val[0] < isolevel) cubeindex |= 1;
-	if (grid.val[1] < isolevel) cubeindex |= 2;
-	if (grid.val[2] < isolevel) cubeindex |= 4;
-	if (grid.val[3] < isolevel) cubeindex |= 8;
-	if (grid.val[4] < isolevel) cubeindex |= 16;
-	if (grid.val[5] < isolevel) cubeindex |= 32;
-	if (grid.val[6] < isolevel) cubeindex |= 64;
-	if (grid.val[7] < isolevel) cubeindex |= 128;
+	if (grid.val[0] < isolevel) cubeindex |= 1;		// 00000001
+	if (grid.val[1] < isolevel) cubeindex |= 2;		// 00000010
+	if (grid.val[2] < isolevel) cubeindex |= 4;		// 00000100
+	if (grid.val[3] < isolevel) cubeindex |= 8;		// 00001000
+	if (grid.val[4] < isolevel) cubeindex |= 16;	// 00010000
+	if (grid.val[5] < isolevel) cubeindex |= 32;	// 00100000
+	if (grid.val[6] < isolevel) cubeindex |= 64;	// 01000000
+	if (grid.val[7] < isolevel) cubeindex |= 128;	// 10000000
 
 	/* Cube is entirely in/out of the surface */
 	if (edgeTable[cubeindex] == 0)

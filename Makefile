@@ -10,11 +10,11 @@ OBJS		=	$(patsubst %.cpp, $(OBJ_PATH)%.o,$(SRCS))
 PLATFORM	:=	$(shell uname)
 CC			=	g++
 HEADER		=	-I./$(INC_PATH)
-FLAGS		=	-lpthread -g -O3 -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
+FLAGS		=	-pthread -g -O3 -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
 VARS		=	-D_REENTRANT \
 				-D_THREAD_SAFE \
 				-DDEBUG \
-		#		-DMARCHING_CUBES
+#				-DMARCHING_CUBES
 NAME		=	vbe
 
 ifeq "$(PLATFORM)" "WIN32"
