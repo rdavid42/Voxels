@@ -5,6 +5,9 @@
 #include <sstream>
 #include "Engine.hpp"
 #include "BlockItem.hpp"
+#include "Block.hpp"
+
+static int				Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles);
 
 Engine::Engine(void)
 {
@@ -43,6 +46,9 @@ Engine::calcFPS(void)
 // MULTI-THREADED CHUNK GENERATION
 // POSIX threads for portability
 // --------------------------------------------------------------------------------
+//	Vec3<float>		p[8];
+//	double			val[8];
+// --------------------------------------------------------------------------------
 static void *
 generateChunkInThread(void *args)
 {
@@ -52,8 +58,14 @@ generateChunkInThread(void *args)
 	Vec3<float>					r;
 	float						t;
 	int							i;
+	float						insert_p[4];
+	int							insert_i;
+	Octree *					b;
+	Gridcell					g;
+	Vec3<float>					k;
+	float						s;
 
-	if (!d->chunk->generated)
+	if (d->chunk != NULL && !d->chunk->generated)
 	{
 		d->chunk->iterated = true;
 #ifdef DEBUG
@@ -95,7 +107,43 @@ generateChunkInThread(void *args)
 					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 				else if (n <= 0.0f + t * 5)
 					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r);
+				insert_p[0] = 0.0f;
+				insert_p[1] = 0.0f;
+				insert_p[2] = 0.0f;
+				insert_p[3] = 0.0f;
+				insert_i = 0;
+				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r, insert_p, &insert_i);
+				if (b != NULL)
+				{
+					k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
+					s = b->getCube()->getS();
+/*					g.p[0] = Vec3<float>(k.x, k.y, k.z - s);
+					g.p[1] = Vec3<float>(k.x + s, k.y, k.z - s);
+					g.p[2] = Vec3<float>(k.x + s, k.y + s, k.z - s);
+					g.p[3] = Vec3<float>(k.x, k.y + s, k.z - s);
+					g.p[4] = Vec3<float>(k.x, k.y, k.z);
+					g.p[5] = Vec3<float>(k.x + s, k.y, k.z);
+					g.p[6] = Vec3<float>(k.x + s, k.y + s, k.z);
+					g.p[7] = Vec3<float>(k.x, k.y + s, k.z);*/
+					g.p[0] = Vec3<float>(k.x, k.y, k.z);
+					g.p[1] = Vec3<float>(k.x + s, k.y + s, k.z);
+					g.p[2] = Vec3<float>(k.x + s, k.y, k.z);
+					g.p[3] = Vec3<float>(k.x, k.y, k.z);
+					g.p[4] = Vec3<float>(k.x, k.y + s, k.z + s);
+					g.p[5] = Vec3<float>(k.x + s, k.y + s, k.z + s);
+					g.p[6] = Vec3<float>(k.x + s, k.y, k.z + s);
+					g.p[7] = Vec3<float>(k.x, k.y, k.z + s);
+					g.val[0] = g.p[0].z;
+					g.val[1] = g.p[1].z;
+					g.val[2] = g.p[2].z;
+					g.val[3] = g.p[3].z;
+					g.val[4] = g.p[4].z;
+					g.val[5] = g.p[5].z;
+					g.val[6] = g.p[6].z;
+					g.val[7] = g.p[7].z;
+					b->n = Polygonise(g, n, b->t);
+					// std::cerr << b->n << std::endl;
+				}
 			}
 		}
 		d->chunk->generated = true;
@@ -135,7 +183,6 @@ launchGeneration(void *args)
 					thread_args->chunk_size = &e->chunk_size;
 					pthread_create(&init, NULL, generateChunkInThread, thread_args);
 					pthread_detach(init);
-					thread_args = NULL;
 				}
 			}
 		}
@@ -217,46 +264,6 @@ Engine::insertChunks(void)
 	}
 }
 
-// --------------------------------------------------------------------------------
-// EXPERIMENTAL
-// --------------------------------------------------------------------------------
-void *
-cleanChunksThread(void *args)
-{
-	Engine *		e = (Engine *)args;
-	Octree *		c;
-	int				cx, cy, cz;
-
-	while (42)
-	{
-		for (cz = 0; cz < GEN_SIZE; ++cz)
-		{
-			for (cy = 0; cy < GEN_SIZE; ++cy)
-			{
-				for (cx = 0; cx < GEN_SIZE; ++cx)
-				{
-					c = e->chunks[cz][cy][cx];
-					if (c != NULL)
-					{
-						if (c->iterated && c->generated)
-						{
-							if (!c->getChild(0) && !c->getChild(1) && !c->getChild(2) && !c->getChild(3)
-								&& !c->getChild(4) && !c->getChild(5) && !c->getChild(6) && !c->getChild(7))
-							{
-								c->remove();
-								e->chunks[cz][cy][cx] = NULL;
-							}
-						}
-					}
-					usleep(500);
-				}
-			}
-		}
-	}
-	return (NULL);
-}
-// --------------------------------------------------------------------------------
-
 void
 Engine::printNoiseMinMaxApproximation(void)
 {
@@ -292,7 +299,6 @@ Engine::initChunks(void)
 {
 	int				i; // index
 	int				x, y, z;
-	// pthread_t		init_cleanupThread;
 
 	for (y = 0; y < GEN_SIZE; ++y)
 		for (x = 0; x < GEN_SIZE; ++x)
@@ -311,14 +317,22 @@ Engine::initChunks(void)
 													octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 	this->insertChunks();
 	this->generation();
-	// pthread_create(&init_cleanupThread, NULL, cleanChunksThread, this);
-	// pthread_detach(init_cleanupThread);
 }
 
+// --------------------------------------------------------------------------------
+// EXPERIMENTAL
+// only render chunks in front of the camera
+// TODO: fix bug where close chunks aren't rendered
+// --------------------------------------------------------------------------------
 void
 Engine::renderChunks(void)
 {
-	int				cx, cy, cz;
+	int						cx, cy, cz;
+	Octree const *			chk; // chunk pointer
+	Vec3<float> const &		cam = this->camera->getPosition(); // camera position
+	Vec3<float>				fwr = this->camera->getForward(); // camera forward vector
+	Vec3<float>				chk_cam_vec;
+	double					dot;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -326,12 +340,29 @@ Engine::renderChunks(void)
 		{
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
-				if (chunks[cz][cy][cx] != NULL)
-					chunks[cz][cy][cx]->renderGround();
+				chk = chunks[cz][cy][cx];
+				if (chk != NULL)
+				{
+					if (cx == center && cy == center && cz == center)
+					{
+						// always render camera chunk
+						chk->renderGround();
+					}
+					else
+					{
+						// only render chunk in front of camera, using dot product
+						chk_cam_vec.x = chk->getCube().getX() - cam.x;
+						chk_cam_vec.y = chk->getCube().getY() - cam.y;
+						chk_cam_vec.z = chk->getCube().getZ() - cam.z;
+						if (fwr.dotProduct(chk_cam_vec) > 0.0)
+							chk->renderGround();
+					}
+				}
 			}
 		}
 	}
 }
+// --------------------------------------------------------------------------------
 
 int
 Engine::getDisplayMode(void)
@@ -400,7 +431,7 @@ Engine::init(void)
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
+	gluPerspective(50, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
 	glEnable(GL_DEPTH_TEST);
 	// glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
@@ -801,8 +832,8 @@ VertexInterp(double const &isolevel, Vec3<float> p1, Vec3<float> p2, double cons
 // grid->p   : block vertices
 // grid->val : block indexes Z values
 // --------------------------------------------------------------------------------
-int
-Engine::Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles)
+static int
+Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles)
 {
 	int						i;
 	int						ntriang;

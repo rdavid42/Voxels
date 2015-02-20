@@ -7,6 +7,7 @@
 # include "Camera.hpp"
 # include "Constants.hpp"
 # include "Vec3.hpp"
+# include "Triangle.hpp"
 
 # define CHD_MAX		8
 
@@ -24,6 +25,8 @@ public:
 	bool				iterated;
 	static uint32_t		block_depth;
 	static uint32_t		chunk_depth;
+	int					n;
+	Triangle<float>		t[5];
 
 	Octree(void);
 	Octree(Cube const &c);
@@ -38,6 +41,7 @@ public:
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, uint32_t const &state);
 	void				grow(uint32_t const &i);
 	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c);
+	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c, float *p, int *i);
 	Octree *			search(float const &x, float const &y, float const &z);
 	Octree *			search(float const &x, float const &y, float const &z, int const &state);
 	void				remove(void);
