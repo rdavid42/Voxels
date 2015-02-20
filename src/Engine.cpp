@@ -98,10 +98,10 @@ generateChunkInThread(void *args)
 			for (x = 0.0f; x < (*d->chunk_size); x += *d->inc)
 			{
 				// std::cerr << "sx: " << sx << ", sy: " << sy << std::endl;
-				n = scalar_field[sy][sx];
-/*				n = 0.0f;
+				// n = scalar_field[sy][sx];
+				n = 0.0f;
 				for (i = 0; i < FRAC_LIMIT; ++i)
-					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);*/
+					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
 				t = ((float)random() / (float)RAND_MAX) / 30;
 				if (n >= 1.5f - t * 5)
 					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
@@ -148,22 +148,22 @@ generateChunkInThread(void *args)
 					g.p[5] = Vec3<float>(k.x + s, k.y + s, k.z + s);
 					g.p[6] = Vec3<float>(k.x + s, k.y, k.z + s);
 					g.p[7] = Vec3<float>(k.x, k.y, k.z + s);
-/*					g.val[0] = g.p[0].z;
+					g.val[0] = g.p[0].z;
 					g.val[1] = g.p[1].z;
 					g.val[2] = g.p[2].z;
 					g.val[3] = g.p[3].z;
 					g.val[4] = g.p[4].z;
 					g.val[5] = g.p[5].z;
 					g.val[6] = g.p[6].z;
-					g.val[7] = g.p[7].z;*/
-					g.val[0] = scalar_field[sy - 1][sx - 1];
+					g.val[7] = g.p[7].z;
+/*					g.val[0] = scalar_field[sy - 1][sx - 1];
 					g.val[1] = scalar_field[sy - 1][sx + 1];
 					g.val[2] = scalar_field[sy + 1][sx + 1];
 					g.val[3] = scalar_field[sy + 1][sx - 1];
 					g.val[4] = scalar_field[sy - 1][sx - 1];
 					g.val[5] = scalar_field[sy - 1][sx + 1];
 					g.val[6] = scalar_field[sy + 1][sx + 1];
-					g.val[7] = scalar_field[sy + 1][sx - 1];
+					g.val[7] = scalar_field[sy + 1][sx - 1];*/
 					b->n = Polygonise(g, n, b->t);
 				}
 				++sx;
