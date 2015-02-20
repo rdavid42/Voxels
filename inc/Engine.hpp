@@ -70,6 +70,7 @@ public:
 	void				drawUI(void);
 	void				calcFPS(void);
 	void				drawText(int const x, int const y, char const *text);
+	void				displayWheel(void);
 	int					sdlError(int code);
 	int					getDisplayMode(void);
 	int					init(void);

@@ -17,9 +17,12 @@ class Container
 		Container & operator = (Container const & rhs);
 
 		BlockItem			*stock[20];
+		int					selected;
 
 		void			add(BlockItem const & item);
+		void			selectItem(int selection);
 		void			deleteFirst(void);
+		void			deleteSelected(void);
 		void			drawInventory(void);
 		Vec3<float>		getFirstBlock(void);
 
