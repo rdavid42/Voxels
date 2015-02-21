@@ -3,6 +3,7 @@
 # define	TRIANGLE_HPP
 
 # include <iostream>
+# include <Vec3.hpp>
 
 template<typename TYPE>
 class Triangle
@@ -24,6 +25,7 @@ public:
 
 	Triangle(Triangle const &src)
 	{
+		(void)src;
 		return ;
 	}
 

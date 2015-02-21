@@ -5,6 +5,9 @@
 #include <sstream>
 #include "Engine.hpp"
 #include "BlockItem.hpp"
+#include "Block.hpp"
+
+static int				Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles);
 
 Engine::Engine(void)
 {
@@ -43,6 +46,9 @@ Engine::calcFPS(void)
 // MULTI-THREADED CHUNK GENERATION
 // POSIX threads for portability
 // --------------------------------------------------------------------------------
+//	Vec3<float>		p[8];
+//	double			val[8];
+// --------------------------------------------------------------------------------
 static void *
 generateChunkInThread(void *args)
 {
@@ -52,8 +58,17 @@ generateChunkInThread(void *args)
 	Vec3<float>					r;
 	float						t;
 	int							i;
+	float						insert_p[4];
+	int							insert_i;
+	Octree *					b;
+	Gridcell					g;
+	Vec3<float>					k;
+	float						s;
+	int	const					sfs = (*d->chunk_size) + 2 * *d->block_size; // scalar field size
+	float						scalar_field[sfs][sfs];
+	int							sx, sy;
 
-	if (!d->chunk->generated)
+	if (d->chunk != NULL && !d->chunk->generated)
 	{
 		d->chunk->iterated = true;
 #ifdef DEBUG
@@ -61,13 +76,32 @@ generateChunkInThread(void *args)
 		d->chunk->c.y = 0.0f;
 		d->chunk->c.z = 0.0f;
 #endif
-		for (x = -(*d->chunk_size) / 2; x < (*d->chunk_size); x += *d->inc)
+		// calculates chunk's scalar field
+/*		sy = 0;
+		for (y = -(*d->block_size); y < sfs - 2; y += *d->block_size)
 		{
-			for (y = -(*d->chunk_size) / 2; y < (*d->chunk_size); y += *d->inc)
+			sx = 0;
+			for (x = -(*d->block_size); x < sfs - 2; x += *d->block_size)
 			{
+				scalar_field[sy][sx] = 0.0f;
+				for (i = 0; i < FRAC_LIMIT; ++i)
+					scalar_field[sy][sx] += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
+				++sx;
+			}
+			++sy;
+		}*/
+		// insert in octree and polygonise block (on gpu later)
+		sy = 1;
+		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
+		{
+			sx = 1;
+			for (x = 0.0f; x < (*d->chunk_size); x += *d->inc)
+			{
+				// std::cerr << "sx: " << sx << ", sy: " << sy << std::endl;
+				// n = scalar_field[sy][sx];
 				n = 0.0f;
-				for (i = 0; i < FRAC_LIMIT; i++)
-					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);// + noise->fractal(0, x, y, 1.5);// * sin(y);// + this->octree->getCube()->getS() / 2;
+				for (i = 0; i < FRAC_LIMIT; ++i)
+					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
 				t = ((float)random() / (float)RAND_MAX) / 30;
 				if (n >= 1.5f - t * 5)
 					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
@@ -95,8 +129,46 @@ generateChunkInThread(void *args)
 					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 				else if (n <= 0.0f + t * 5)
 					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r);
+				insert_p[0] = 0.0f;
+				insert_p[1] = 0.0f;
+				insert_p[2] = 0.0f;
+				insert_p[3] = 0.0f;
+				insert_i = 0;
+				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r, insert_p, &insert_i);
+				// Calculate 0 to 5 triangles based on chunk's scalar field (opti: do it with biome's scalar field directly)(Polygonisation) and store them in the block
+				if (b != NULL)
+				{
+					k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
+					s = b->getCube()->getS();
+					g.p[0] = Vec3<float>(k.x, k.y, k.z);
+					g.p[1] = Vec3<float>(k.x + s, k.y + s, k.z);
+					g.p[2] = Vec3<float>(k.x + s, k.y, k.z);
+					g.p[3] = Vec3<float>(k.x, k.y, k.z);
+					g.p[4] = Vec3<float>(k.x, k.y + s, k.z + s);
+					g.p[5] = Vec3<float>(k.x + s, k.y + s, k.z + s);
+					g.p[6] = Vec3<float>(k.x + s, k.y, k.z + s);
+					g.p[7] = Vec3<float>(k.x, k.y, k.z + s);
+					g.val[0] = g.p[0].z;
+					g.val[1] = g.p[1].z;
+					g.val[2] = g.p[2].z;
+					g.val[3] = g.p[3].z;
+					g.val[4] = g.p[4].z;
+					g.val[5] = g.p[5].z;
+					g.val[6] = g.p[6].z;
+					g.val[7] = g.p[7].z;
+/*					g.val[0] = scalar_field[sy - 1][sx - 1];
+					g.val[1] = scalar_field[sy - 1][sx + 1];
+					g.val[2] = scalar_field[sy + 1][sx + 1];
+					g.val[3] = scalar_field[sy + 1][sx - 1];
+					g.val[4] = scalar_field[sy - 1][sx - 1];
+					g.val[5] = scalar_field[sy - 1][sx + 1];
+					g.val[6] = scalar_field[sy + 1][sx + 1];
+					g.val[7] = scalar_field[sy + 1][sx - 1];*/
+					b->n = Polygonise(g, n, b->t);
+				}
+				++sx;
 			}
+			++sy;
 		}
 		d->chunk->generated = true;
 #ifdef DEBUG
@@ -113,7 +185,6 @@ static void *
 launchGeneration(void *args)
 {
 	Engine						*e = (Engine *)args;
-	static float const			inc = e->chunk_size / powf(2.0f, 6); // should be 2^5 (32), needs a technique to generate blocks below and fill gaps
 	int							cz;
 	int							cx, cy;
 	pthread_t					init;
@@ -131,11 +202,11 @@ launchGeneration(void *args)
 					thread_args = new Engine::t_chunkThreadArgs();
 					thread_args->noise = e->noise;
 					thread_args->chunk = e->chunks[cz][cy][cx];
-					thread_args->inc = &inc;
+					thread_args->inc = &e->noise_inc;
+					thread_args->block_size = &e->block_size;
 					thread_args->chunk_size = &e->chunk_size;
 					pthread_create(&init, NULL, generateChunkInThread, thread_args);
 					pthread_detach(init);
-					thread_args = NULL;
 				}
 			}
 		}
@@ -260,6 +331,7 @@ Engine::initChunks(void)
 	center = (GEN_SIZE - 1) / 2;
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
+	noise_inc = chunk_size / powf(2, BLOCK_DEPTH + 2);
 	// this->printNoiseMinMaxApproximation();
 	this->noise_min = -FRAC_LIMIT;
 	this->noise_max = FRAC_LIMIT;
@@ -272,10 +344,20 @@ Engine::initChunks(void)
 	this->generation();
 }
 
+// --------------------------------------------------------------------------------
+// EXPERIMENTAL
+// only render chunks in front of the camera
+// TODO: fix bug where close chunks aren't rendered
+// --------------------------------------------------------------------------------
 void
 Engine::renderChunks(void)
 {
-	int				cx, cy, cz;
+	int						cx, cy, cz;
+	Octree const *			chk; // chunk pointer
+	Vec3<float> const &		cam = this->camera->getPosition(); // camera position
+	Vec3<float>				fwr = this->camera->getForward(); // camera forward vector
+	Vec3<float>				chk_cam_vec;
+	double					dot;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -283,12 +365,29 @@ Engine::renderChunks(void)
 		{
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
-				if (chunks[cz][cy][cx] != NULL)
-					chunks[cz][cy][cx]->renderGround();
+				chk = chunks[cz][cy][cx];
+				if (chk != NULL)
+				{
+					if (cx == center && cy == center && cz == center)
+					{
+						// always render camera chunk
+						chk->renderGround();
+					}
+					else
+					{
+						// only render chunk in front of camera, using dot product
+						chk_cam_vec.x = chk->getCube().getX() - cam.x;
+						chk_cam_vec.y = chk->getCube().getY() - cam.y;
+						chk_cam_vec.z = chk->getCube().getZ() - cam.z;
+						if (fwr.dotProduct(chk_cam_vec) > 0.0)
+							chk->renderGround();
+					}
+				}
 			}
 		}
 	}
 }
+// --------------------------------------------------------------------------------
 
 int
 Engine::getDisplayMode(void)
@@ -357,7 +456,7 @@ Engine::init(void)
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
+	gluPerspective(50, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
 	glEnable(GL_DEPTH_TEST);
 	// glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
@@ -463,6 +562,11 @@ Engine::drawUI(void)
 	glVertex2i(w2, h2 - 10);
 	glVertex2i(w2, h2 + 10);
 	glEnd();
+	if (this->player->creative)
+	{
+		this->displayWheel();
+		this->drawText(650, 30, "Creative Mode");
+	}
 	this->player->inventory->drawInventory();
 }
 
@@ -520,7 +624,7 @@ Engine::update(Uint32 const &elapsed_time)
 void
 Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 {
-	if (e.type == SDL_MOUSEBUTTONDOWN)
+	if (e.type == SDL_MOUSEBUTTONDOWN && !this->player->creative)
 	{
 		Vec3<float>			inc = this->camera->getForward();
 		Octree *			hit; // block
@@ -550,6 +654,22 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 			i += 0.01f;
 		}
 	}
+	else if (e.type == SDL_MOUSEBUTTONDOWN)
+	{
+		int		xpos;
+		int		ypos;
+		int		win_width = 1400;
+		GLfloat		pixel_color[3];
+		float		blockColor[3];
+
+		SDL_GetMouseState(&xpos, &ypos);
+		glReadPixels(xpos, win_width - ypos - 90, 1, 1, GL_RGB, GL_FLOAT, &pixel_color);
+		blockColor[0] = pixel_color[0];
+		blockColor[1] = pixel_color[1];
+		blockColor[2] = pixel_color[2];
+		BlockItem			block(Vec3<float>(blockColor[0], blockColor[1], blockColor[2]));
+		this->player->inventory->add(block);
+	}
 //	else
 //		this->camera->onMouseButton(e);
 }
@@ -564,7 +684,7 @@ Engine::addBlock(void)
 
 	chunkS = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	Vec3<float>	blockPos(chunkS * inc.x, chunkS * inc.y, chunkS * inc.z);
-	if (this->player->inventory->stock[0] != NULL)
+	if (this->player->inventory->stock[this->player->inventory->selected] != NULL)
 	{
 	//		chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
 	//									this->camera->getPosition().y + inc.y * i,
@@ -572,10 +692,26 @@ Engine::addBlock(void)
 		hit = this->octree->insert(this->camera->getPosition().x + blockPos.x,
 							this->camera->getPosition().y + blockPos.y,
 							this->camera->getPosition().z + blockPos.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK,
-							this->player->inventory->stock[0]->color);
-		this->player->inventory->deleteFirst();
+							this->player->inventory->stock[this->player->inventory->selected]->color);
+		this->player->inventory->deleteSelected();
 	}
 }
+
+void
+Engine::displayWheel(void)
+{
+	glBegin(GL_QUADS);
+	glColor3f(0.5f, 0.0f, 1.0f);
+	glVertex2i(10, 1040);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex2i(140, 1040);
+	glColor3f(0.0f, 1.0f, 0.0f);
+	glVertex2i(140, 1170);
+	glColor3f(1.0, 1.0f, 0.0f);
+	glVertex2i(10, 1170);
+	glEnd();
+}
+
 
 void
 Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
@@ -618,8 +754,37 @@ void
 Engine::onKeyboard(SDL_KeyboardEvent const &e)
 {
 	this->camera->onKeyboard(e);
-	if (e.keysym.scancode == SDL_SCANCODE_Z)
-		this->addBlock();
+
+	if (e.repeat == 0 && e.type == SDL_KEYDOWN)
+	{
+		if (e.keysym.scancode == SDL_SCANCODE_Z)
+			this->addBlock();
+		if (e.keysym.scancode == SDL_SCANCODE_C)
+		{
+			this->player->changeMode();
+			this->displayWheel();
+		}
+		if (e.keysym.scancode == SDL_SCANCODE_KP_0)
+			this->player->inventory->selectItem(0);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_1)
+			this->player->inventory->selectItem(1);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_2)
+			this->player->inventory->selectItem(2);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_3)
+			this->player->inventory->selectItem(3);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_4)
+			this->player->inventory->selectItem(4);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_5)
+			this->player->inventory->selectItem(5);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_6)
+			this->player->inventory->selectItem(6);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_7)
+			this->player->inventory->selectItem(7);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_8)
+			this->player->inventory->selectItem(8);
+		if (e.keysym.scancode == SDL_SCANCODE_KP_9)
+			this->player->inventory->selectItem(9);
+	}
 }
 
 void
@@ -650,7 +815,7 @@ Engine::loop(void)
 					mouse_button = false;
 					this->onMouseButton(e.button);
 				case SDL_MOUSEMOTION:
-					if (!mouse_button)
+					if (!mouse_button && !this->player->creative)
 						this->onMouseMotion(e.motion);
 					break;
 				case SDL_MOUSEWHEEL:
@@ -737,8 +902,8 @@ VertexInterp(double const &isolevel, Vec3<float> p1, Vec3<float> p2, double cons
 // grid->p   : block vertices
 // grid->val : block indexes Z values
 // --------------------------------------------------------------------------------
-int
-Engine::Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles)
+static int
+Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles)
 {
 	int						i;
 	int						ntriang;
@@ -1044,14 +1209,14 @@ Engine::Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float>
 	tells us which vertices are inside of the surface
 	*/
 	cubeindex = 0;
-	if (grid.val[0] < isolevel) cubeindex |= 1;
-	if (grid.val[1] < isolevel) cubeindex |= 2;
-	if (grid.val[2] < isolevel) cubeindex |= 4;
-	if (grid.val[3] < isolevel) cubeindex |= 8;
-	if (grid.val[4] < isolevel) cubeindex |= 16;
-	if (grid.val[5] < isolevel) cubeindex |= 32;
-	if (grid.val[6] < isolevel) cubeindex |= 64;
-	if (grid.val[7] < isolevel) cubeindex |= 128;
+	if (grid.val[0] < isolevel) cubeindex |= 1;		// 00000001
+	if (grid.val[1] < isolevel) cubeindex |= 2;		// 00000010
+	if (grid.val[2] < isolevel) cubeindex |= 4;		// 00000100
+	if (grid.val[3] < isolevel) cubeindex |= 8;		// 00001000
+	if (grid.val[4] < isolevel) cubeindex |= 16;	// 00010000
+	if (grid.val[5] < isolevel) cubeindex |= 32;	// 00100000
+	if (grid.val[6] < isolevel) cubeindex |= 64;	// 01000000
+	if (grid.val[7] < isolevel) cubeindex |= 128;	// 10000000
 
 	/* Cube is entirely in/out of the surface */
 	if (edgeTable[cubeindex] == 0)

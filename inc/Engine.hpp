@@ -4,7 +4,6 @@
 
 # include <iostream>
 # include <stdint.h>
-# include <thread>
 # include <pthread.h>
 # include <unistd.h>
 # include <sstream>
@@ -37,6 +36,7 @@ public:
 		Noise			*noise;
 		Octree			*chunk;
 		float const		*inc;
+		float const		*block_size;
 		float const		*chunk_size;
 	}					t_chunkThreadArgs;
 
@@ -49,9 +49,10 @@ public:
 	Camera *			camera;
 	Noise *				noise;
 	Player *			player;
-	float				chunk_size; // number of chunks within distance (gen_dist)
-	float				block_size;
-	int					center;
+	float				chunk_size; // size of a chunk
+	float				block_size; // size of a block inside a chunk
+	float				noise_inc; // noise function increment, smaller than block size -> less gaps
+	int					center; // central chunk's index, `chunks[center][center][center]`
 	Octree				*chunks[GEN_SIZE]
 								[GEN_SIZE]
 								[GEN_SIZE]; // camera chunk in the center
@@ -69,6 +70,7 @@ public:
 	void				drawUI(void);
 	void				calcFPS(void);
 	void				drawText(int const x, int const y, char const *text);
+	void				displayWheel(void);
 	int					sdlError(int code);
 	int					getDisplayMode(void);
 	int					init(void);
