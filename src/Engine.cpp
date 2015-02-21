@@ -64,8 +64,8 @@ generateChunkInThread(void *args)
 	Gridcell					g;
 	Vec3<float>					k;
 	float						s;
-	int	const					sfs = (*d->chunk_size) + 2 * *d->block_size; // scalar field size
-	float						scalar_field[sfs][sfs];
+	// int	const					sfs = (*d->chunk_size + *d->inc * 2) / ; // scalar field size
+	float						scalar_field[66][66];
 	int							sx, sy;
 
 	if (d->chunk != NULL && !d->chunk->generated)
@@ -77,11 +77,11 @@ generateChunkInThread(void *args)
 		d->chunk->c.z = 0.0f;
 #endif
 		// calculates chunk's scalar field
-/*		sy = 0;
-		for (y = -(*d->block_size); y < sfs - 2; y += *d->block_size)
+		sy = 0;
+		for (y = -(*d->inc); y < (*d->chunk_size + *d->inc); y += *d->inc)
 		{
 			sx = 0;
-			for (x = -(*d->block_size); x < sfs - 2; x += *d->block_size)
+			for (x = -(*d->inc); x < (*d->chunk_size + *d->inc); x += *d->inc)
 			{
 				scalar_field[sy][sx] = 0.0f;
 				for (i = 0; i < FRAC_LIMIT; ++i)
@@ -89,7 +89,7 @@ generateChunkInThread(void *args)
 				++sx;
 			}
 			++sy;
-		}*/
+		}
 		// insert in octree and polygonise block (on gpu later)
 		sy = 1;
 		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
@@ -98,10 +98,10 @@ generateChunkInThread(void *args)
 			for (x = 0.0f; x < (*d->chunk_size); x += *d->inc)
 			{
 				// std::cerr << "sx: " << sx << ", sy: " << sy << std::endl;
-				// n = scalar_field[sy][sx];
-				n = 0.0f;
+				n = scalar_field[sy][sx];
+/*				n = 0.0f;
 				for (i = 0; i < FRAC_LIMIT; ++i)
-					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
+					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);*/
 				t = ((float)random() / (float)RAND_MAX) / 30;
 				if (n >= 1.5f - t * 5)
 					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
