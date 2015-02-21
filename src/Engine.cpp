@@ -368,7 +368,8 @@ Engine::renderChunks(void)
 				chk = chunks[cz][cy][cx];
 				if (chk != NULL)
 				{
-					if (cx == center && cy == center && cz == center)
+					if ((cx == center && cy == center && cz == center)
+						|| (cx == center && cy == center && cz == center - 1))
 					{
 						// always render camera chunk
 						chk->renderGround();
@@ -525,12 +526,12 @@ Engine::drawText(int const x, int const y, char const *text)
 	(void)x;
 	(void)y;
 	(void)text;
-/*	int			i;
+	int			i;
 	int	const	len = strlen(text);
 
 	glRasterPos2i(x, y);
 	for (i = 0; i < len; ++i)
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);*/
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
 }
 
 void

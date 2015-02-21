@@ -26,8 +26,7 @@ SDL			=	`sdl2-config --cflags --libs`
 ifeq "$(PLATFORM)" "Darwin" #MAC
 GL			=	-framework OpenGL -framework GLUT -framework Cocoa
 else ifeq "$(PLATFORM)" "Linux" #LINUX
-GL			=	-lGL -lGLU
-#-lGLUT
+GL			=	-lGL -lGLU -lglut
 else ifeq "$(PLATFORM)" "Win32" #WINDOWS
 GL			=	-lopengl32
 endif

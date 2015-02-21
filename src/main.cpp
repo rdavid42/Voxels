@@ -14,13 +14,12 @@ check_sizes(void)
 int
 main(int argc, char **argv)
 {
-	(void)argc;
-	(void)argv;
 	Engine			engine;
 
 	check_sizes();
 	if (!engine.init())
 		return (0);
+	glutInit(&argc, argv);
 	engine.loop();
 	return (0);
 }
