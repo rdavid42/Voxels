@@ -368,7 +368,8 @@ Engine::renderChunks(void)
 				chk = chunks[cz][cy][cx];
 				if (chk != NULL)
 				{
-					if (cx == center && cy == center && cz == center)
+					if ((cx == center && cy == center && cz == center)
+						|| (cx == center && cy == center && cz == center - 1))
 					{
 						// always render camera chunk
 						chk->renderGround();
@@ -522,6 +523,9 @@ Engine::drawDebugInfo(void)
 void
 Engine::drawText(int const x, int const y, char const *text)
 {
+	(void)x;
+	(void)y;
+	(void)text;
 	int			i;
 	int	const	len = strlen(text);
 
