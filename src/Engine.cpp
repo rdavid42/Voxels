@@ -423,12 +423,15 @@ Engine::drawDebugInfo(void)
 void
 Engine::drawText(int const x, int const y, char const *text)
 {
-	int			i;
+	(void)x;
+	(void)y;
+	(void)text;
+/*	int			i;
 	int	const	len = strlen(text);
 
 	glRasterPos2i(x, y);
 	for (i = 0; i < len; ++i)
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);*/
 }
 
 void

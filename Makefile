@@ -27,6 +27,7 @@ ifeq "$(PLATFORM)" "Darwin" #MAC
 GL			=	-framework OpenGL -framework GLUT -framework Cocoa
 else ifeq "$(PLATFORM)" "Linux" #LINUX
 GL			=	-lGL -lGLU
+#-lGLUT
 else ifeq "$(PLATFORM)" "Win32" #WINDOWS
 GL			=	-lopengl32
 endif

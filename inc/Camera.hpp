@@ -8,6 +8,7 @@
 # ifdef linux
 #  include <GL/glu.h>
 #  include <GL/gl.h>
+// #  include <GL/glut.h>
 #  include <SDL2/SDL.h>
 # endif
 
