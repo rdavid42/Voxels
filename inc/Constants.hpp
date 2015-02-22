@@ -78,5 +78,6 @@
 # define MINIMAP_SIZE				200
 # define MINIMAP_PADDING			5
 
-# define THREAD_POOL_SIZE			8192
+# define CAMERA_FRONT_LIMIT			-0.6 // allow more chunks rendered behind the camera
+
 #endif

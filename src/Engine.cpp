@@ -384,7 +384,7 @@ Engine::renderChunks(void)
 						chk_cam_vec.x = chk->getCube().getX() - cam.x;
 						chk_cam_vec.y = chk->getCube().getY() - cam.y;
 						chk_cam_vec.z = chk->getCube().getZ() - cam.z;
-						if (fwr.dotProduct(chk_cam_vec) > -0.5)
+						if (fwr.dotProduct(chk_cam_vec) > CAMERA_FRONT_LIMIT)
 							chk->renderGround();
 					}
 				}

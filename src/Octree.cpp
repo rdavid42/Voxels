@@ -370,7 +370,7 @@ Octree::drawCube(float const &x, float const &y, float const &z, float const &s)
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
-// Draw the 16 ridges of a cube, usually for debug purposes
+// Draw the 16 cube edges
 // -------------------------------------------------------------------
 void
 Octree::drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const
@@ -445,6 +445,8 @@ Octree::renderGround(void) const
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
 #else
+	// glColor3f(1.0f, 1.0f, 1.0f);
+	// drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	if (this->_state == BLOCK)
 	{
 		glColor3f(c.x, c.y, c.z);
