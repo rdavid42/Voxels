@@ -75,5 +75,8 @@
 
 # define FRAC_LIMIT					3.0f
 
+# define MINIMAP_SIZE				200
+# define MINIMAP_PADDING			5
+
 # define THREAD_POOL_SIZE			8192
 #endif

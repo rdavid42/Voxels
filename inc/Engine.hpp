@@ -83,6 +83,7 @@ public:
 	void				initChunks(void);
 	void				insertChunks(void);
 	void				renderChunks(void);
+	void				drawMinimap(void);
 	void				generation(void);
 	void				generateChunks(void);
 	void				cleanChunks(void);
