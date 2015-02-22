@@ -78,6 +78,6 @@
 # define MINIMAP_SIZE				200
 # define MINIMAP_PADDING			5
 
-# define CAMERA_FRONT_LIMIT			-0.6 // allow more chunks rendered behind the camera
+# define CAMERA_FRONT_LIMIT			-0.55 // allow more chunks rendered behind the camera
 
 #endif

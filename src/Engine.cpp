@@ -90,7 +90,6 @@ generateChunkInThread(void *args)
 			}
 			++sy;
 		}*/
-		// insert in octree and polygonise block (on gpu later)
 		sy = 1;
 		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
 		{
@@ -102,7 +101,7 @@ generateChunkInThread(void *args)
 				n = 0.0f;
 				for (i = 0; i < FRAC_LIMIT; ++i)
 					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
-				t = ((float)random() / (float)RAND_MAX) / 30;
+				t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 10;
 				if (n >= 1.5f - t * 5)
 					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
 				else if (n >= 1.2f - t * 5)
@@ -123,8 +122,6 @@ generateChunkInThread(void *args)
 					r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
 				else if (n <= -0.4f)
 					r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-				else if (!(random() % 1000) && n <= 0.0f && n >= -0.4f)
-					r = Vec3<float>(0.1f + t, 0.1 + t, 0.1f + t);
 				else if (n <= -0.1f)
 					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 				else if (n <= 0.0f + t * 5)
@@ -506,11 +503,12 @@ Engine::init(void)
 	this->noise = new Noise(42, 256);
 	srandom(time(NULL));
 	this->noise->configs.emplace_back(FRAC_LIMIT, 0.5, 0.2, 0.4, 0.1);
-	std::cout	<< "layers:     " << this->noise->configs.at(0).layers << std::endl
-				<< "frequency:  " << this->noise->configs.at(0).frequency << std::endl
-				<< "lacunarity: " << this->noise->configs.at(0).lacunarity << std::endl
-				<< "amplitude:  " << this->noise->configs.at(0).amplitude << std::endl
-				<< "gain:       " << this->noise->configs.at(0).gain << std::endl;
+	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
+	std::cout	<< "layers:     " << this->noise->configs.at(1).layers << std::endl
+				<< "frequency:  " << this->noise->configs.at(1).frequency << std::endl
+				<< "lacunarity: " << this->noise->configs.at(1).lacunarity << std::endl
+				<< "amplitude:  " << this->noise->configs.at(1).amplitude << std::endl
+				<< "gain:       " << this->noise->configs.at(1).gain << std::endl;
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
 	// glViewport(0, 0, this->window_width, this->window_height);
