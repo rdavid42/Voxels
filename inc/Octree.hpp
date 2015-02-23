@@ -23,6 +23,7 @@ public:
 	Vec3<float>			c;
 	bool				generated;
 	bool				iterated;
+	bool				empty;
 	// int					n;
 	// Triangle<float>		t[5];
 
@@ -36,10 +37,10 @@ public:
 	Octree *			getNeighbor(void);
 	int					createChild(uint32_t const &i);
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s);
-	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, uint32_t const &state);
+	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state);
 	void				grow(uint32_t const &i);
-	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c);
-	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c, float *p, int *i);
+	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c);
+	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c, float *p, int *i);
 	Octree *			search(float const &x, float const &y, float const &z);
 	Octree *			search(float const &x, float const &y, float const &z, int const &state);
 	void				remove(void);

@@ -22,11 +22,11 @@
 #  include <SDL.h>
 # endif
 
-/*# ifdef __APPLE__
-    #include "OpenCL/opencl.h"
+# ifdef __APPLE__
+#  include "OpenCL/opencl.h"
 # else
-    #include "CL/cl.h"
-# endif*/
+#  include "CL/cl.h"
+# endif
 
 # define MASK_1			0x00000001
 # define MASK_2			0x00000003
@@ -73,7 +73,7 @@
 # define CHUNK_DEPTH				15 // insert from biome
 # define BLOCK_DEPTH				4 // insert from chunk depth // WARNING IT CANT BE OVER 6
 // [1, 3, 5, 7, 9, ...]
-# define GEN_SIZE					17 // (n * n * n) must be odd in order to place camera in the center all the time
+# define GEN_SIZE					25 // (n * n * n) must be odd in order to place camera in the center all the time
 
 # define TARGET_DIST				1
 

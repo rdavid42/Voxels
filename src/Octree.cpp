@@ -6,21 +6,21 @@
 #include "Biome.hpp"
 
 Octree::Octree(void)
-	: _state(0), _cube(), _parent(NULL), c(), generated(false), iterated(false)
+	: _state(EMPTY), _cube(), _parent(NULL), c(), generated(false), iterated(false), empty(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
 }
 
 Octree::Octree(Octree const &src)
-	: _state(src.getState()), _cube(src.getCube()), _parent(NULL), c(), generated(false), iterated(false)
+	: _state(src.getState()), _cube(src.getCube()), _parent(NULL), c(), generated(false), iterated(false), empty(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
 }
 
 Octree::Octree(float const &x, float const &y, float const &z, float const &s)
-	: _state(0), _cube(x, y, z, s), _parent(NULL), c(), generated(false), iterated(false)
+	: _state(EMPTY), _cube(x, y, z, s), _parent(NULL), c(), generated(false), iterated(false), empty(false)
 {
 	for (uint32_t i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
@@ -112,7 +112,7 @@ Octree::createChild(uint32_t const &i, float const &x, float const &y, float con
 // Creates a child with octree state specified
 // -------------------------------------------------------------------
 void
-Octree::createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, uint32_t const &state)
+Octree::createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state)
 {
 	switch (state)
 	{
@@ -124,7 +124,6 @@ Octree::createChild(uint32_t const &i, float const &x, float const &y, float con
 			break;
 		case BLOCK:
 			this->_children[i] = new Block(x, y, z, s);
-			
 			break;
 		case BIOME:
 			this->_children[i] = new Biome(x, y, z, s);
@@ -219,7 +218,7 @@ Octree::remove(void)
 // Insert an Octree in another
 // -------------------------------------------------------------------
 Octree *
-Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c)
+Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c)
 {
 	// size never changes for children.
 	float const		s = this->_cube.getS() / 2.0f;
@@ -272,12 +271,12 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 // Insert an Octree in another, no variables declared
 // -------------------------------------------------------------------
 Octree *
-Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, uint32_t const &state, Vec3<float> const &c, float *p, int *i)
+Octree::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c, float *p, int *i)
 {
 	if (depth == 0)
 	{
 		// max depth reached, put values here
-		this->setState(state);
+		this->_state = state;
 		this->c = c;
 		// std::cerr << "insert deepest: " << this << std::endl;
 		return (this);
@@ -306,7 +305,14 @@ Octree::insert(float const &x, float const &y, float const &z, uint32_t const &d
 				}
 			}
 			else if (this->_children[*i]->getCube()->vertexInside(x, y, z))
+			{
+				if (this->_state == state)
+				{
+					this->_state = EMPTY;
+					this->c.set(0.0f, 0.0f, 0.0f);
+				}
 				return (this->_children[*i]->insert(x, y, z, depth - 1, state, c));
+			}
 		}
 	}
 	// std::cerr << "not created, depth: " << depth << std::endl;
