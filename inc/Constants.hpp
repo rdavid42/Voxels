@@ -1,6 +1,33 @@
 #ifndef CONSTANTS_HPP
 # define CONSTANTS_HPP
 
+# ifdef linux
+#  include <GL/glu.h>
+#  include <GL/gl.h>
+#  include <GL/glut.h>
+#  include <SDL2/SDL.h>
+# endif
+
+# ifdef __APPLE__
+#  include <openGL/glu.h>
+#  include <openGL/gl.h>
+#  include <GLUT/glut.h>
+#  include <SDL.h>
+# endif
+
+# ifdef __WIN32__
+#  include <GL/gl.h>
+#  include <GL/glut.h>
+#  include <windows.h>
+#  include <SDL.h>
+# endif
+
+/*# ifdef __APPLE__
+    #include "OpenCL/opencl.h"
+# else
+    #include "CL/cl.h"
+# endif*/
+
 # define MASK_1			0x00000001
 # define MASK_2			0x00000003
 # define MASK_3			0x00000007
@@ -44,7 +71,7 @@
 
 # define BIOME_DEPTH				10 // insert directly in octree (not implemented)
 # define CHUNK_DEPTH				15 // insert from biome
-# define BLOCK_DEPTH				4 // insert from chunk depth
+# define BLOCK_DEPTH				4 // insert from chunk depth // WARNING IT CANT BE OVER 6
 // [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE					17 // (n * n * n) must be odd in order to place camera in the center all the time
 
@@ -54,5 +81,9 @@
 
 # define FRAC_LIMIT					3.0f
 
-# define THREAD_POOL_SIZE			8192
+# define MINIMAP_SIZE				200
+# define MINIMAP_PADDING			5
+
+# define CAMERA_FRONT_LIMIT			-0.55 // allow more chunks rendered behind the camera
+
 #endif

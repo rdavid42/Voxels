@@ -64,8 +64,8 @@ generateChunkInThread(void *args)
 	Gridcell					g;
 	Vec3<float>					k;
 	float						s;
-	int	const					sfs = (*d->chunk_size) + 2 * *d->block_size; // scalar field size
-	float						scalar_field[sfs][sfs];
+	// int	const					sfs = (*d->chunk_size + *d->inc * 2) / ; // scalar field size
+	// float						scalar_field[66][66];
 	int							sx, sy;
 
 	if (d->chunk != NULL && !d->chunk->generated)
@@ -78,10 +78,10 @@ generateChunkInThread(void *args)
 #endif
 		// calculates chunk's scalar field
 /*		sy = 0;
-		for (y = -(*d->block_size); y < sfs - 2; y += *d->block_size)
+		for (y = -(*d->inc); y < (*d->chunk_size + *d->inc); y += *d->inc)
 		{
 			sx = 0;
-			for (x = -(*d->block_size); x < sfs - 2; x += *d->block_size)
+			for (x = -(*d->inc); x < (*d->chunk_size + *d->inc); x += *d->inc)
 			{
 				scalar_field[sy][sx] = 0.0f;
 				for (i = 0; i < FRAC_LIMIT; ++i)
@@ -90,7 +90,6 @@ generateChunkInThread(void *args)
 			}
 			++sy;
 		}*/
-		// insert in octree and polygonise block (on gpu later)
 		sy = 1;
 		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
 		{
@@ -102,7 +101,7 @@ generateChunkInThread(void *args)
 				n = 0.0f;
 				for (i = 0; i < FRAC_LIMIT; ++i)
 					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
-				t = ((float)random() / (float)RAND_MAX) / 30;
+				t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 5;
 				if (n >= 1.5f - t * 5)
 					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
 				else if (n >= 1.2f - t * 5)
@@ -123,8 +122,6 @@ generateChunkInThread(void *args)
 					r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
 				else if (n <= -0.4f)
 					r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-				else if (!(random() % 1000) && n <= 0.0f && n >= -0.4f)
-					r = Vec3<float>(0.1f + t, 0.1 + t, 0.1f + t);
 				else if (n <= -0.1f)
 					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 				else if (n <= 0.0f + t * 5)
@@ -134,8 +131,10 @@ generateChunkInThread(void *args)
 				insert_p[2] = 0.0f;
 				insert_p[3] = 0.0f;
 				insert_i = 0;
-				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r, insert_p, &insert_i);
+//				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, BLOCK_DEPTH, BLOCK, r, insert_p, &insert_i);
+				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, BLOCK_DEPTH, BLOCK, r, insert_p, &insert_i);
 				// Calculate 0 to 5 triangles based on chunk's scalar field (opti: do it with biome's scalar field directly)(Polygonisation) and store them in the block
+#if 0
 				if (b != NULL)
 				{
 					k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
@@ -148,14 +147,14 @@ generateChunkInThread(void *args)
 					g.p[5] = Vec3<float>(k.x + s, k.y + s, k.z + s);
 					g.p[6] = Vec3<float>(k.x + s, k.y, k.z + s);
 					g.p[7] = Vec3<float>(k.x, k.y, k.z + s);
-					g.val[0] = g.p[0].z;
+/*					g.val[0] = g.p[0].z;
 					g.val[1] = g.p[1].z;
 					g.val[2] = g.p[2].z;
 					g.val[3] = g.p[3].z;
 					g.val[4] = g.p[4].z;
 					g.val[5] = g.p[5].z;
 					g.val[6] = g.p[6].z;
-					g.val[7] = g.p[7].z;
+					g.val[7] = g.p[7].z;*/
 /*					g.val[0] = scalar_field[sy - 1][sx - 1];
 					g.val[1] = scalar_field[sy - 1][sx + 1];
 					g.val[2] = scalar_field[sy + 1][sx + 1];
@@ -164,8 +163,17 @@ generateChunkInThread(void *args)
 					g.val[5] = scalar_field[sy - 1][sx + 1];
 					g.val[6] = scalar_field[sy + 1][sx + 1];
 					g.val[7] = scalar_field[sy + 1][sx - 1];*/
+					g.val[0] = d->noise->fractal(0, g.p[0].x, g.p[0].y, 1.5);
+					g.val[1] = d->noise->fractal(0, g.p[1].x, g.p[1].y, 1.5);
+					g.val[2] = d->noise->fractal(0, g.p[2].x, g.p[2].y, 1.5);
+					g.val[3] = d->noise->fractal(0, g.p[3].x, g.p[3].y, 1.5);
+					g.val[4] = d->noise->fractal(0, g.p[4].x, g.p[4].y, 1.5);
+					g.val[5] = d->noise->fractal(0, g.p[5].x, g.p[5].y, 1.5);
+					g.val[6] = d->noise->fractal(0, g.p[6].x, g.p[6].y, 1.5);
+					g.val[7] = d->noise->fractal(0, g.p[7].x, g.p[7].y, 1.5);
 					b->n = Polygonise(g, n, b->t);
 				}
+#endif
 				++sx;
 			}
 			++sy;
@@ -230,7 +238,7 @@ Engine::generateChunks(void)
 	Octree *			current = this->octree->insert(camera->getPosition().x,
 														camera->getPosition().y,
 														camera->getPosition().z,
-														octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+														CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 
 	if (current != NULL)
 	{
@@ -273,7 +281,7 @@ Engine::insertChunks(void)
 					// check for terrain bounds
 					if (pz <= this->noise_max && pz >= this->noise_min)
 					{
-						new_chunk = octree->insert(px, py, pz, octree->chunk_depth, CHUNK, Vec3<float>(0.7f, 0.5f, 0.0f));
+						new_chunk = octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, Vec3<float>(0.7f, 0.5f, 0.0f));
 						if (new_chunk != chunks[cz][cy][cx])
 							chunks[cz][cy][cx] = new_chunk;
 					}
@@ -339,15 +347,13 @@ Engine::initChunks(void)
 	chunks[center][center][center] = octree->insert(camera->getPosition().x,
 													camera->getPosition().y,
 													camera->getPosition().z,
-													octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+													CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 	this->insertChunks();
 	this->generation();
 }
 
 // --------------------------------------------------------------------------------
-// EXPERIMENTAL
 // only render chunks in front of the camera
-// TODO: fix bug where close chunks aren't rendered
 // --------------------------------------------------------------------------------
 void
 Engine::renderChunks(void)
@@ -357,7 +363,6 @@ Engine::renderChunks(void)
 	Vec3<float> const &		cam = this->camera->getPosition(); // camera position
 	Vec3<float>				fwr = this->camera->getForward(); // camera forward vector
 	Vec3<float>				chk_cam_vec;
-	double					dot;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -369,17 +374,14 @@ Engine::renderChunks(void)
 				if (chk != NULL)
 				{
 					if (cx == center && cy == center && cz == center)
-					{
-						// always render camera chunk
 						chk->renderGround();
-					}
 					else
 					{
-						// only render chunk in front of camera, using dot product
+						// only render chunks in front of camera, using dot product
 						chk_cam_vec.x = chk->getCube().getX() - cam.x;
 						chk_cam_vec.y = chk->getCube().getY() - cam.y;
 						chk_cam_vec.z = chk->getCube().getZ() - cam.z;
-						if (fwr.dotProduct(chk_cam_vec) > 0.0)
+						if (fwr.dotProduct(chk_cam_vec) > CAMERA_FRONT_LIMIT)
 							chk->renderGround();
 					}
 				}
@@ -388,6 +390,61 @@ Engine::renderChunks(void)
 	}
 }
 // --------------------------------------------------------------------------------
+
+void
+Engine::drawMinimap(void)
+{
+	int					cx, cy, cz;
+	static const int	mcs = MINIMAP_SIZE / GEN_SIZE; // chunk size on map
+	static const int	mx = this->window_width - MINIMAP_SIZE + MINIMAP_PADDING; // minimap x
+	static const int	my = MINIMAP_PADDING; // minimap y
+	int					mcx;
+	int					mcy;
+	Octree const *		chk;
+
+	// draw map white background
+	glBegin(GL_TRIANGLES);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glVertex2i(mx, my);
+	glVertex2i(mx + MINIMAP_SIZE - mcs - 2, my);
+	glVertex2i(mx, my + MINIMAP_SIZE - mcs - 1);
+
+	glVertex2i(mx + MINIMAP_SIZE - mcs - 2, my);
+	glVertex2i(mx + MINIMAP_SIZE - mcs - 2, my + MINIMAP_SIZE - mcs - 1);
+	glVertex2i(mx, my + MINIMAP_SIZE - mcs - 1);
+	glEnd();
+	// draw chunks edges
+	glBegin(GL_LINES);
+	// for (cz = 0; cz < GEN_SIZE; ++cz)
+	// {
+	for (cy = 0; cy < GEN_SIZE; ++cy)
+	{
+		for (cx = 0; cx < GEN_SIZE; ++cx)
+		{
+			chk = chunks[center][cy][cx];
+			if (chk != NULL)
+			{
+				mcx = mx + cx * mcs;
+				mcy = my + cy * mcs;
+				glColor3f(chk->c.x, chk->c.y, chk->c.z);
+				// up, left to right
+				glVertex2i(mcx, mcy);
+				glVertex2i(mcx + mcs, mcy);
+				// right, up to down
+				glVertex2i(mcx + mcs, mcy);
+				glVertex2i(mcx + mcs, mcy + mcs);
+				// down, right to left
+				glVertex2i(mcx + mcs, mcy + mcs);
+				glVertex2i(mcx, mcy + mcs);
+				// left, down to up
+				glVertex2i(mcx, mcy + mcs);
+				glVertex2i(mcx, mcy);
+			}
+		}
+	}
+	// }
+	glEnd();
+}
 
 int
 Engine::getDisplayMode(void)
@@ -446,6 +503,7 @@ Engine::init(void)
 	this->noise = new Noise(42, 256);
 	srandom(time(NULL));
 	this->noise->configs.emplace_back(FRAC_LIMIT, 0.5, 0.2, 0.4, 0.1);
+	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
 	std::cout	<< "layers:     " << this->noise->configs.at(0).layers << std::endl
 				<< "frequency:  " << this->noise->configs.at(0).frequency << std::endl
 				<< "lacunarity: " << this->noise->configs.at(0).lacunarity << std::endl
@@ -522,6 +580,9 @@ Engine::drawDebugInfo(void)
 void
 Engine::drawText(int const x, int const y, char const *text)
 {
+	(void)x;
+	(void)y;
+	(void)text;
 	int			i;
 	int	const	len = strlen(text);
 
@@ -601,6 +662,7 @@ Engine::render(void)
 // --------------------------------------
 	glEnable2D(0, 0);
 	drawUI();
+	drawMinimap();
 #ifdef DEBUG
 	this->drawDebugInfo();
 #endif

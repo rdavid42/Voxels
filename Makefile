@@ -10,11 +10,11 @@ OBJS		=	$(patsubst %.cpp, $(OBJ_PATH)%.o,$(SRCS))
 PLATFORM	:=	$(shell uname)
 CC			=	g++
 HEADER		=	-I./$(INC_PATH)
-FLAGS		=	-pthread -g -O3 -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
+FLAGS		=	-pthread -Ofast -g -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
 VARS		=	-D_REENTRANT \
 				-D_THREAD_SAFE \
-				-DDEBUG \
-#				-DMARCHING_CUBES
+				# -DDEBUG \
+				# -DMARCHING_CUBES
 NAME		=	vbe
 
 ifeq "$(PLATFORM)" "WIN32"
@@ -26,7 +26,7 @@ SDL			=	`sdl2-config --cflags --libs`
 ifeq "$(PLATFORM)" "Darwin" #MAC
 GL			=	-framework OpenGL -framework GLUT -framework Cocoa
 else ifeq "$(PLATFORM)" "Linux" #LINUX
-GL			=	-lGL -lGLU
+GL			=	-lGL -lGLU -lglut
 else ifeq "$(PLATFORM)" "Win32" #WINDOWS
 GL			=	-lopengl32
 endif

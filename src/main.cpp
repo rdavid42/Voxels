@@ -14,13 +14,17 @@ check_sizes(void)
 int
 main(int argc, char **argv)
 {
-	(void)argc;
-	(void)argv;
 	Engine			engine;
 
 	check_sizes();
 	if (!engine.init())
 		return (0);
+#ifdef linux // glutInit called automatically on Mac osx
+	glutInit(&argc, argv);
+#else
+	(void)argc;
+	(void)argv;
+#endif
 	engine.loop();
 	return (0);
 }

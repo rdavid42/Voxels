@@ -23,10 +23,8 @@ public:
 	Vec3<float>			c;
 	bool				generated;
 	bool				iterated;
-	static uint32_t		block_depth;
-	static uint32_t		chunk_depth;
-	int					n;
-	Triangle<float>		t[5];
+	// int					n;
+	// Triangle<float>		t[5];
 
 	Octree(void);
 	Octree(Cube const &c);
@@ -55,7 +53,7 @@ public:
 	Cube const &		getCube(void) const;
 	Cube *				getCube(void);
 	int32_t const &		getState(void) const;
-	Octree *			getChild(uint32_t const &i) const;
+	Octree *			getChild(uint32_t const &i);
 	Octree *			getParent(void);
 	uint32_t			getDepth(void);
 
