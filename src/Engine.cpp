@@ -101,7 +101,7 @@ generateChunkInThread(void *args)
 				n = 0.0f;
 				for (i = 0; i < FRAC_LIMIT; ++i)
 					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
-				t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 10;
+				t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 5;
 				if (n >= 1.5f - t * 5)
 					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
 				else if (n >= 1.2f - t * 5)
@@ -131,8 +131,8 @@ generateChunkInThread(void *args)
 				insert_p[2] = 0.0f;
 				insert_p[3] = 0.0f;
 				insert_i = 0;
-//				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r, insert_p, &insert_i);
-				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, Octree::block_depth, BLOCK, r, insert_p, &insert_i);
+//				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, BLOCK_DEPTH, BLOCK, r, insert_p, &insert_i);
+				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, BLOCK_DEPTH, BLOCK, r, insert_p, &insert_i);
 				// Calculate 0 to 5 triangles based on chunk's scalar field (opti: do it with biome's scalar field directly)(Polygonisation) and store them in the block
 #if 0
 				if (b != NULL)
@@ -238,7 +238,7 @@ Engine::generateChunks(void)
 	Octree *			current = this->octree->insert(camera->getPosition().x,
 														camera->getPosition().y,
 														camera->getPosition().z,
-														octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+														CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 
 	if (current != NULL)
 	{
@@ -281,7 +281,7 @@ Engine::insertChunks(void)
 					// check for terrain bounds
 					if (pz <= this->noise_max && pz >= this->noise_min)
 					{
-						new_chunk = octree->insert(px, py, pz, octree->chunk_depth, CHUNK, Vec3<float>(0.7f, 0.5f, 0.0f));
+						new_chunk = octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, Vec3<float>(0.7f, 0.5f, 0.0f));
 						if (new_chunk != chunks[cz][cy][cx])
 							chunks[cz][cy][cx] = new_chunk;
 					}
@@ -347,7 +347,7 @@ Engine::initChunks(void)
 	chunks[center][center][center] = octree->insert(camera->getPosition().x,
 													camera->getPosition().y,
 													camera->getPosition().z,
-													octree->chunk_depth, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+													CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 	this->insertChunks();
 	this->generation();
 }
@@ -504,11 +504,11 @@ Engine::init(void)
 	srandom(time(NULL));
 	this->noise->configs.emplace_back(FRAC_LIMIT, 0.5, 0.2, 0.4, 0.1);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
-	std::cout	<< "layers:     " << this->noise->configs.at(1).layers << std::endl
-				<< "frequency:  " << this->noise->configs.at(1).frequency << std::endl
-				<< "lacunarity: " << this->noise->configs.at(1).lacunarity << std::endl
-				<< "amplitude:  " << this->noise->configs.at(1).amplitude << std::endl
-				<< "gain:       " << this->noise->configs.at(1).gain << std::endl;
+	std::cout	<< "layers:     " << this->noise->configs.at(0).layers << std::endl
+				<< "frequency:  " << this->noise->configs.at(0).frequency << std::endl
+				<< "lacunarity: " << this->noise->configs.at(0).lacunarity << std::endl
+				<< "amplitude:  " << this->noise->configs.at(0).amplitude << std::endl
+				<< "gain:       " << this->noise->configs.at(0).gain << std::endl;
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
 	// glViewport(0, 0, this->window_width, this->window_height);

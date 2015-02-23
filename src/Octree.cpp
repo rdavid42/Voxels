@@ -5,12 +5,6 @@
 #include "Block.hpp"
 #include "Biome.hpp"
 
-uint32_t
-Octree::block_depth = BLOCK_DEPTH;
-
-uint32_t
-Octree::chunk_depth = CHUNK_DEPTH;
-
 Octree::Octree(void)
 	: _state(0), _cube(), _parent(NULL), c(), generated(false), iterated(false)
 {
@@ -95,8 +89,6 @@ Octree::grow(uint32_t const &gd) // gd : grow direction [0, 1, 2, 3, 4, 5, 6, 7]
 {
 	if (this->_parent != NULL)
 		return ;
-	this->block_depth++;
-	this->chunk_depth++;
 	this->_parent = new Octree( this->_cube.getX() - (~(gd >> 0) & MASK_1)	* this->_cube.getS(),
 								this->_cube.getY() - (~(gd >> 1) & MASK_1)	* this->_cube.getS(),
 								this->_cube.getZ() - (~(gd >> 2) & MASK_1)	* this->_cube.getS(),
@@ -414,6 +406,7 @@ Octree::renderGround(void) const
 {
 	int				i;
 
+// ---------------------------------
 #ifdef MARCHING_CUBES
 /*	if (c.x != 0.0f || c.y != 0.0f || c.z != 0.0f)
 	{
@@ -439,11 +432,7 @@ Octree::renderGround(void) const
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
 # endif
-	else if (this->_parent == NULL)
-	{
-		glColor3f(1.0f, 1.0f, 1.0f);
-		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
-	}
+// ---------------------------------
 #else
 	// glColor3f(1.0f, 1.0f, 1.0f);
 	// drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
@@ -464,12 +453,8 @@ Octree::renderGround(void) const
 		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
 # endif
-	else if (this->_parent == NULL)
-	{
-		glColor3f(1.0f, 1.0f, 1.0f);
-		drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
-	}
 #endif
+// ---------------------------------
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (this->_children[i] != NULL)
@@ -524,7 +509,7 @@ Octree::getState(void) const
 }
 
 Octree *
-Octree::getChild(uint32_t const &i) const
+Octree::getChild(uint32_t const &i)
 {
 	return (this->_children[i]);
 }
