@@ -1,3 +1,3 @@
-# Voxel Base Engine
+# Voxel Based Engine
 
 Work in progress.
