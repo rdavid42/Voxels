@@ -752,7 +752,7 @@ Engine::onKeyboard(SDL_KeyboardEvent const &e)
 {
 	this->camera->onKeyboard(e);
 
-	if (e.repeat == 0 && e.type == SDL_KEYDOWN)
+	if (e.type == SDL_KEYDOWN)
 	{
 		if (e.keysym.scancode == SDL_SCANCODE_Z)
 			this->addBlock();
