@@ -15,7 +15,7 @@ VARS		=	-D_REENTRANT \
 				-D_THREAD_SAFE \
 				# -DDEBUG \
 				# -DMARCHING_CUBES
-NAME		=	vbe
+NAME		=	voxels
 
 ifeq "$(PLATFORM)" "WIN32"
 NAME		+=	.exe
@@ -24,7 +24,7 @@ endif
 SDL			=	`sdl2-config --cflags --libs`
 
 ifeq "$(PLATFORM)" "Darwin" #MAC
-GL			=	-framework OpenGL -framework GLUT -framework Cocoa
+GL			=	-framework OpenGL -framework GLUT -framework Cocoa -framework OpenCL
 else ifeq "$(PLATFORM)" "Linux" #LINUX
 GL			=	-lGL -lGLU -lglut
 else ifeq "$(PLATFORM)" "Win32" #WINDOWS

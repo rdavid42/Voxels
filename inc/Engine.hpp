@@ -38,6 +38,7 @@ public:
 		float const		*inc;
 		float const		*block_size;
 		float const		*chunk_size;
+		Vec3<int>		pos;
 	}					t_chunkThreadArgs;
 
 	t_timer				fps;

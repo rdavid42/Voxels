@@ -64,18 +64,23 @@ generateChunkInThread(void *args)
 	Gridcell					g;
 	Vec3<float>					k;
 	float						s;
+	int							depth;
 	// int	const					sfs = (*d->chunk_size + *d->inc * 2) / ; // scalar field size
 	// float						scalar_field[66][66];
-	int							sx, sy;
+	// int							sx, sy;
 
 	if (d->chunk != NULL && !d->chunk->generated)
 	{
-		d->chunk->iterated = true;
-#ifdef DEBUG
+		if (d->pos.x > ((GEN_SIZE - 1) / 2) + GEN_SIZE / 3 || d->pos.x < ((GEN_SIZE - 1) / 2) - GEN_SIZE / 3
+			|| d->pos.y > ((GEN_SIZE - 1) / 2) + GEN_SIZE / 3 || d->pos.y < ((GEN_SIZE - 1) / 2) - GEN_SIZE / 3
+			|| d->pos.z > ((GEN_SIZE - 1) / 2) + GEN_SIZE / 3 || d->pos.z < ((GEN_SIZE - 1) / 2) - GEN_SIZE / 3)
+			depth = BLOCK_DEPTH - 1;
+		else
+			depth = BLOCK_DEPTH;
+		// d->chunk->iterated = true;
 		d->chunk->c.x = 1.0f;
 		d->chunk->c.y = 0.0f;
 		d->chunk->c.z = 0.0f;
-#endif
 		// calculates chunk's scalar field
 /*		sy = 0;
 		for (y = -(*d->inc); y < (*d->chunk_size + *d->inc); y += *d->inc)
@@ -90,10 +95,10 @@ generateChunkInThread(void *args)
 			}
 			++sy;
 		}*/
-		sy = 1;
+		// sy = 1;
 		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
 		{
-			sx = 1;
+			// sx = 1;
 			for (x = 0.0f; x < (*d->chunk_size); x += *d->inc)
 			{
 				// std::cerr << "sx: " << sx << ", sy: " << sy << std::endl;
@@ -132,7 +137,8 @@ generateChunkInThread(void *args)
 				insert_p[3] = 0.0f;
 				insert_i = 0;
 //				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, BLOCK_DEPTH, BLOCK, r, insert_p, &insert_i);
-				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, BLOCK_DEPTH, BLOCK, r, insert_p, &insert_i);
+					// std::cerr << "prout" << std::endl;
+				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r, insert_p, &insert_i);
 				// Calculate 0 to 5 triangles based on chunk's scalar field (opti: do it with biome's scalar field directly)(Polygonisation) and store them in the block
 #if 0
 				if (b != NULL)
@@ -174,16 +180,17 @@ generateChunkInThread(void *args)
 					b->n = Polygonise(g, n, b->t);
 				}
 #endif
-				++sx;
+				// ++sx;
 			}
-			++sy;
+			// ++sy;
 		}
-		d->chunk->generated = true;
-#ifdef DEBUG
-		d->chunk->c.x = 0.0f;
-		d->chunk->c.y = 1.0f;
-		d->chunk->c.z = 0.0f;
-#endif
+		if (depth == BLOCK_DEPTH)
+		{
+			d->chunk->generated = true;
+			d->chunk->c.x = 0.0f;
+			d->chunk->c.y = 1.0f;
+			d->chunk->c.z = 0.0f;
+		}
 	}
 	delete d;
 	return (NULL);
@@ -198,7 +205,7 @@ launchGeneration(void *args)
 	pthread_t					init;
 	Engine::t_chunkThreadArgs	*thread_args;
 
-	// pthread_setcanceltype(PTHREAD_CANCEL_DISABLE, NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_DISABLE, NULL);
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
 		for (cy = 0; cy < GEN_SIZE; ++cy)
@@ -213,6 +220,7 @@ launchGeneration(void *args)
 					thread_args->inc = &e->noise_inc;
 					thread_args->block_size = &e->block_size;
 					thread_args->chunk_size = &e->chunk_size;
+					thread_args->pos = Vec3<int>(cx, cy, cz);
 					pthread_create(&init, NULL, generateChunkInThread, thread_args);
 					pthread_detach(init);
 				}
@@ -443,6 +451,10 @@ Engine::drawMinimap(void)
 		}
 	}
 	// }
+	// draw camera direction
+	glColor3f(0.0f, 0.0f, 1.0f);
+	glVertex2i(mx + MINIMAP_SIZE / 2 - 1, my + MINIMAP_SIZE / 2);
+	glVertex2i(mx + MINIMAP_SIZE / 2 + this->camera->getForward().x * 30, my + MINIMAP_SIZE / 2 + this->camera->getForward().y * 30);
 	glEnd();
 }
 
@@ -490,7 +502,7 @@ Engine::init(void)
 	this->window_height = 1400;
 	this->highlight = NULL;
 	SDL_ShowCursor(SDL_DISABLE);
-	this->window = SDL_CreateWindow("Mod1",
+	this->window = SDL_CreateWindow("Voxels",
 									SDL_WINDOWPOS_UNDEFINED,
 									SDL_WINDOWPOS_UNDEFINED,
 									this->window_width,
@@ -514,9 +526,9 @@ Engine::init(void)
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(50, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
+	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
 	glEnable(GL_DEPTH_TEST);
-	// glEnable(GL_BLEND);
+	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
 	// clock_t startTime = clock();
 	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
@@ -771,7 +783,6 @@ Engine::displayWheel(void)
 	glEnd();
 }
 
-
 void
 Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
 {
@@ -814,7 +825,7 @@ Engine::onKeyboard(SDL_KeyboardEvent const &e)
 {
 	this->camera->onKeyboard(e);
 
-	if (e.repeat == 0 && e.type == SDL_KEYDOWN)
+	if (e.type == SDL_KEYDOWN)
 	{
 		if (e.keysym.scancode == SDL_SCANCODE_Z)
 			this->addBlock();
