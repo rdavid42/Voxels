@@ -21,6 +21,21 @@ Chunk::~Chunk(void)
 	return ;
 }
 
+void
+Chunk::render(void) const
+{
+	int			i;
+
+	glColor3f(c.x, c.y, c.z);
+	drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (this->_children[i] != NULL)
+			this->_children[i]->render();
+	}
+}
+
 Chunk
 &Chunk::operator=(Chunk const &rhs)
 {

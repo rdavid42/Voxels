@@ -15,6 +15,8 @@ public:
 	Block(Block const &src);
 	virtual ~Block(void);
 
+	virtual void		render(void) const;
+
 	Block				&operator=(Block const &rhs);
 };
 

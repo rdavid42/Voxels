@@ -21,6 +21,13 @@ Block::~Block(void)
 	return ;
 }
 
+void
+Block::render(void) const
+{
+	glColor3f(c.x, c.y, c.z);
+	drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+}
+
 Block
 &Block::operator=(Block const &rhs)
 {

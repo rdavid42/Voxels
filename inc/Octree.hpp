@@ -13,7 +13,7 @@
 
 class Octree
 {
-private:
+protected:
 	int32_t				_state;
 	Cube				_cube;
 	Octree				*_parent;
@@ -40,11 +40,10 @@ public:
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state);
 	void				grow(uint32_t const &i);
 	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c);
-	Octree *			insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c, float *p, int *i);
 	Octree *			search(float const &x, float const &y, float const &z);
 	Octree *			search(float const &x, float const &y, float const &z, int const &state);
 	void				remove(void);
-	void				renderGround(void) const;
+	virtual void		render(void) const;
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;
 	void				drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const;
 	void				setCube(float const &x, float const &y, float const &z, float const &s);
