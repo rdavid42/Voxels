@@ -1,17 +1,17 @@
 
 #include "Chunk.hpp"
 
-Chunk::Chunk(void) : Octree()
+Chunk::Chunk(void) : Link(), hm(NULL), generated(false)
 {
 	return ;
 }
 
-Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s)
+Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s), generated(false)
 {
 	return ;
 }
 
-Chunk::Chunk(Chunk const &src) : Octree(src)
+Chunk::Chunk(Chunk const &src) : Link(src), generated(false)
 {
 	return ;
 }
@@ -26,9 +26,11 @@ Chunk::render(void) const
 {
 	int			i;
 
-	glColor3f(c.x, c.y, c.z);
+	if (this->generated)
+		glColor3f(0.7f, 0.5f, 0.0f);
+	else
+		glColor3f(1.0f, 0.0f, 0.0f);
 	drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
-
 	for (i = 0; i < CHD_MAX; ++i)
 	{
 		if (this->_children[i] != NULL)

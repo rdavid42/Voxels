@@ -4,9 +4,9 @@
 
 # include <iostream>
 # include "Constants.hpp"
-# include "Octree.hpp"
+# include "Link.hpp"
 
-class Biome : public Octree
+class Biome : public Link
 {
 public:
 	Biome(void);

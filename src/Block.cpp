@@ -1,17 +1,17 @@
 
 #include "Block.hpp"
 
-Block::Block(void) : Octree()
+Block::Block(void) : Octree(), c()
 {
 	return ;
 }
 
-Block::Block(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s)
+Block::Block(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c()
 {
 	return ;
 }
 
-Block::Block(Block const &src) : Octree(src)
+Block::Block(Block const &src) : Octree(src), c(src.c)
 {
 	return ;
 }

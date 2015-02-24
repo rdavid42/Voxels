@@ -4,12 +4,13 @@
 
 # include <iostream>
 # include "Constants.hpp"
-# include "Octree.hpp"
+# include "Link.hpp"
 
-class Chunk : public Octree
+class Chunk : public Link
 {
 public:
 	float			**hm; // heightmap
+	bool			generated;
 
 	Chunk(void);
 	Chunk(float const &x, float const &y, float const &z, float const &s);

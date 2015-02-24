@@ -8,15 +8,15 @@
 # include <unistd.h>
 # include <sstream>
 # include <string>
-# include "Octree.hpp"
 # include "Noise.hpp"
 # include "Player.hpp"
 # include "Triangle.hpp"
 # include "Struct.hpp"
+# include "Octree.hpp"
+# include "Chunk.hpp"
 
 class Camera;
-class Octree;
-class Chunk;
+class Link;
 
 class Engine
 {
@@ -34,7 +34,7 @@ public:
 	typedef struct		s_chunkThreadArgs
 	{
 		Noise			*noise;
-		Octree			*chunk;
+		Chunk			*chunk;
 		float const		*inc;
 		float const		*block_size;
 		float const		*chunk_size;
@@ -46,7 +46,7 @@ public:
 	SDL_GLContext		context;
 	uint32_t			window_width;
 	uint32_t			window_height;
-	Octree *			octree;
+	Link *				octree;
 	Camera *			camera;
 	Noise *				noise;
 	Player *			player;
@@ -54,7 +54,7 @@ public:
 	float				block_size; // size of a block inside a chunk
 	float				noise_inc; // noise function increment, smaller than block size -> less gaps
 	int					center; // central chunk's index, `chunks[center][center][center]`
-	Octree				*chunks[GEN_SIZE]
+	Chunk				*chunks[GEN_SIZE]
 								[GEN_SIZE]
 								[GEN_SIZE]; // camera chunk in the center
 	float				noise_min;

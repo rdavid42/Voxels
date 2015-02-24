@@ -99,16 +99,10 @@ generateChunkInThread(void *args)
 	if (d->chunk != NULL && !d->chunk->generated)
 	{
 		depth = BLOCK_DEPTH;
-		d->chunk->c.x = 1.0f;
-		d->chunk->c.y = 0.0f;
-		d->chunk->c.z = 0.0f;
 		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
 			for (x = 0.0f; x < (*d->chunk_size); x += *d->inc)
 				generateBlock(d, x, y, depth);
 		d->chunk->generated = true;
-		d->chunk->c.x = 0.0f;
-		d->chunk->c.y = 1.0f;
-		d->chunk->c.z = 0.0f;
 	}
 	delete d;
 	return (NULL);
@@ -189,7 +183,7 @@ Engine::insertChunks(void)
 {
 	int					cx, cy, cz;
 	float				px, py, pz;
-	Octree *			new_chunk;
+	Chunk *				new_chunk;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -260,7 +254,7 @@ void
 Engine::renderChunks(void)
 {
 	int						cx, cy, cz;
-	Octree const *			chk; // chunk pointer
+	Chunk const *			chk; // chunk pointer
 	Vec3<float> const &		cam = this->camera->getPosition(); // camera position
 	Vec3<float>				fwr = this->camera->getForward(); // camera forward vector
 	Vec3<float>				chk_cam_vec;
@@ -301,7 +295,7 @@ Engine::drawMinimap(void)
 	static const int	my = MINIMAP_PADDING; // minimap y
 	int					mcx;
 	int					mcy;
-	Octree const *		chk;
+	Chunk const *		chk;
 
 	// draw map white background
 	glBegin(GL_TRIANGLES);
@@ -327,7 +321,10 @@ Engine::drawMinimap(void)
 			{
 				mcx = mx + cx * mcs;
 				mcy = my + cy * mcs;
-				glColor3f(chk->c.x, chk->c.y, chk->c.z);
+				if (chk->generated)
+					glColor3f(0.7f, 0.5f, 0.0f);
+				else
+					glColor3f(1.0f, 0.0f, 0.0f);
 				// up, left to right
 				glVertex2i(mcx, mcy);
 				glVertex2i(mcx + mcs, mcy);
@@ -450,7 +447,7 @@ Engine::init(void)
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
 	// clock_t startTime = clock();
-	this->octree = new Octree(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
+	this->octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	this->initChunks();
 	glMatrixMode(GL_PROJECTION);
 	return (1);

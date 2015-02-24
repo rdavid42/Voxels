@@ -1,17 +1,17 @@
 
 #include "Biome.hpp"
 
-Biome::Biome(void) : Octree()
+Biome::Biome(void) : Link()
 {
 	return ;
 }
 
-Biome::Biome(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s)
+Biome::Biome(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s)
 {
 	return ;
 }
 
-Biome::Biome(Biome const &src) : Octree(src)
+Biome::Biome(Biome const &src) : Link(src)
 {
 	return ;
 }
