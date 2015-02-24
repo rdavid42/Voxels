@@ -24,8 +24,6 @@ public:
 	bool				generated;
 	bool				iterated;
 	bool				empty;
-	// int					n;
-	// Triangle<float>		t[5];
 
 	Octree(void);
 	Octree(Cube const &c);
