@@ -965,10 +965,6 @@ VertexInterp(double const &isolevel, Vec3<float> p1, Vec3<float> p2, double cons
 // 0 will be returned if the grid cell is either totally above
 // of totally below the isolevel.
 // --------------------------------------------------------------------------------
-// isolevel  : noise value
-// grid->p   : block vertices
-// grid->val : block indexes Z values
-// --------------------------------------------------------------------------------
 static int
 Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles)
 {
