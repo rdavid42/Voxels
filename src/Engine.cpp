@@ -46,9 +46,6 @@ Engine::calcFPS(void)
 // MULTI-THREADED CHUNK GENERATION
 // POSIX threads for portability
 // --------------------------------------------------------------------------------
-//	Vec3<float>		p[8];
-//	double			val[8];
-// --------------------------------------------------------------------------------
 static void *
 generateChunkInThread(void *args)
 {
