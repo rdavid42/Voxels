@@ -95,12 +95,13 @@ generateChunkInThread(void *args)
 	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
 	float						x, y;
 	int							depth;
+	float const					inc = *d->inc;
 
 	if (d->chunk != NULL && !d->chunk->generated)
 	{
 		depth = BLOCK_DEPTH;
-		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
-			for (x = 0.0f; x < (*d->chunk_size); x += *d->inc)
+		for (y = 0.0f; y < (*d->chunk_size); y += inc)
+			for (x = 0.0f; x < (*d->chunk_size); x += inc)
 				generateBlock(d, x, y, depth);
 		d->chunk->generated = true;
 	}
@@ -643,9 +644,9 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 	}
 	else if (e.type == SDL_MOUSEBUTTONDOWN)
 	{
-		int		xpos;
-		int		ypos;
-		int		win_width = 1400;
+		int			xpos;
+		int			ypos;
+		int			win_width = 1400;
 		GLfloat		pixel_color[3];
 		float		blockColor[3];
 

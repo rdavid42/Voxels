@@ -117,21 +117,19 @@ Octree *
 Link::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c)
 {
 	// size never changes for children.
-	float const		s = this->_cube.getS() / 2.0f;
 	float			nx;
 	float			ny;
 	float			nz;
 
 	if (depth == 0)
 	{
-		// max depth reached, put values here
 		this->setState(state);
-		// std::cerr << "insert deepest: " << this << std::endl;
 		return (this);
 	}
 	else if (depth > 0)
 	{
 		int				i;
+		float const		s = this->_cube.getS() / 2.0f;
 
 		for (i = 0; i < CHD_MAX; ++i)
 		{

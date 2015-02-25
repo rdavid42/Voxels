@@ -18,6 +18,8 @@ public:
 	Block(Block const &src);
 	virtual ~Block(void);
 
+	virtual Octree *	search(float const &x, float const &y, float const &z);
+	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state);
 	virtual void		render(void) const;
 
 	Block				&operator=(Block const &rhs);

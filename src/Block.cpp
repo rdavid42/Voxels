@@ -30,6 +30,23 @@ Block::~Block(void)
 	return ;
 }
 
+Octree *
+Block::search(float const &x, float const &y, float const &z)
+{
+	if (this->_cube.vertexInside(x, y, z))
+		return (this);
+	return (NULL);
+}
+// -------------------------------------------------------------------
+
+Octree *
+Block::search(float const &x, float const &y, float const &z, int const &state)
+{
+	if (this->_cube.vertexInside(x, y, z) && this->_state == state)
+		return (this);
+	return (NULL);
+}
+
 void
 Block::render(void) const
 {
