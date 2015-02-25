@@ -24,7 +24,7 @@ class Link;
 class Engine
 {
 public:
-	// FPS calculation structure (ty Gundz)
+	// FPS calculation structure
 	typedef struct		s_timer
 	{
 		int				fps;
