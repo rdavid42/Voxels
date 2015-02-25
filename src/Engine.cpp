@@ -431,7 +431,7 @@ Engine::initChunks(void)
 	center = (GEN_SIZE - 1) / 2;
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
-	noise_inc = chunk_size / powf(2, BLOCK_DEPTH + 3);
+	noise_inc = chunk_size / powf(2, BLOCK_DEPTH + 2);
 	// this->printNoiseMinMaxApproximation();
 	this->noise_min = -FRAC_LIMIT;
 	this->noise_max = FRAC_LIMIT;
