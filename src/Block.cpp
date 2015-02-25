@@ -1,25 +1,25 @@
 
 #include "Block.hpp"
 
-Block::Block(void) : Octree(), c()
+Block::Block(void) : Octree(), c(), n(0)
 {
 	this->_state = BLOCK;
 	return ;
 }
 
-Block::Block(Vec3<float> const &color) : Octree(), c(color)
+Block::Block(Vec3<float> const &color) : Octree(), c(color), n(0)
 {
 	this->_state = BLOCK;
 	return ;
 }
 
-Block::Block(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c()
+Block::Block(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c(), n(0)
 {
 	this->_state = BLOCK;
 	return ;
 }
 
-Block::Block(Block const &src) : Octree(src), c(src.c)
+Block::Block(Block const &src) : Octree(src), c(src.c), n(0)
 {
 	this->_state = BLOCK;
 	return ;
@@ -47,11 +47,38 @@ Block::search(float const &x, float const &y, float const &z, int const &state)
 	return (NULL);
 }
 
+Octree *
+Block::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c)
+{
+	(void)x;
+	(void)y;
+	(void)z;
+	(void)depth;
+	(void)state;
+	(void)c;
+	return (this);
+}
+
 void
 Block::render(void) const
 {
+#ifdef MARCHING_CUBES
+	int			i, j;
+
+	glColor3f(c.x, c.y, c.z);
+	glBegin(GL_TRIANGLES);
+	for (i = 0; i < this->n; ++i)
+	{
+		for (j = 0; j < 3; ++j)
+		{
+			glVertex3f(t[i].p[j].x, t[i].p[j].y, t[i].p[j].z);
+		}
+	}
+	glEnd();
+#else
 	glColor3f(c.x, c.y, c.z);
 	drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+#endif
 }
 
 Block

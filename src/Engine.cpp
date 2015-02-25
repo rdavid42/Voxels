@@ -86,7 +86,47 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, int 
 		r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 	else if (n <= 0.5f)
 		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+#ifdef MARCHING_CUBES
+	Block *b = (Block *)d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
+	if (b != NULL)
+	{
+		Gridcell			g;
+		Vec3<float>			k;
+		float				s;
+		int					j;
+		float				nb[4];
+	//	GRIDCELL
+	//	Vec3<float>		p[8];
+	//	double			val[8];
+		k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
+		s = b->getCube()->getS();
+		g.p[0] = Vec3<float>(k.x, k.y, k.z + s);
+		g.p[1] = Vec3<float>(k.x + s, k.y, k.z + s);
+		g.p[2] = Vec3<float>(k.x + s, k.y + s, k.z + s);
+		g.p[3] = Vec3<float>(k.x, k.y + s, k.z + s);
+		g.p[4] = Vec3<float>(k.x, k.y, k.z);
+		g.p[5] = Vec3<float>(k.x + s, k.y, k.z);
+		g.p[6] = Vec3<float>(k.x + s, k.y + s, k.z);
+		g.p[7] = Vec3<float>(k.x, k.y + s, k.z);
+		for (j = 0; j < 4; ++j)
+		{
+			nb[j] = 0.0f;
+			for (i = 0; i < FRAC_LIMIT; ++i)
+				nb[j] += d->noise->fractal(0, g.p[j].x, g.p[j].y, 1.5);
+		}
+		g.val[0] = g.p[0].z < nb[0] ? -FRAC_LIMIT : FRAC_LIMIT;
+		g.val[1] = g.p[1].z < nb[1] ? -FRAC_LIMIT : FRAC_LIMIT;
+		g.val[2] = g.p[2].z < nb[2] ? -FRAC_LIMIT : FRAC_LIMIT;
+		g.val[3] = g.p[3].z < nb[3] ? -FRAC_LIMIT : FRAC_LIMIT;
+		g.val[4] = g.p[4].z < nb[0] ? -FRAC_LIMIT : FRAC_LIMIT;
+		g.val[5] = g.p[5].z < nb[1] ? -FRAC_LIMIT : FRAC_LIMIT;
+		g.val[6] = g.p[6].z < nb[2] ? -FRAC_LIMIT : FRAC_LIMIT;
+		g.val[7] = g.p[7].z < nb[3] ? -FRAC_LIMIT : FRAC_LIMIT;
+		b->n = Polygonise(g, n, b->t);
+	}
+#else
 	d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
+#endif
 }
 
 static void *

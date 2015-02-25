@@ -11,6 +11,8 @@ class Block : public Octree
 {
 public:
 	Vec3<float>			c;
+	int					n;
+	Triangle<float>		t[5];
 
 	Block(void);
 	Block(Vec3<float> const &color);
@@ -20,6 +22,7 @@ public:
 
 	virtual Octree *	search(float const &x, float const &y, float const &z);
 	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state);
+	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c);
 	virtual void		render(void) const;
 
 	Block				&operator=(Block const &rhs);
