@@ -1,7 +1,7 @@
 
 #include "Chunk.hpp"
 
-Chunk::Chunk(void) : Link(), hm(NULL), generated(false)
+Chunk::Chunk(void) : Link(), generated(false)
 {
 	this->_state = CHUNK;
 	return ;

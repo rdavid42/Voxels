@@ -9,7 +9,6 @@
 class Chunk : public Link
 {
 public:
-	float			**hm; // heightmap
 	bool			generated;
 
 	Chunk(void);
