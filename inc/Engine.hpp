@@ -8,14 +8,17 @@
 # include <unistd.h>
 # include <sstream>
 # include <string>
+# include "Camera.hpp"
 # include "Noise.hpp"
 # include "Player.hpp"
 # include "Triangle.hpp"
 # include "Struct.hpp"
 # include "Octree.hpp"
 # include "Chunk.hpp"
+# include "Block.hpp"
 
 class Camera;
+class Octree;
 class Link;
 
 class Engine
@@ -60,7 +63,7 @@ public:
 	float				noise_min;
 	float				noise_max;
 	bool				mouse_button;
-	Octree				*highlight;
+	Block				*highlight;
 
 	Engine(void);
 	~Engine(void);

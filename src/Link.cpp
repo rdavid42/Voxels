@@ -1,5 +1,8 @@
 
 #include "Link.hpp"
+#include "Chunk.hpp"
+#include "Block.hpp"
+#include "Biome.hpp"
 
 Link::Link(void) : Octree()
 {
@@ -33,7 +36,7 @@ Link::~Link(void)
 // Creates a child with octree state specified
 // -------------------------------------------------------------------
 void
-Link::createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state)
+Link::createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state, Vec3<float> const &c)
 {
 	switch (state)
 	{
@@ -41,13 +44,14 @@ Link::createChild(uint32_t const &i, float const &x, float const &y, float const
 			this->_children[i] = new Chunk(x, y, z, s);
 			break;
 		case BLOCK:
-			this->_children[i] = new Block(x, y, z, s);
+			this->_children[i] = new Block(c);
+			this->_children[i]->setCube(x, y, z, s);
 			break;
 		case BIOME:
 			this->_children[i] = new Biome(x, y, z, s);
 			break;
 		default:
-			this->_children[i] = new Octree(x, y, z, s);
+			this->_children[i] = new Link(x, y, z, s);
 	}
 	this->_children[i]->setParent(this);
 }
@@ -122,7 +126,6 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 	{
 		// max depth reached, put values here
 		this->setState(state);
-		this->c = c;
 		// std::cerr << "insert deepest: " << this << std::endl;
 		return (this);
 	}
@@ -144,9 +147,9 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 				if (x >= nx && x < nx + s && y >= ny && y < ny + s && z >= nz && z < nz + s)
 				{
 					if ((depth - 1) == 0)
-						this->createChild(i, nx, ny, nz, s, state);
+						this->createChild(i, nx, ny, nz, s, state, c);
 					else
-						this->createChild(i, nx, ny, nz, s);
+						this->createChild(i, nx, ny, nz, s, -1, c);
 					return (this->_children[i]->insert(x, y, z, depth - 1, state, c));
 				}
 			}
@@ -158,6 +161,18 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 	return (NULL);
 }
 // -------------------------------------------------------------------
+
+void
+Link::render(void) const
+{
+	int				i;
+
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (this->_children[i] != NULL)
+			this->_children[i]->render();
+	}
+}
 
 Octree *
 Link::getChild(uint32_t const &i)

@@ -2,7 +2,6 @@
 #include "Constants.hpp"
 #include "Octree.hpp"
 #include "Block.hpp"
-#include "Biome.hpp"
 
 Octree::Octree(void)
 	: _state(EMPTY), _cube(), _parent(NULL)

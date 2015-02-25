@@ -3,16 +3,25 @@
 
 Block::Block(void) : Octree(), c()
 {
+	this->_state = BLOCK;
+	return ;
+}
+
+Block::Block(Vec3<float> const &color) : Octree(), c(color)
+{
+	this->_state = BLOCK;
 	return ;
 }
 
 Block::Block(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c()
 {
+	this->_state = BLOCK;
 	return ;
 }
 
 Block::Block(Block const &src) : Octree(src), c(src.c)
 {
+	this->_state = BLOCK;
 	return ;
 }
 

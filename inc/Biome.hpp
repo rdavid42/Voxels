@@ -14,6 +14,8 @@ public:
 	Biome(Biome const &src);
 	virtual ~Biome(void);
 
+	virtual void		render(void) const {}
+
 	Biome				&operator=(Biome const &rhs);
 };
 

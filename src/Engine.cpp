@@ -154,7 +154,7 @@ Engine::generation(void)
 void
 Engine::generateChunks(void)
 {
-	Octree *			current = this->octree->insert(camera->getPosition().x,
+	Chunk *			current = (Chunk *)this->octree->insert(camera->getPosition().x,
 														camera->getPosition().y,
 														camera->getPosition().z,
 														CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
@@ -200,7 +200,7 @@ Engine::insertChunks(void)
 					// check for terrain bounds
 					if (pz <= this->noise_max && pz >= this->noise_min)
 					{
-						new_chunk = octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, Vec3<float>(0.7f, 0.5f, 0.0f));
+						new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, Vec3<float>(0.7f, 0.5f, 0.0f));
 						if (new_chunk != chunks[cz][cy][cx])
 							chunks[cz][cy][cx] = new_chunk;
 					}
@@ -395,10 +395,10 @@ Engine::initChunks(void)
 	this->noise_min = -FRAC_LIMIT;
 	this->noise_max = FRAC_LIMIT;
 	// Create initial chunk
-	chunks[center][center][center] = octree->insert(camera->getPosition().x,
-													camera->getPosition().y,
-													camera->getPosition().z,
-													CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
+	chunks[center][center][center] = (Chunk *)octree->insert(camera->getPosition().x,
+															camera->getPosition().y,
+															camera->getPosition().z,
+															CHUNK_DEPTH, CHUNK, Vec3<float>(1.0f, 0.0f, 1.0f));
 	this->insertChunks();
 	this->generation();
 }
@@ -614,8 +614,8 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 	if (e.type == SDL_MOUSEBUTTONDOWN && !this->player->creative)
 	{
 		Vec3<float>			inc = this->camera->getForward();
-		Octree *			hit; // block
-		Octree *			chunk;
+		Block *				hit; // block
+		Chunk *				chunk;
 		float				i;
 		float				j;
 
@@ -625,12 +625,12 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 		i = 0.0f;
 		while (i < TARGET_DIST)
 		{
-			chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
+			chunk = (Chunk *)this->octree->search(this->camera->getPosition().x + inc.x * i,
+												this->camera->getPosition().y + inc.y * i,
+												this->camera->getPosition().z + inc.z * i, CHUNK);
+			hit = (Block *)chunk->search(this->camera->getPosition().x + inc.x * i,
 										this->camera->getPosition().y + inc.y * i,
-										this->camera->getPosition().z + inc.z * i, CHUNK);
-			hit = chunk->search(this->camera->getPosition().x + inc.x * i,
-								this->camera->getPosition().y + inc.y * i,
-								this->camera->getPosition().z + inc.z * i, BLOCK);
+										this->camera->getPosition().z + inc.z * i, BLOCK);
 			if (hit != NULL && hit->getState() == BLOCK)
 			{
 				BlockItem			block(Vec3<float>(hit->c.x, hit->c.y, hit->c.z));
@@ -703,8 +703,8 @@ void
 Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
 {
 	Vec3<float>			inc = this->camera->getForward();
-	Octree *			hit; // block
-	Octree *			chunk;
+	Block *				hit; // block
+	Chunk *				chunk;
 	float				i;
 
 	inc.x *= this->chunk_size;
@@ -714,12 +714,12 @@ Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
 	i = 0.0f;
 	while (i < TARGET_DIST)
 	{
-		chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
+		chunk = (Chunk *)this->octree->search(this->camera->getPosition().x + inc.x * i,
+											this->camera->getPosition().y + inc.y * i,
+											this->camera->getPosition().z + inc.z * i, CHUNK);
+		hit = (Block *)chunk->search(this->camera->getPosition().x + inc.x * i,
 									this->camera->getPosition().y + inc.y * i,
-									this->camera->getPosition().z + inc.z * i, CHUNK);
-		hit = chunk->search(this->camera->getPosition().x + inc.x * i,
-							this->camera->getPosition().y + inc.y * i,
-							this->camera->getPosition().z + inc.z * i, BLOCK);
+									this->camera->getPosition().z + inc.z * i, BLOCK);
 		if (hit != NULL && hit->getState() == BLOCK)
 		{
 			this->highlight = hit;

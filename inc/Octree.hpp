@@ -4,7 +4,6 @@
 
 # include <iostream>
 # include "Cube.hpp"
-# include "Camera.hpp"
 # include "Constants.hpp"
 # include "Vec3.hpp"
 # include "Triangle.hpp"
@@ -24,7 +23,10 @@ public:
 	virtual ~Octree(void);
 
 	void				remove(void);
-	virtual void		render(void) const;
+	virtual Octree *	insert(float const &, float const &, float const &, uint32_t const &, int32_t const &, Vec3<float> const &) { return (NULL); }
+	virtual Octree *	search(float const &, float const &, float const &) { return (NULL); }
+	virtual Octree *	search(float const &, float const &, float const &, int const &) { return (NULL); }
+	virtual void		render(void) const {}
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;
 	void				drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const;
 	void				setCube(float const &x, float const &y, float const &z, float const &s);
@@ -35,6 +37,9 @@ public:
 	int32_t const &		getState(void) const;
 	Octree *			getParent(void);
 	uint32_t			getDepth(void);
+
+	virtual Octree *	getChild(uint32_t const &) { return (NULL); }
+	virtual void		setChild(uint32_t const &, Octree *const) {}
 
 	Octree				&operator=(Octree const &rhs);
 };

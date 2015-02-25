@@ -13,6 +13,7 @@ public:
 	Vec3<float>			c;
 
 	Block(void);
+	Block(Vec3<float> const &color);
 	Block(float const &x, float const &y, float const &z, float const &s);
 	Block(Block const &src);
 	virtual ~Block(void);

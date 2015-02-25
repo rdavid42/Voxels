@@ -3,16 +3,19 @@
 
 Chunk::Chunk(void) : Link(), hm(NULL), generated(false)
 {
+	this->_state = CHUNK;
 	return ;
 }
 
 Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s), generated(false)
 {
+	this->_state = CHUNK;
 	return ;
 }
 
 Chunk::Chunk(Chunk const &src) : Link(src), generated(false)
 {
+	this->_state = CHUNK;
 	return ;
 }
 
