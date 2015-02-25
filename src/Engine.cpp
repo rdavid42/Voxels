@@ -114,15 +114,15 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, int 
 			for (i = 0; i < FRAC_LIMIT; ++i)
 				nb[j] += d->noise->fractal(0, g.p[j].x, g.p[j].y, 1.5);
 		}
-		g.val[0] = g.p[0].z < nb[0] ? -FRAC_LIMIT : FRAC_LIMIT;
-		g.val[1] = g.p[1].z < nb[1] ? -FRAC_LIMIT : FRAC_LIMIT;
-		g.val[2] = g.p[2].z < nb[2] ? -FRAC_LIMIT : FRAC_LIMIT;
-		g.val[3] = g.p[3].z < nb[3] ? -FRAC_LIMIT : FRAC_LIMIT;
-		g.val[4] = g.p[4].z < nb[0] ? -FRAC_LIMIT : FRAC_LIMIT;
-		g.val[5] = g.p[5].z < nb[1] ? -FRAC_LIMIT : FRAC_LIMIT;
-		g.val[6] = g.p[6].z < nb[2] ? -FRAC_LIMIT : FRAC_LIMIT;
-		g.val[7] = g.p[7].z < nb[3] ? -FRAC_LIMIT : FRAC_LIMIT;
-		b->n = Polygonise(g, n, b->t);
+		g.val[0] = g.p[0].z < nb[0] ? -1 : 1;
+		g.val[1] = g.p[1].z < nb[1] ? -1 : 1;
+		g.val[2] = g.p[2].z < nb[2] ? -1 : 1;
+		g.val[3] = g.p[3].z < nb[3] ? -1 : 1;
+		g.val[4] = g.p[4].z < nb[0] ? -1 : 1;
+		g.val[5] = g.p[5].z < nb[1] ? -1 : 1;
+		g.val[6] = g.p[6].z < nb[2] ? -1 : 1;
+		g.val[7] = g.p[7].z < nb[3] ? -1 : 1;
+		b->n = Polygonise(g, 0, b->t);
 	}
 #else
 	d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
@@ -431,7 +431,7 @@ Engine::initChunks(void)
 	center = (GEN_SIZE - 1) / 2;
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
-	noise_inc = chunk_size / powf(2, BLOCK_DEPTH + 2);
+	noise_inc = chunk_size / powf(2, BLOCK_DEPTH + 3);
 	// this->printNoiseMinMaxApproximation();
 	this->noise_min = -FRAC_LIMIT;
 	this->noise_max = FRAC_LIMIT;
