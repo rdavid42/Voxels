@@ -46,19 +46,10 @@ Engine::calcFPS(void)
 // MULTI-THREADED CHUNK GENERATION
 // POSIX threads for portability
 // --------------------------------------------------------------------------------
-inline static void
-generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, int const &depth)
-{
-	Vec3<float>					r;
-	int							i;
-	float						n;
-	float						t;
 
-	n = 0.0f;
-	for (i = 0; i < FRAC_LIMIT; ++i)
-		n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
-	t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 5;
-	(void)depth;
+inline static void
+getBlockColor(Vec3<float> &r, float &t, float &n)
+{
 	r.x = 1.0f;
 	r.y = 1.0f;
 	r.z = 1.0f;
@@ -86,186 +77,43 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, int 
 		r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 	else if (n <= 0.5f)
 		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-#ifdef MARCHING_CUBES
-	Block *b = (Block *)d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
-	if (b != NULL)
-	{
-		Gridcell			g;
-		Vec3<float>			k;
-		float				s;
-		int					j;
-		float				nb[4];
-
-		k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
-		s = b->getCube()->getS();
-		g.p[0] = Vec3<float>(k.x, k.y, k.z + s);
-		g.p[1] = Vec3<float>(k.x + s, k.y, k.z + s);
-		g.p[2] = Vec3<float>(k.x + s, k.y + s, k.z + s);
-		g.p[3] = Vec3<float>(k.x, k.y + s, k.z + s);
-		g.p[4] = Vec3<float>(k.x, k.y, k.z);
-		g.p[5] = Vec3<float>(k.x + s, k.y, k.z);
-		g.p[6] = Vec3<float>(k.x + s, k.y + s, k.z);
-		g.p[7] = Vec3<float>(k.x, k.y + s, k.z);
-		for (j = 0; j < 4; ++j)
-		{
-			nb[j] = 0.0f;
-			for (i = 0; i < FRAC_LIMIT; ++i)
-				nb[j] += d->noise->fractal(0, g.p[j].x, g.p[j].y, 1.5);
-		}
-		g.val[0] = g.p[0].z < nb[0] ? -1 : 1;
-		g.val[1] = g.p[1].z < nb[1] ? -1 : 1;
-		g.val[2] = g.p[2].z < nb[2] ? -1 : 1;
-		g.val[3] = g.p[3].z < nb[3] ? -1 : 1;
-		g.val[4] = g.p[4].z < nb[0] ? -1 : 1;
-		g.val[5] = g.p[5].z < nb[1] ? -1 : 1;
-		g.val[6] = g.p[6].z < nb[2] ? -1 : 1;
-		g.val[7] = g.p[7].z < nb[3] ? -1 : 1;
-		b->n = Polygonise(g, 0, b->t);
-	}
-#else
-	d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
-#endif
 }
 
-static void *
-generateChunkInThread(void *args)
-{
-	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
-	float						x, y;
-	int							depth;
-	float const					inc = *d->inc;
-
-	if (d->chunk != NULL && !d->chunk->generated)
-	{
-		depth = BLOCK_DEPTH;
-		for (y = 0.0f; y < (*d->chunk_size); y += inc)
-			for (x = 0.0f; x < (*d->chunk_size); x += inc)
-				generateBlock(d, x, y, depth);
-		d->chunk->generated = true;
-	}
-	delete d;
-	return (NULL);
-}
-/*
 inline static void
-generateBlock(Engine::t_chunkThreadArgs *d, int const hms, float *hm, int const &x, int const &y, int const &z, int const &depth)
+generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
 {
-	float			rx = d->chunk->getCube()->getX() + x * *d->block_size;
-	float			ry = d->chunk->getCube()->getY() + y * *d->block_size;
-	float			rz = d->chunk->getCube()->getZ() + z * *d->block_size;
-	float			n = hm[(y + 1) * hms + (x + 1)];
+	Vec3<float>					r;
+	int							i;
+	float						n;
+	float						color_noise;
 
-	if (n < rz && n > rz - *d->block_size)
-	{
-		Vec3<float>					r;
-		int							i;
-		float						n;
-		float						t;
-
-		t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 5;
-		(void)depth;
-		r.x = 1.0f;
-		r.y = 1.0f;
-		r.z = 1.0f;
-		if (n >= 1.5f - t * 5)
-			r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
-		else if (n >= 1.2f)
-			r = Vec3<float>(0.9f - t, 0.9f - t, 0.9f - t);
-		else if (n >= 1.1f)
-			r = Vec3<float>(0.8f, 0.8f + t, 0.8f);
-		else if (n >= 0.3f)
-			r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
-		else if (n >= 0.2f)
-			r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
-		else if (n >= 0.0f)
-			r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
-		else if (n <= -0.7f)
-			r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
-		else if (n <= -0.6f)
-			r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
-		else if (n <= -0.5f)
-			r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
-		else if (n <= -0.4f)
-			r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-		else if (n <= -0.1f)
-			r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
-		else if (n <= 0.5f)
-			r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-#ifdef MARCHING_CUBES
-		Block *b = (Block *)d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
-		if (b != NULL)
-		{
-			Gridcell			g;
-			Vec3<float>			k;
-			float				s;
-			int					j;
-			float				nb[4];
-
-			k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
-			s = b->getCube()->getS();
-			g.p[0] = Vec3<float>(k.x, k.y, k.z + s);
-			g.p[1] = Vec3<float>(k.x + s, k.y, k.z + s);
-			g.p[2] = Vec3<float>(k.x + s, k.y + s, k.z + s);
-			g.p[3] = Vec3<float>(k.x, k.y + s, k.z + s);
-			g.p[4] = Vec3<float>(k.x, k.y, k.z);
-			g.p[5] = Vec3<float>(k.x + s, k.y, k.z);
-			g.p[6] = Vec3<float>(k.x + s, k.y + s, k.z);
-			g.p[7] = Vec3<float>(k.x, k.y + s, k.z);
-			for (j = 0; j < 4; ++j)
-			{
-				nb[j] = 0.0f;
-				for (i = 0; i < FRAC_LIMIT; ++i)
-					nb[j] += d->noise->fractal(0, g.p[j].x, g.p[j].y, 1.5);
-			}
-			g.val[0] = g.p[0].z < nb[0] ? -1 : 1;
-			g.val[1] = g.p[1].z < nb[1] ? -1 : 1;
-			g.val[2] = g.p[2].z < nb[2] ? -1 : 1;
-			g.val[3] = g.p[3].z < nb[3] ? -1 : 1;
-			g.val[4] = g.p[4].z < nb[0] ? -1 : 1;
-			g.val[5] = g.p[5].z < nb[1] ? -1 : 1;
-			g.val[6] = g.p[6].z < nb[2] ? -1 : 1;
-			g.val[7] = g.p[7].z < nb[3] ? -1 : 1;
-			b->n = Polygonise(g, 0, b->t);
-		}
-#else
-		d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
-#endif
-	}
-	return ;
+	color_noise = d->noise->octave_noise_3d(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, d->chunk->getCube()->getZ() + z) / 10;
+	n = d->noise->octave_noise_3d(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, d->chunk->getCube()->getZ() + z);
+	getBlockColor(r, color_noise, n);
+	(void)depth;
+	d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
 }
 
 static void *
 generateChunkInThread(void *args)
 {
 	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
-	int							x, y, z;
+	float						x, y, z;
 	int							depth;
-	float const					inc = *d->inc;
-	int const					hms = *d->chunk_size / *d->block_size + 2;
-	float						hm[hms * hms];
 
-	for (y = 0; y < hms; ++y)
-	{
-		for (x = 0; x < hms; ++x)
-		{
-			hm[y * hms + x] = 0.0f;
-			for (z = 0; z < FRAC_LIMIT; ++z)
-				hm[y * hms + x] = d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
-		}
-	}
 	if (d->chunk != NULL && !d->chunk->generated)
 	{
 		depth = BLOCK_DEPTH;
-		for (z = 0; z < hms - 2; ++z)
-			for (y = 0; y < hms - 2; ++y)
-				for (x = 0; x < hms - 2; ++x)
-					generateBlock(d, hms, hm, x, y, z, depth);
+		for (z = 0.0f; z < *d->chunk_size; z += *d->block_size)
+			for (y = 0.0f; y < *d->chunk_size; y += *d->block_size)
+				for (x = 0.0f; x < *d->chunk_size; x += *d->block_size)
+					generateBlock(d, x, y, z, depth);
 		d->chunk->generated = true;
 	}
 	delete d;
 	return (NULL);
 }
-*/
+
 static void *
 launchGeneration(void *args)
 {
@@ -588,13 +436,13 @@ Engine::init(void)
 		return (sdlError(0));
 	this->noise = new Noise(42, 256);
 	srandom(time(NULL));
-	this->noise->configs.emplace_back(FRAC_LIMIT, 0.5, 0.2, 0.4, 0.1);
+	this->noise->configs.emplace_back(3, 0.5, 0.1, 0.8, 0.7);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
-	std::cout	<< "layers:     " << this->noise->configs.at(0).layers << std::endl
-				<< "frequency:  " << this->noise->configs.at(0).frequency << std::endl
-				<< "lacunarity: " << this->noise->configs.at(0).lacunarity << std::endl
-				<< "amplitude:  " << this->noise->configs.at(0).amplitude << std::endl
-				<< "gain:       " << this->noise->configs.at(0).gain << std::endl;
+	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
+				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
+				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
+				<< "amplitude:   " << this->noise->configs.at(0).amplitude << std::endl
+				<< "persistence: " << this->noise->configs.at(0).persistence << std::endl;
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
 	// glViewport(0, 0, this->window_width, this->window_height);
@@ -1390,150 +1238,103 @@ Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triang
 }
 
 #if 0
+inline static void
+generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, int const &depth)
+{
+	Vec3<float>					r;
+	int							i;
+	float						n;
+	float						t;
+
+	n = d->noise->scaled_octave_noise_3d(0, -2, 2, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
+	t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 5;
+	(void)depth;
+	r.x = 1.0f;
+	r.y = 1.0f;
+	r.z = 1.0f;
+	if (n >= 1.5f - t * 5)
+		r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
+	else if (n >= 1.2f)
+		r = Vec3<float>(0.9f - t, 0.9f - t, 0.9f - t);
+	else if (n >= 1.1f)
+		r = Vec3<float>(0.8f, 0.8f + t, 0.8f);
+	else if (n >= 0.3f)
+		r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
+	else if (n >= 0.2f)
+		r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
+	else if (n >= 0.0f)
+		r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
+	else if (n <= -0.7f)
+		r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
+	else if (n <= -0.6f)
+		r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
+	else if (n <= -0.5f)
+		r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
+	else if (n <= -0.4f)
+		r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+	else if (n <= -0.1f)
+		r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
+	else if (n <= 0.5f)
+		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+#ifdef MARCHING_CUBES
+	Block *b = (Block *)d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
+	if (b != NULL)
+	{
+		Gridcell			g;
+		Vec3<float>			k;
+		float				s;
+		int					j;
+		float				nb[4];
+
+		k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
+		s = b->getCube()->getS();
+		g.p[0] = Vec3<float>(k.x, k.y, k.z + s);
+		g.p[1] = Vec3<float>(k.x + s, k.y, k.z + s);
+		g.p[2] = Vec3<float>(k.x + s, k.y + s, k.z + s);
+		g.p[3] = Vec3<float>(k.x, k.y + s, k.z + s);
+		g.p[4] = Vec3<float>(k.x, k.y, k.z);
+		g.p[5] = Vec3<float>(k.x + s, k.y, k.z);
+		g.p[6] = Vec3<float>(k.x + s, k.y + s, k.z);
+		g.p[7] = Vec3<float>(k.x, k.y + s, k.z);
+		for (j = 0; j < 4; ++j)
+		{
+			nb[j] = 0.0f;
+			for (i = 0; i < FRAC_LIMIT; ++i)
+				nb[j] += d->noise->fractal(0, g.p[j].x, g.p[j].y, 1.5);
+		}
+		g.val[0] = g.p[0].z < nb[0] ? -1 : 1;
+		g.val[1] = g.p[1].z < nb[1] ? -1 : 1;
+		g.val[2] = g.p[2].z < nb[2] ? -1 : 1;
+		g.val[3] = g.p[3].z < nb[3] ? -1 : 1;
+		g.val[4] = g.p[4].z < nb[0] ? -1 : 1;
+		g.val[5] = g.p[5].z < nb[1] ? -1 : 1;
+		g.val[6] = g.p[6].z < nb[2] ? -1 : 1;
+		g.val[7] = g.p[7].z < nb[3] ? -1 : 1;
+		b->n = Polygonise(g, 0, b->t);
+	}
+#else
+	d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
+#endif
+}
+
 static void *
 generateChunkInThread(void *args)
 {
 	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
 	float						x, y;
-	float						n;
-	Vec3<float>					r;
-	float						t;
-	int							i;
-	float						insert_p[4];
-	int							insert_i;
-	Octree *					b;
-	Gridcell					g;
-	Vec3<float>					k;
-	float						s;
 	int							depth;
-	// int	const					sfs = (*d->chunk_size + *d->inc * 2) / ; // scalar field size
-	// float						scalar_field[66][66];
-	// int							sx, sy;
+	float const					inc = *d->inc;
 
 	if (d->chunk != NULL && !d->chunk->generated)
 	{
-/*		if (d->pos.x > ((GEN_SIZE - 1) / 2) + GEN_SIZE / 3 || d->pos.x < ((GEN_SIZE - 1) / 2) - GEN_SIZE / 3
-			|| d->pos.y > ((GEN_SIZE - 1) / 2) + GEN_SIZE / 3 || d->pos.y < ((GEN_SIZE - 1) / 2) - GEN_SIZE / 3
-			|| d->pos.z > ((GEN_SIZE - 1) / 2) + GEN_SIZE / 3 || d->pos.z < ((GEN_SIZE - 1) / 2) - GEN_SIZE / 3)
-			depth = BLOCK_DEPTH - 1;
-		else*/
-			depth = BLOCK_DEPTH;
-		// d->chunk->iterated = true;
-		d->chunk->c.x = 1.0f;
-		d->chunk->c.y = 0.0f;
-		d->chunk->c.z = 0.0f;
-		// calculates chunk's scalar field
-/*		sy = 0;
-		for (y = -(*d->inc); y < (*d->chunk_size + *d->inc); y += *d->inc)
-		{
-			sx = 0;
-			for (x = -(*d->inc); x < (*d->chunk_size + *d->inc); x += *d->inc)
-			{
-				scalar_field[sy][sx] = 0.0f;
-				for (i = 0; i < FRAC_LIMIT; ++i)
-					scalar_field[sy][sx] += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
-				++sx;
-			}
-			++sy;
-		}*/
-		// sy = 1;
-		for (y = 0.0f; y < (*d->chunk_size); y += *d->inc)
-		{
-			// sx = 1;
-			for (x = 0.0f; x < (*d->chunk_size); x += *d->inc)
-			{
-				// std::cerr << "sx: " << sx << ", sy: " << sy << std::endl;
-				// n = scalar_field[sy][sx];
-				n = 0.0f;
-				for (i = 0; i < FRAC_LIMIT; ++i)
-					n += d->noise->fractal(0, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
-				t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 5;
-				if (n >= 1.5f - t * 5)
-					r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
-				else if (n >= 1.2f - t * 5)
-					r = Vec3<float>(0.9f - t, 0.9f - t, 0.9f - t);
-				else if (n >= 1.1f - t * 5)
-					r = Vec3<float>(0.8f, 0.8f + t, 0.8f);
-				else if (n >= 0.3f)
-					r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
-				else if (n >= 0.2f)
-					r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
-				else if (n >= 0.0f)
-					r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
-				else if (n <= -0.7f)
-					r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
-				else if (n <= -0.6f)
-					r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
-				else if (n <= -0.5f)
-					r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
-				else if (n <= -0.4f)
-					r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-				else if (n <= -0.1f)
-					r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
-				else if (n <= 0.0f + t * 5)
-					r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-				insert_p[0] = 0.0f;
-				insert_p[1] = 0.0f;
-				insert_p[2] = 0.0f;
-				insert_p[3] = 0.0f;
-				insert_i = 0;
-//				b = d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, BLOCK_DEPTH, BLOCK, r, insert_p, &insert_i);
-					// std::cerr << "prout" << std::endl;
-				d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r, insert_p, &insert_i);
-				// Calculate 0 to 5 triangles based on chunk's scalar field (opti: do it with biome's scalar field directly)(Polygonisation) and store them in the block
-#if 0
-				if (b != NULL)
-				{
-					k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
-					s = b->getCube()->getS();
-					g.p[0] = Vec3<float>(k.x, k.y, k.z);
-					g.p[1] = Vec3<float>(k.x + s, k.y + s, k.z);
-					g.p[2] = Vec3<float>(k.x + s, k.y, k.z);
-					g.p[3] = Vec3<float>(k.x, k.y, k.z);
-					g.p[4] = Vec3<float>(k.x, k.y + s, k.z + s);
-					g.p[5] = Vec3<float>(k.x + s, k.y + s, k.z + s);
-					g.p[6] = Vec3<float>(k.x + s, k.y, k.z + s);
-					g.p[7] = Vec3<float>(k.x, k.y, k.z + s);
-/*					g.val[0] = g.p[0].z;
-					g.val[1] = g.p[1].z;
-					g.val[2] = g.p[2].z;
-					g.val[3] = g.p[3].z;
-					g.val[4] = g.p[4].z;
-					g.val[5] = g.p[5].z;
-					g.val[6] = g.p[6].z;
-					g.val[7] = g.p[7].z;*/
-/*					g.val[0] = scalar_field[sy - 1][sx - 1];
-					g.val[1] = scalar_field[sy - 1][sx + 1];
-					g.val[2] = scalar_field[sy + 1][sx + 1];
-					g.val[3] = scalar_field[sy + 1][sx - 1];
-					g.val[4] = scalar_field[sy - 1][sx - 1];
-					g.val[5] = scalar_field[sy - 1][sx + 1];
-					g.val[6] = scalar_field[sy + 1][sx + 1];
-					g.val[7] = scalar_field[sy + 1][sx - 1];*/
-					g.val[0] = d->noise->fractal(0, g.p[0].x, g.p[0].y, 1.5);
-					g.val[1] = d->noise->fractal(0, g.p[1].x, g.p[1].y, 1.5);
-					g.val[2] = d->noise->fractal(0, g.p[2].x, g.p[2].y, 1.5);
-					g.val[3] = d->noise->fractal(0, g.p[3].x, g.p[3].y, 1.5);
-					g.val[4] = d->noise->fractal(0, g.p[4].x, g.p[4].y, 1.5);
-					g.val[5] = d->noise->fractal(0, g.p[5].x, g.p[5].y, 1.5);
-					g.val[6] = d->noise->fractal(0, g.p[6].x, g.p[6].y, 1.5);
-					g.val[7] = d->noise->fractal(0, g.p[7].x, g.p[7].y, 1.5);
-					b->n = Polygonise(g, n, b->t);
-				}
-#endif
-				// ++sx;
-			}
-			// ++sy;
-		}
-		if (depth == BLOCK_DEPTH)
-		{
-			d->chunk->generated = true;
-			d->chunk->c.x = 0.0f;
-			d->chunk->c.y = 1.0f;
-			d->chunk->c.z = 0.0f;
-		}
+		depth = BLOCK_DEPTH;
+		for (y = 0.0f; y < (*d->chunk_size); y += inc)
+			for (x = 0.0f; x < (*d->chunk_size); x += inc)
+				generateBlock(d, x, y, depth);
+		d->chunk->generated = true;
 	}
 	delete d;
 	return (NULL);
 }
+
 #endif

@@ -9,6 +9,7 @@
 class Chunk : public Link
 {
 public:
+	float			**hm;
 	bool			generated;
 
 	Chunk(void);

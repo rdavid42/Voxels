@@ -21,13 +21,13 @@
 #  include <windows.h>
 #  include <SDL.h>
 # endif
-
-/*# ifdef __APPLE__
+/*
+# ifdef __APPLE__
 #  include "OpenCL/opencl.h"
 # else
 #  include "CL/cl.h"
-# endif*/
-
+# endif
+*/
 # define MASK_1						0x00000001
 # define MASK_2						0x00000003
 # define MASK_3						0x00000007

@@ -14,13 +14,13 @@ public:
 	class				Config
 	{
 	public:
-		int				layers;
+		int				octaves;
 		float			frequency;
 		float			lacunarity;
 		float			amplitude;
-		float			gain;
+		float			persistence;
 
-		Config(int layers, float frequency, float lacunarity, float amplitude, float gain);
+		Config(int octaves, float frequency, float lacunarity, float amplitude, float persistence);
 	};
 
 	uint32_t const				seed;
@@ -32,7 +32,12 @@ public:
 	virtual ~Noise(void);
 
 	float				perlin(float x, float y, float z);
-	float				fractal(int const ci, float const &x, float const &y, float const &z);
+	float				fractal(int const &ci, float const &x, float const &y, float const &z);
+
+	float				raw_noise_3d(float const &x, float const &y, float const &z);
+	float				octave_noise_3d(int const &ci, float const &x, float const &y, float const &z);
+	float				scaled_raw_noise_3d(float const &loBound, float const &hiBound, float const &x, float const &y, float const &z);
+	float				scaled_octave_noise_3d(int const &ci, float const &loBound, float const &hiBound, float const &x, float const &y, float const &z);
 
 	Noise &				operator=(Noise const &rhs);
 
