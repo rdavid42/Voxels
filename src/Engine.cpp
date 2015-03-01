@@ -87,17 +87,41 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 	float						nx, ny, nz;
 	float						color_noise;
 
-	nx = d->chunk->getCube()->getX() + x + *d->block_size / 2;
-	ny = d->chunk->getCube()->getY() + y + *d->block_size / 2;
-	nz = d->chunk->getCube()->getZ() + z + *d->block_size / 2;
+	(void)z;
+	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
+	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
+	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
+	n = d->noise->octave_noise_3d(0, nx, ny, nz);
+	n += d->noise->octave_noise_3d(1, nx, ny, nz);
 
-	n = d->noise->scaled_octave_noise_3d(0, -FRAC_LIMIT, FRAC_LIMIT, nx, ny, nz);
-
-	color_noise = d->noise->octave_noise_3d(1, nx, ny, nz) / 10;
+	color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
 	getBlockColor(r, color_noise, n);
 	d->chunk->insert(nx, ny, n, depth, BLOCK, r);
 }
 
+/*
+inline static void
+generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
+{
+	Vec3<float>					r;
+	int							i;
+	float						density;
+	float						nx, ny, nz;
+	float						color_noise;
+
+	(void)z;
+	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
+	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
+	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
+
+	density = 0;
+	density += octave_noise_3d(0, nx, ny, 0);
+
+	color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
+	getBlockColor(r, color_noise, density);
+	d->chunk->insert(nx, ny, density, depth, BLOCK, r);
+}
+*/
 static void *
 generateChunkInThread(void *args)
 {
@@ -452,7 +476,7 @@ Engine::init(void)
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
+	gluPerspective(70, (float)(this->window_width / this->window_height), 0.01, OCTREE_SIZE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
