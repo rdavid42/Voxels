@@ -440,7 +440,7 @@ Engine::init(void)
 		return (sdlError(0));
 	this->noise = new Noise(42, 256);
 	srandom(time(NULL));
-	this->noise->configs.emplace_back(6, 1.0, 0.01, 0.01, 0.5);
+	this->noise->configs.emplace_back(6, 0.1, 0.3, 0.3, 0.3);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
 	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
