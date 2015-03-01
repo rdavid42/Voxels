@@ -158,19 +158,46 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 // -------------------------------------------------------------------
 
 void
+Link::simplify(void)
+{
+	int				i;
+
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (!this->_children[i] || !(this->_children[i]->getState() & GROUND))
+		{
+			for (i = 0; i < CHD_MAX; ++i)
+			{
+				if (this->_children[i] && !(this->_children[i]->getState() & BLOCK))
+					this->_children[i]->simplify();
+			}
+			return ;
+		}
+	}
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (this->_children[i])
+		{
+			delete this->_children[i];
+			this->_children[i] = 0;
+		}
+	}
+	this->_state |= GROUND;
+}
+
+void
 Link::render(void) const
 {
 	int				i;
 
 	if (this->_state & GROUND)
 	{
-		std::cerr << "noooo" << std::endl;
 		glColor3f(c.x, c.y, c.z);
 		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
 	}
 	for (i = 0; i < CHD_MAX; ++i)
 	{
-		if (this->_children[i] != NULL)
+		if (this->_children[i])
 			this->_children[i]->render();
 	}
 }

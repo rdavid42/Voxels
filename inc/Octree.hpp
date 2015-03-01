@@ -26,6 +26,7 @@ public:
 	virtual Octree *	insert(float const &, float const &, float const &, uint32_t const &, int32_t const &, Vec3<float> const &) { return (NULL); }
 	virtual Octree *	search(float const &, float const &, float const &) { return (NULL); }
 	virtual Octree *	search(float const &, float const &, float const &, int const &) { return (NULL); }
+	virtual void		simplify(void) {}
 	virtual void		render(void) const {}
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;
 	void				drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const;

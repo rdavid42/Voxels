@@ -93,7 +93,7 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
 	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
 	n = d->noise->octave_noise_3d(0, nx, ny, nz);
-	n += d->noise->octave_noise_3d(0, nx, ny, nz);
+	// n += d->noise->octave_noise_3d(0, nx, ny, nz);
 
 	// if (n < nz + *d->block_size && n > nz)
 	// {
@@ -129,6 +129,7 @@ generateChunkInThread(void *args)
 				}
 			}
 		}
+		d->chunk->simplify();
 		d->chunk->generated = true;
 	}
 	delete d;
@@ -293,7 +294,7 @@ Engine::renderChunks(void)
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
 				chk = chunks[cz][cy][cx];
-				if (chk != NULL)
+				if (chk != NULL && chk->generated)
 				{
 					if (cx == center && cy == center && cz == center)
 						chk->render();
