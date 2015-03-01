@@ -9,10 +9,10 @@
 class Chunk : public Link
 {
 public:
-	float			**hm;
 	bool			generated;
 
 	Chunk(void);
+	Chunk(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s);
 	Chunk(float const &x, float const &y, float const &z, float const &s);
 	Chunk(Chunk const &src);
 	virtual ~Chunk(void);

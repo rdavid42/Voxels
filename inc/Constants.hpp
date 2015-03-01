@@ -64,16 +64,16 @@
 # define CHD_MAX					8
 
 // Octree states
-# define EMPTY						0
-# define BLOCK						1
-# define CHUNK						2
-# define BIOME						3
+# define EMPTY						0b00000001
+# define GROUND						0b00000010
+# define BLOCK						0b00000100
+# define CHUNK						0b00001000
 
 # define OCTREE_SIZE				2147483647.0f
 
 # define BIOME_DEPTH				10 // insert directly in octree (not implemented)
-# define CHUNK_DEPTH				32 // insert from biome
-# define BLOCK_DEPTH				4 // insert from chunk depth // WARNING IT CANT BE OVER 6
+# define CHUNK_DEPTH				31 // insert from biome
+# define BLOCK_DEPTH				3 // insert from chunk depth // WARNING IT CANT BE OVER 6
 // [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE					17 // (n * n * n) must be odd in order to place camera in the center all the time
 # define HEIGHTMAP_SIZE				3

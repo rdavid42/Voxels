@@ -1,27 +1,21 @@
 
 #include "Block.hpp"
 
-Block::Block(void) : Octree(), c(), n(0)
+Block::Block(void) : Octree(), c()
 {
-	this->_state = BLOCK;
+	this->_state = GROUND;
 	return ;
 }
 
-Block::Block(Vec3<float> const &color) : Octree(), c(color), n(0)
+Block::Block(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c(c)
 {
-	this->_state = BLOCK;
+	this->_state = GROUND;
 	return ;
 }
 
-Block::Block(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c(), n(0)
+Block::Block(Block const &src) : Octree(src), c(src.c)
 {
-	this->_state = BLOCK;
-	return ;
-}
-
-Block::Block(Block const &src) : Octree(src), c(src.c), n(0)
-{
-	this->_state = BLOCK;
+	this->_state = GROUND;
 	return ;
 }
 

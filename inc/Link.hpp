@@ -10,10 +10,12 @@
 class Link : public Octree
 {
 protected:
+	Vec3<float>			c;
 	Octree				*_children[CHD_MAX];
 
 public:
 	Link(void);
+	Link(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s);
 	Link(float const &x, float const &y, float const &z, float const &s);
 	Link(Link const &src);
 	virtual ~Link(void);

@@ -3,19 +3,25 @@
 
 Chunk::Chunk(void) : Link(), generated(false)
 {
-	this->_state = CHUNK;
+	this->_state = CHUNK | EMPTY;
+	return ;
+}
+
+Chunk::Chunk(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Link(c, x, y, z, s), generated(false)
+{
+	this->_state = CHUNK | EMPTY;
 	return ;
 }
 
 Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s), generated(false)
 {
-	this->_state = CHUNK;
+	this->_state = CHUNK | EMPTY;
 	return ;
 }
 
 Chunk::Chunk(Chunk const &src) : Link(src), generated(false)
 {
-	this->_state = CHUNK;
+	this->_state = src.getState();
 	return ;
 }
 

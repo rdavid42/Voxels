@@ -29,6 +29,7 @@ public:
 	virtual void		render(void) const {}
 	void				drawCube(float const &x, float const &y, float const &z, float const &s) const;
 	void				drawCubeRidges(float const &x, float const &y, float const &z, float const &s) const;
+
 	void				setCube(float const &x, float const &y, float const &z, float const &s);
 	void				setState(int32_t const &state);
 	void				setParent(Octree *parent);
@@ -37,7 +38,6 @@ public:
 	int32_t const &		getState(void) const;
 	Octree *			getParent(void);
 	uint32_t			getDepth(void);
-
 	virtual Octree *	getChild(uint32_t const &) { return (NULL); }
 	virtual void		setChild(uint32_t const &, Octree *const) {}
 

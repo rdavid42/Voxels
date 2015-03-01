@@ -10,6 +10,12 @@ Link::Link(void) : Octree()
 		this->_children[i] = NULL;
 }
 
+Link::Link(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c(c)
+{
+	for (int i = 0; i < CHD_MAX; ++i)
+		this->_children[i] = NULL;
+}
+
 Link::Link(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s)
 {
 	for (int i = 0; i < CHD_MAX; ++i)
@@ -38,21 +44,12 @@ Link::~Link(void)
 void
 Link::createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state, Vec3<float> const &c)
 {
-	switch (state)
-	{
-		case CHUNK:
-			this->_children[i] = new Chunk(x, y, z, s);
-			break;
-		case BLOCK:
-			this->_children[i] = new Block(c);
-			this->_children[i]->setCube(x, y, z, s);
-			break;
-		case BIOME:
-			this->_children[i] = new Biome(x, y, z, s);
-			break;
-		default:
-			this->_children[i] = new Link(x, y, z, s);
-	}
+	if (state & CHUNK)
+		this->_children[i] = new Chunk(x, y, z, s);
+	else if (state & BLOCK)
+		this->_children[i] = new Block(c, x, y, z, s);
+	else
+		this->_children[i] = new Link(x, y, z, s);
 	this->_children[i]->setParent(this);
 }
 // -------------------------------------------------------------------
@@ -147,7 +144,7 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 					if ((depth - 1) == 0)
 						this->createChild(i, nx, ny, nz, s, state, c);
 					else
-						this->createChild(i, nx, ny, nz, s, -1, c);
+						this->createChild(i, nx, ny, nz, s, 0, c);
 					return (this->_children[i]->insert(x, y, z, depth - 1, state, c));
 				}
 			}
@@ -165,6 +162,12 @@ Link::render(void) const
 {
 	int				i;
 
+	if (this->_state & GROUND)
+	{
+		std::cerr << "noooo" << std::endl;
+		glColor3f(c.x, c.y, c.z);
+		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+	}
 	for (i = 0; i < CHD_MAX; ++i)
 	{
 		if (this->_children[i] != NULL)
