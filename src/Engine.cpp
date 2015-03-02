@@ -431,6 +431,29 @@ Engine::initChunks(void)
 	this->generation();
 }
 
+inline static float
+test_perlin_speed(Noise &noise)
+{
+	clock_t			startTime = clock();
+	int				x, y, z;
+	int	const		size = 100.0f;
+	float			n;
+
+	n = 0;
+	for (x = 0.0f; x < size; ++x)
+	{
+		for (y = 0.0f; y < size; ++y)
+		{
+			for (z = 0.0f; z < size; ++z)
+			{
+				n += noise.octave_noise_3d(0, x, y, z);
+			}
+		}
+	}
+	std::cerr << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << std::endl;
+	return (n);
+}
+
 int
 Engine::init(void)
 {
@@ -445,17 +468,6 @@ Engine::init(void)
 	this->window_width = 1400;
 	this->window_height = 1400;
 	this->highlight = NULL;
-	SDL_ShowCursor(SDL_DISABLE);
-	this->window = SDL_CreateWindow("Voxels",
-									SDL_WINDOWPOS_UNDEFINED,
-									SDL_WINDOWPOS_UNDEFINED,
-									this->window_width,
-									this->window_height,
-									SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-	if (this->window == NULL)
-		return (sdlError(0));
-	if (!(this->context = SDL_GL_CreateContext(this->window)))
-		return (sdlError(0));
 	this->noise = new Noise(42, 256);
 	srandom(time(NULL));
 	this->noise->configs.emplace_back(1, 0.3, 0.5, 0.5, 0.5);
@@ -467,6 +479,19 @@ Engine::init(void)
 				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
 				<< "amplitude:   " << this->noise->configs.at(0).amplitude << std::endl
 				<< "persistence: " << this->noise->configs.at(0).persistence << std::endl;
+/*	std::cerr << test_perlin_speed(*this->noise) << std::endl;
+	return (0);*/
+	SDL_ShowCursor(SDL_DISABLE);
+	this->window = SDL_CreateWindow("Voxels",
+									SDL_WINDOWPOS_UNDEFINED,
+									SDL_WINDOWPOS_UNDEFINED,
+									this->window_width,
+									this->window_height,
+									SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+	if (this->window == NULL)
+		return (sdlError(0));
+	if (!(this->context = SDL_GL_CreateContext(this->window)))
+		return (sdlError(0));
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
 	// glViewport(0, 0, this->window_width, this->window_height);
