@@ -10,8 +10,9 @@ Link::Link(void) : Octree()
 		this->_children[i] = NULL;
 }
 
-Link::Link(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c(c)
+Link::Link(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s)
 {
+	this->c = c;
 	for (int i = 0; i < CHD_MAX; ++i)
 		this->_children[i] = NULL;
 }
@@ -111,7 +112,7 @@ Link::search(float const &x, float const &y, float const &z, int const &state)
 // Insert an Octree in another
 // -------------------------------------------------------------------
 Octree *
-Link::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c)
+Link::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c, bool const &simplify)
 {
 	// size never changes for children.
 	float			nx;
@@ -145,45 +146,16 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 						this->createChild(i, nx, ny, nz, s, state, c);
 					else
 						this->createChild(i, nx, ny, nz, s, 0, c);
-					return (this->_children[i]->insert(x, y, z, depth - 1, state, c));
+					return (this->_children[i]->insert(x, y, z, depth - 1, state, c, simplify));
 				}
 			}
 			else if (this->_children[i]->getCube()->vertexInside(x, y, z))
-				return (this->_children[i]->insert(x, y, z, depth - 1, state, c));
+				return (this->_children[i]->insert(x, y, z, depth - 1, state, c, simplify));
 		}
 	}
-	// std::cerr << "not created, depth: " << depth << std::endl;
 	return (NULL);
 }
 // -------------------------------------------------------------------
-
-void
-Link::simplify(void)
-{
-	int				i;
-
-	for (i = 0; i < CHD_MAX; ++i)
-	{
-		if (!this->_children[i] || !(this->_children[i]->getState() & GROUND))
-		{
-			for (i = 0; i < CHD_MAX; ++i)
-			{
-				if (this->_children[i] && !(this->_children[i]->getState() & BLOCK))
-					this->_children[i]->simplify();
-			}
-			return ;
-		}
-	}
-	for (i = 0; i < CHD_MAX; ++i)
-	{
-		if (this->_children[i])
-		{
-			delete this->_children[i];
-			this->_children[i] = 0;
-		}
-	}
-	this->_state |= GROUND;
-}
 
 void
 Link::render(void) const

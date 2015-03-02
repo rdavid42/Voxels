@@ -108,7 +108,7 @@ Camera::onKeyboard(SDL_KeyboardEvent const &e)
 void
 Camera::animate(Uint32 timeStep, Engine &e)
 {
-	double			speed = (_keyStates[_keyConfig["boost"]]) ? 10 * _speed : _speed;
+	float			speed = (_keyStates[_keyConfig["boost"]]) ? 10 * _speed : _speed;
 
 	if (_keyStates[_keyConfig["forward"]])
 		_position += _forward * (speed * timeStep);

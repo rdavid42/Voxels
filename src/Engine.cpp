@@ -77,7 +77,7 @@ getBlockColor(Vec3<float> &r, float &t, float &n)
 	else if (n <= 0.5f)
 		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
 }
-
+/*
 inline static void
 generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
 {
@@ -105,8 +105,14 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 	{
 		color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
 		getBlockColor(r, color_noise, n);
-		d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r);
+		d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
 	}
+}
+
+inline static void
+insertBlocks()
+{
+
 }
 
 static void *
@@ -129,7 +135,69 @@ generateChunkInThread(void *args)
 				}
 			}
 		}
-		d->chunk->simplify();
+		d->chunk->generated = true;
+	}
+	delete d;
+	return (NULL);
+}
+*/
+inline static int
+generateNoise(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z)
+{
+	float						n;
+	float						nx, ny, nz;
+
+	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
+	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
+	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
+	n = d->noise->octave_noise_3d(0, nx, ny, nz);
+	return (n);
+}
+
+inline static void
+insertBlocks(float const *da, int const &s, float const &bs, int const &depth)
+{
+	int				i;
+	int				d;
+	int				x, y, z;
+
+	for (d = 0; d < depth; ++d)
+	{
+		for (z = 0; z < s; ++z)
+		{
+			for (y = 0; y < s; ++y)
+			{
+				for (x = 0; x < s; ++x)
+				{
+
+				}
+			}
+		}
+	}
+}
+
+static void *
+generateChunkInThread(void *args)
+{
+	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
+	int							x, y, z;
+	static int const			s = *d->chunk_size / *d->block_size;
+	float						da[s * s * s]; // 3D density array -> index : z * s * s + y * s + x
+	int							i;
+
+	if (d->chunk != NULL && !d->chunk->generated)
+	{
+		for (z = 0; z < s; ++z)
+		{
+			for (y = 0; y < s; ++y)
+			{
+				for (x = 0; x < s; ++x)
+				{
+					i = z * s * s + y * s + x;
+					da[i] = generateNoise(d, x * *d->block_size, y * *d->block_size, z * *d->block_size);
+				}
+			}
+		}
 		d->chunk->generated = true;
 	}
 	delete d;
@@ -185,7 +253,7 @@ Engine::generateChunks(void)
 	Chunk *			current = (Chunk *)this->octree->insert(camera->getPosition().x,
 														camera->getPosition().y,
 														camera->getPosition().z,
-														CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(1.0f, 0.0f, 1.0f));
+														CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(1.0f, 0.0f, 1.0f), false);
 
 	if (current != NULL)
 	{
@@ -228,7 +296,7 @@ Engine::insertChunks(void)
 					// check for terrain bounds
 					// if (pz <= this->noise_max && pz >= this->noise_min)
 					// {
-						new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(0.7f, 0.5f, 0.0f));
+						new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(0.7f, 0.5f, 0.0f), false);
 						if (new_chunk != chunks[cz][cy][cx])
 							chunks[cz][cy][cx] = new_chunk;
 					// // }
@@ -426,7 +494,7 @@ Engine::initChunks(void)
 	chunks[center][center][center] = (Chunk *)octree->insert(camera->getPosition().x,
 															camera->getPosition().y,
 															camera->getPosition().z,
-															CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(1.0f, 0.0f, 1.0f));
+															CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(1.0f, 0.0f, 1.0f), false);
 	this->insertChunks();
 	this->generation();
 }
@@ -686,8 +754,9 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 			hit = (Block *)chunk->search(this->camera->getPosition().x + inc.x * i,
 										this->camera->getPosition().y + inc.y * i,
 										this->camera->getPosition().z + inc.z * i, GROUND);
-			if (hit != NULL && hit->getState() == GROUND)
+			if (hit != NULL && hit->getState() & GROUND)
 			{
+				std::cerr << hit->getState();
 				BlockItem			block(Vec3<float>(hit->c.x, hit->c.y, hit->c.z));
 				hit->remove();
 				this->player->inventory->add(block);
@@ -734,7 +803,7 @@ Engine::addBlock(void)
 		hit = this->octree->insert(this->camera->getPosition().x + blockPos.x,
 							this->camera->getPosition().y + blockPos.y,
 							this->camera->getPosition().z + blockPos.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK | GROUND,
-							this->player->inventory->stock[this->player->inventory->selected]->color);
+							this->player->inventory->stock[this->player->inventory->selected]->color, false);
 		this->player->inventory->deleteSelected();
 	}
 }
@@ -771,7 +840,7 @@ Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
 		hit = (Block *)this->octree->search(this->camera->getPosition().x + inc.x * i,
 									this->camera->getPosition().y + inc.y * i,
 									this->camera->getPosition().z + inc.z * i, GROUND);
-		if (hit != NULL && hit->getState() == GROUND)
+		if (hit != NULL && hit->getState() & GROUND)
 		{
 			this->highlight = hit;
 			break;

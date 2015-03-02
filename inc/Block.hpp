@@ -10,7 +10,6 @@
 class Block : public Octree
 {
 public:
-	Vec3<float>			c;
 /*	int					n;
 	Triangle<float>		t[5];*/
 
@@ -21,12 +20,13 @@ public:
 
 	virtual Octree *	search(float const &x, float const &y, float const &z);
 	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state);
-	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c);
+	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c, bool const &simplify);
+
 	virtual void		render(void) const;
 
 	Block				&operator=(Block const &rhs);
 };
 
-std::ostream				&operator<<(std::ostream &o, Block const &i);
+std::ostream			&operator<<(std::ostream &o, Block const &i);
 
 #endif

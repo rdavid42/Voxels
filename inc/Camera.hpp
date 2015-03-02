@@ -34,8 +34,8 @@ public:
 	Camera									&operator=(Camera const &rhs);
 
 private:
-	double									_speed;					// camera moving speed
-	double									_sensivity;				// camera sensivity relative to mouse movements
+	float									_speed;					// camera moving speed
+	float									_sensivity;				// camera sensivity relative to mouse movements
 	uint32_t								_verticalMotionDelay;
 	bool									_verticalMotionActive;
 	int										_verticalMotionDir;
@@ -47,8 +47,8 @@ private:
 	Vec3<float>								_target;				// absolute position of point focused
 	Vec3<float>								_forward;				// forward vector
 	Vec3<float>								_left;					// left vector
-	double									_theta;					// horizontal rotation angle
-	double									_phi;					// vertical rotation angle
+	float									_theta;					// horizontal rotation angle
+	float									_phi;					// vertical rotation angle
 
 	Camera(void);
 	Camera(Camera const &src);

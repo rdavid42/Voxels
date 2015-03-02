@@ -10,7 +10,6 @@
 class Link : public Octree
 {
 protected:
-	Vec3<float>			c;
 	Octree				*_children[CHD_MAX];
 
 public:
@@ -21,10 +20,10 @@ public:
 	virtual ~Link(void);
 
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state, Vec3<float> const &c);
-	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c);
+	// virtual Octree *	backwardSimplification(void) { return (NULL); }
+	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c, bool const &simplify);
 	virtual Octree *	search(float const &x, float const &y, float const &z);
 	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state);
-	virtual void		simplify(void);
 	virtual void		render(void) const;
 
 	Octree *			getChild(uint32_t const &i);

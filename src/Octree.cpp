@@ -2,21 +2,28 @@
 #include "Constants.hpp"
 #include "Octree.hpp"
 #include "Block.hpp"
+#include "Link.hpp"
 
 Octree::Octree(void)
-	: _state(EMPTY), _cube(), _parent(NULL)
+	: _state(EMPTY), _cube(), _parent(NULL), c(0, 0, 0)
 {
 	return ;
 }
 
 Octree::Octree(Octree const &src)
-	: _state(src.getState()), _cube(src.getCube()), _parent(NULL)
+	: _state(src.getState()), _cube(src.getCube()), _parent(NULL), c(src.c)
 {
 	return ;
 }
 
 Octree::Octree(float const &x, float const &y, float const &z, float const &s)
-	: _state(EMPTY), _cube(x, y, z, s), _parent(NULL)
+	: _state(EMPTY), _cube(x, y, z, s), _parent(NULL), c(0, 0, 0)
+{
+	return ;
+}
+
+Octree::Octree(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s)
+	: _state(EMPTY), _cube(x, y, z, s), _parent(NULL), c(c)
 {
 	return ;
 }
@@ -62,6 +69,44 @@ Octree::remove(void)
 	}
 }
 // -------------------------------------------------------------------
+
+Octree *
+Octree::backwardSimplification(void)
+{
+/*	int				i;
+
+	if (_parent && !(_parent->getState() & CHUNK))
+	{
+		for (i = 0; i < CHD_MAX; ++i)
+		{
+			if (_parent->getChild(i))
+			{
+				if (!(_parent->getChild(i)->getState() & GROUND))
+					return (this);
+			}
+			else
+				return (this);
+		}
+		Vec3<float> cl(0, 0, 0);
+		for (i = 0; i < CHD_MAX; ++i)
+		{
+			if (_parent->getChild(i))
+			{
+				cl.x += _parent->getChild(i)->c.x;
+				cl.y += _parent->getChild(i)->c.y;
+				cl.z += _parent->getChild(i)->c.z;
+				// delete _parent->getChild(i);
+				_parent->setChild(i, NULL);
+			}
+		}
+		_parent->setState(_parent->getState() | GROUND);
+		_parent->c.x = cl.x / 8.0f;
+		_parent->c.y = cl.y / 8.0f;
+		_parent->c.z = cl.z / 8.0f;
+		return (_parent->backwardSimplification());
+	}*/
+	return (this);
+}
 
 // -------------------------------------------------------------------
 // Draw a cube with 12 triangles

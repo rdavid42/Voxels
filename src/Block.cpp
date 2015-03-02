@@ -1,21 +1,18 @@
 
 #include "Block.hpp"
 
-Block::Block(void) : Octree(), c()
+Block::Block(void) : Octree()
 {
-	this->_state = GROUND;
 	return ;
 }
 
-Block::Block(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s), c(c)
+Block::Block(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Octree(c, x, y, z, s)
 {
-	this->_state = GROUND;
 	return ;
 }
 
-Block::Block(Block const &src) : Octree(src), c(src.c)
+Block::Block(Block const &src) : Octree(src)
 {
-	this->_state = GROUND;
 	return ;
 }
 
@@ -42,7 +39,7 @@ Block::search(float const &x, float const &y, float const &z, int const &state)
 }
 
 Octree *
-Block::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c)
+Block::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c, bool const &simplify)
 {
 	(void)x;
 	(void)y;
@@ -50,6 +47,12 @@ Block::insert(float const &x, float const &y, float const &z, uint32_t const &de
 	(void)depth;
 	(void)state;
 	(void)c;
+	(void)simplify;
+	this->setState(state);
+	if (simplify)
+		return (this->backwardSimplification());
+	else
+		return (this);
 	return (this);
 }
 
