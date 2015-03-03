@@ -69,7 +69,7 @@
 # define BLOCK						0b00000010
 # define CHUNK						0b00000100
 
-# define OCTREE_SIZE				2147483647.0f
+# define OCTREE_SIZE				2147483648
 
 # define BIOME_DEPTH				10 // insert directly in octree (not implemented)
 # define CHUNK_DEPTH				32 // insert from biome

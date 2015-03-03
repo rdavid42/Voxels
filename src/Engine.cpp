@@ -141,7 +141,7 @@ generateChunkInThread(void *args)
 	return (NULL);
 }
 */
-inline static int
+inline static float
 generateNoise(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z)
 {
 	float						n;
@@ -155,21 +155,43 @@ generateNoise(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 }
 
 inline static void
-insertBlocks(float const *da, int const &s, float const &bs, int const &depth)
+insertBlocks(float const *da, int const &s)
 {
-	int				i;
-	int				d;
+	int				i, j, k;
+	int const		sums_size = (powf(8, BLOCK_DEPTH) - 1) / 7; // get number of subdivisions above deepest
+	int				sums[sums_size];
 	int				x, y, z;
 
-	for (d = 0; d < depth; ++d)
+	j = 0;
+	for (z = 0; z < s; z += 2)
 	{
-		for (z = 0; z < s; ++z)
+		for (y = 0; y < s; y += 2)
 		{
-			for (y = 0; y < s; ++y)
+			for (x = 0; x < s; x += 2)
 			{
-				for (x = 0; x < s; ++x)
+				sums[j] = 0;
+				for (i = 0; i < 8; ++i)
 				{
-
+					sums[j] += (da[(z + ((i >> 2) & 1)) * s * s
+								 + (y + ((i >> 1) & 1)) * s
+								 + (x + ((i >> 0) & 1))] > 0.0f);
+				}
+				++j;
+			}
+		}
+	}
+	for (i = 4; i < s; i <<= 1)
+	{
+		for (z = 0; z < s; z += i)
+		{
+			for (y = 0; y < s; y += i)
+			{
+				for (x = 0; x < s; x += i)
+				{
+					for (k = 0; k < 8; ++k)
+					{
+						
+					}
 				}
 			}
 		}
@@ -198,6 +220,7 @@ generateChunkInThread(void *args)
 				}
 			}
 		}
+		insertBlocks(da, s);
 		d->chunk->generated = true;
 	}
 	delete d;
