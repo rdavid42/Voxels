@@ -23,12 +23,6 @@ Link::Link(float const &x, float const &y, float const &z, float const &s) : Oct
 		this->_children[i] = NULL;
 }
 
-Link::Link(Link const &src) : Octree(src)
-{
-	for (int i = 0; i < CHD_MAX; ++i)
-		this->_children[i] = NULL;
-}
-
 Link::~Link(void)
 {
 	for (int i = 0; i < CHD_MAX; ++i)
@@ -162,11 +156,11 @@ Link::render(void) const
 {
 	int				i;
 
-	if (this->_state & GROUND)
+/*	if (this->_state & GROUND)
 	{
 		glColor3f(c.x, c.y, c.z);
 		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
-	}
+	}*/
 	for (i = 0; i < CHD_MAX; ++i)
 	{
 		if (this->_children[i])

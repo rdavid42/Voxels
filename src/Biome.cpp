@@ -13,12 +13,6 @@ Biome::Biome(float const &x, float const &y, float const &z, float const &s) : L
 	return ;
 }
 
-Biome::Biome(Biome const &src) : Link(src)
-{
-	this->_state = EMPTY;
-	return ;
-}
-
 Biome::~Biome(void)
 {
 	return ;

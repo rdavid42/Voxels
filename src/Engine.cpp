@@ -46,101 +46,7 @@ Engine::calcFPS(void)
 // MULTI-THREADED CHUNK GENERATION
 // --------------------------------------------------------------------------------
 
-inline static void
-getBlockColor(Vec3<float> &r, float &t, float &n)
-{
-	r.x = 1.0f;
-	r.y = 1.0f;
-	r.z = 1.0f;
-	if (n >= 1.5f - t * 5)
-		r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
-	else if (n >= 1.2f)
-		r = Vec3<float>(0.9f - t, 0.9f - t, 0.9f - t);
-	else if (n >= 1.1f)
-		r = Vec3<float>(0.8f, 0.8f + t, 0.8f);
-	else if (n >= 0.3f)
-		r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
-	else if (n >= 0.2f)
-		r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
-	else if (n >= 0.0f)
-		r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
-	else if (n <= -0.7f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
-	else if (n <= -0.6f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
-	else if (n <= -0.5f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
-	else if (n <= -0.4f)
-		r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-	else if (n <= -0.1f)
-		r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
-	else if (n <= 0.5f)
-		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-}
 /*
-inline static void
-generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
-{
-	Vec3<float>					r;
-	int							i;
-	float						n;
-	float						nx, ny, nz;
-	float						color_noise;
-
-	(void)z;
-	(void)depth;
-	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
-	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
-	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
-	n = d->noise->octave_noise_3d(0, nx, ny, nz);
-	// n += d->noise->octave_noise_3d(0, nx, ny, nz);
-
-	// if (n < nz + *d->block_size && n > nz)
-	// {
-	// 	color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
-	// 	getBlockColor(r, color_noise, n);
-	// 	d->chunk->insert(nx, ny, n, depth, BLOCK, r);
-	// }
-	if (n > 0 && nz < FRAC_LIMIT && nz > -FRAC_LIMIT)
-	{
-		color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
-		getBlockColor(r, color_noise, n);
-		d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
-	}
-}
-
-inline static void
-insertBlocks()
-{
-
-}
-
-static void *
-generateChunkInThread(void *args)
-{
-	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
-	float						x, y, z;
-	int							depth;
-
-	if (d->chunk != NULL && !d->chunk->generated)
-	{
-		depth = BLOCK_DEPTH;
-		for (z = 0.0f; z < *d->chunk_size; z += *d->block_size)
-		{
-			for (y = 0.0f; y < *d->chunk_size; y += *d->block_size)
-			{
-				for (x = 0.0f; x < *d->chunk_size; x += *d->block_size)
-				{
-					generateBlock(d, x, y, z, depth);
-				}
-			}
-		}
-		d->chunk->generated = true;
-	}
-	delete d;
-	return (NULL);
-}
-*/
 inline static float
 generateNoise(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z)
 {
@@ -188,9 +94,10 @@ insertBlocks(float const *da, int const &s)
 			{
 				for (x = 0; x < s; x += i)
 				{
+					sums[j] = 0;
 					for (k = 0; k < 8; ++k)
 					{
-						
+						sums[j] += sums[];
 					}
 				}
 			}
@@ -221,6 +128,106 @@ generateChunkInThread(void *args)
 			}
 		}
 		insertBlocks(da, s);
+		d->chunk->generated = true;
+	}
+	delete d;
+	return (NULL);
+}
+*/
+inline static void
+getBlockColor(Vec3<float> &r, float &t, float &n)
+{
+	r.x = 1.0f;
+	r.y = 1.0f;
+	r.z = 1.0f;
+	if (n >= 1.5f - t * 5)
+		r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
+	else if (n >= 1.2f)
+		r = Vec3<float>(0.9f - t, 0.9f - t, 0.9f - t);
+	else if (n >= 1.1f)
+		r = Vec3<float>(0.8f, 0.8f + t, 0.8f);
+	else if (n >= 0.3f)
+		r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
+	else if (n >= 0.2f)
+		r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
+	else if (n >= 0.0f)
+		r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
+	else if (n <= -0.7f)
+		r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
+	else if (n <= -0.6f)
+		r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
+	else if (n <= -0.5f)
+		r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
+	else if (n <= -0.4f)
+		r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
+	else if (n <= -0.1f)
+		r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
+	else if (n <= 0.5f)
+		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+}
+
+inline static void
+generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
+{
+	Vec3<float>					r;
+	int							i;
+	float						n;
+	float						u;
+	float						nx, ny, nz;
+	float						color_noise;
+	Octree						*tmp;
+
+	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
+	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
+	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
+	n = d->noise->octave_noise_3d(0, nx, ny, nz);
+	if (nz < 0)
+	{
+		if (n > 0)
+		{
+			color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
+			getBlockColor(r, color_noise, nz);
+			d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+		}
+	}
+	else
+	{
+		u = d->noise->octave_noise_3d(0, nx, ny, nz) * 100;
+		if (u > 0)
+		{
+			if (n <= 0)
+			{
+				color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
+				getBlockColor(r, color_noise, nz);
+				d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+			/*	tmp = d->chunk->search(nx, ny, nz);
+				if (tmp->getState() & GROUND)
+					tmp->remove();*/
+			}
+		}
+	}
+}
+
+static void *
+generateChunkInThread(void *args)
+{
+	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
+	float						x, y, z;
+	int							depth;
+
+	if (d->chunk != NULL && !d->chunk->generated)
+	{
+		depth = BLOCK_DEPTH;
+		for (z = 0.0f; z < *d->chunk_size; z += *d->block_size)
+		{
+			for (y = 0.0f; y < *d->chunk_size; y += *d->block_size)
+			{
+				for (x = 0.0f; x < *d->chunk_size; x += *d->block_size)
+				{
+					generateBlock(d, x, y, z, depth);
+				}
+			}
+		}
 		d->chunk->generated = true;
 	}
 	delete d;
@@ -564,7 +571,6 @@ Engine::init(void)
 	this->noise->configs.emplace_back(1, 0.3, 0.5, 0.5, 0.5);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
 	this->noise->configs.emplace_back(2, 0.8, 0.4, 0.3, 0.4);
-	this->noise->configs.emplace_back(3, 0.3, 0.5, 0.6, 0.5);
 	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
 				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
@@ -588,7 +594,7 @@ Engine::init(void)
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (float)(this->window_width / this->window_height), 0.01, OCTREE_SIZE);
+	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));

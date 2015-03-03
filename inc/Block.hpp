@@ -10,8 +10,8 @@
 class Block : public Octree
 {
 public:
-/*	int					n;
-	Triangle<float>		t[5];*/
+	int					n;
+	Triangle<float>		t[5];
 
 	Block(void);
 	Block(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s);

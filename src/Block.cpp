@@ -39,20 +39,9 @@ Block::search(float const &x, float const &y, float const &z, int const &state)
 }
 
 Octree *
-Block::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, Vec3<float> const &c, bool const &simplify)
+Block::insert(float const &, float const &, float const &, uint32_t const &, int32_t const &state, Vec3<float> const &, bool const &)
 {
-	(void)x;
-	(void)y;
-	(void)z;
-	(void)depth;
-	(void)state;
-	(void)c;
-	(void)simplify;
 	this->setState(state);
-	if (simplify)
-		return (this->backwardSimplification());
-	else
-		return (this);
 	return (this);
 }
 

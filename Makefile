@@ -12,7 +12,7 @@ CC			=	g++
 HEADER		=	-I./$(INC_PATH)
 FLAGS		=	-pthread -Ofast -g -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
 VARS		=	-D_REENTRANT -D_THREAD_SAFE -DDEBUG
-#-DMARCHING_CUBES
+# -DMARCHING_CUBES
 NAME		=	voxels
 
 ifeq "$(PLATFORM)" "WIN32"

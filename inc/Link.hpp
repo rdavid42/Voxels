@@ -16,7 +16,6 @@ public:
 	Link(void);
 	Link(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s);
 	Link(float const &x, float const &y, float const &z, float const &s);
-	Link(Link const &src);
 	virtual ~Link(void);
 
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state, Vec3<float> const &c);
@@ -30,6 +29,9 @@ public:
 	void				setChild(uint32_t const &i, Octree *const child);
 
 	Link &				operator=(Link const &rhs);
+
+private:
+	Link(Link const &src);
 };
 
 std::ostream &			operator<<(std::ostream &o, Link const &i);

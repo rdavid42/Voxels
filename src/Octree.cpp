@@ -45,10 +45,7 @@ Octree::operator=(Octree const &rhs)
 }
 
 // -------------------------------------------------------------------
-// Remove current octree from his parent,
-// and set it to NULL in the parent.
-// You should never call delete on an Octree (ex: delete this->octree;)
-// because it doesn't set it to NULL in his parent
+// Remove current octree from his parent, and set it to NULL
 // -------------------------------------------------------------------
 void
 Octree::remove(void)
@@ -60,7 +57,7 @@ Octree::remove(void)
 	{
 		for (i = 0; i < CHD_MAX; ++i)
 		{
-			if (parent->getChild(i) == this)
+			if (parent->getChild(i) != NULL && parent->getChild(i) == this)
 			{
 				delete parent->getChild(i);
 				parent->setChild(i, NULL);
@@ -90,12 +87,12 @@ Octree::backwardSimplification(void)
 		Vec3<float> cl(0, 0, 0);
 		for (i = 0; i < CHD_MAX; ++i)
 		{
-			if (_parent->getChild(i))
+			if (_parent->getChild(i) != NULL)
 			{
 				cl.x += _parent->getChild(i)->c.x;
 				cl.y += _parent->getChild(i)->c.y;
 				cl.z += _parent->getChild(i)->c.z;
-				// delete _parent->getChild(i);
+				delete _parent->getChild(i);
 				_parent->setChild(i, NULL);
 			}
 		}
