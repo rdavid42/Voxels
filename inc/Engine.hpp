@@ -8,6 +8,7 @@
 # include <unistd.h>
 # include <sstream>
 # include <string>
+# include <list>
 # include "Camera.hpp"
 # include "Noise.hpp"
 # include "Player.hpp"
@@ -24,7 +25,7 @@ class Link;
 class Engine
 {
 public:
-	// FPS calculation structure
+	// FPS
 	typedef struct		s_timer
 	{
 		int				fps;
@@ -33,7 +34,7 @@ public:
 		std::string		title;
 	}					t_timer;
 
-	// Chunk thread argument, should be replaced by a more generic structure in the future
+	// Chunk thread arguments
 	typedef struct		s_chunkThreadArgs
 	{
 		Noise			*noise;
@@ -41,29 +42,30 @@ public:
 		float const		*inc;
 		float const		*block_size;
 		float const		*chunk_size;
+		int				*center;
 		Vec3<int>		pos;
 	}					t_chunkThreadArgs;
 
-	t_timer				fps;
-	SDL_Window *		window;
-	SDL_GLContext		context;
-	uint32_t			window_width;
-	uint32_t			window_height;
-	Link *				octree;
-	Camera *			camera;
-	Noise *				noise;
-	Player *			player;
-	float				chunk_size; // size of a chunk
-	float				block_size; // size of a block inside a chunk
-	float				noise_inc; // noise function increment, smaller than block size -> less gaps
-	int					center; // central chunk's index, `chunks[center][center][center]`
-	Chunk				*chunks[GEN_SIZE]
-								[GEN_SIZE]
-								[GEN_SIZE]; // camera chunk in the center
-	float				noise_min;
-	float				noise_max;
-	bool				mouse_button;
-	Block				*highlight;
+	t_timer								fps;
+	SDL_Window *						window;
+	SDL_GLContext						context;
+	uint32_t							window_width;
+	uint32_t							window_height;
+	Link *								octree;
+	Camera *							camera;
+	Noise *								noise;
+	Player *							player;
+	float								chunk_size; // size of a chunk
+	float								block_size; // size of a block inside a chunk
+	float								noise_inc; // noise function increment, smaller than block size -> less gaps
+	int									center; // central chunk's index, `chunks[center][center][center]`
+	Chunk								*chunks[GEN_SIZE]
+												[GEN_SIZE]
+												[GEN_SIZE]; // camera chunk in the center
+	float								noise_min;
+	float								noise_max;
+	bool								mouse_button;
+	Block								*highlight;
 
 	Engine(void);
 	~Engine(void);

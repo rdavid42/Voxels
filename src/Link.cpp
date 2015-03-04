@@ -140,6 +140,7 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 						this->createChild(i, nx, ny, nz, s, state, c);
 					else
 						this->createChild(i, nx, ny, nz, s, 0, c);
+					this->_state &= ~state; // clear bits
 					return (this->_children[i]->insert(x, y, z, depth - 1, state, c, simplify));
 				}
 			}

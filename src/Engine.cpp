@@ -220,21 +220,22 @@ generateChunkInThread(void *args)
 	float						x, y, z;
 	int							depth;
 
-	if (d->chunk != NULL && !d->chunk->generated)
-	{
+	if ((d->pos.y < *d->center - 1 || d->pos.y > *d->center + 1)
+		&& (d->pos.x < *d->center - 1 || d->pos.x > *d->center + 1))
+		depth = BLOCK_DEPTH - 1;
+	else
 		depth = BLOCK_DEPTH;
-		for (z = 0.0f; z < *d->chunk_size; z += *d->block_size)
+	for (z = 0.0f; z < *d->chunk_size; z += *d->block_size)
+	{
+		for (y = 0.0f; y < *d->chunk_size; y += *d->block_size)
 		{
-			for (y = 0.0f; y < *d->chunk_size; y += *d->block_size)
+			for (x = 0.0f; x < *d->chunk_size; x += *d->block_size)
 			{
-				for (x = 0.0f; x < *d->chunk_size; x += *d->block_size)
-				{
-					generateBlock(d, x, y, z, depth);
-				}
+				generateBlock(d, x, y, z, depth);
 			}
 		}
-		d->chunk->generated = true;
 	}
+	// d->chunk->generated = true;
 	delete d;
 	return (NULL);
 }
@@ -256,15 +257,19 @@ launchGeneration(void *args)
 			{
 				if (e->chunks[cz][cy][cx] != NULL)
 				{
-					thread_args = new Engine::t_chunkThreadArgs();
-					thread_args->noise = e->noise;
-					thread_args->chunk = e->chunks[cz][cy][cx];
-					thread_args->inc = &e->noise_inc;
-					thread_args->block_size = &e->block_size;
-					thread_args->chunk_size = &e->chunk_size;
-					thread_args->pos = Vec3<int>(cx, cy, cz);
-					pthread_create(&init, NULL, generateChunkInThread, thread_args);
-					pthread_detach(init);
+					if (!e->chunks[cz][cy][cx]->generated)
+					{
+						thread_args = new Engine::t_chunkThreadArgs();
+						thread_args->noise = e->noise;
+						thread_args->chunk = e->chunks[cz][cy][cx];
+						thread_args->inc = &e->noise_inc;
+						thread_args->block_size = &e->block_size;
+						thread_args->chunk_size = &e->chunk_size;
+						thread_args->center = &e->center;
+						thread_args->pos = Vec3<int>(cx, cy, cz);
+						pthread_create(&init, NULL, generateChunkInThread, thread_args);
+						pthread_detach(init);
+					}
 				}
 			}
 		}
@@ -295,8 +300,6 @@ Engine::generateChunks(void)
 		// only try to generate if the camera moved to another chunk
 		if (current != chunks[center][center][center])
 		{
-			// std::cerr << "current: " << current << std::endl;
-			// chunks[center][center][center]->remove();
 			chunks[center][center][center] = current;
 			this->insertChunks();
 			this->generation();
@@ -337,38 +340,6 @@ Engine::insertChunks(void)
 	}
 }
 
-void
-Engine::printNoiseMinMaxApproximation(void)
-{
-	float			n;
-	float			max;
-	float			min;
-	float			x, y;
-	float const		inc = 0.01;
-	float			i;
-
-	max = 0.0f;
-	min = NOISE_NOT_GENERATED;
-	for (x = -10; x < 10; x += inc)
-	{
-		for (y = -10; y < 10; y += inc)
-		{
-			i = 0.0f;
-			n = 0.0f;
-			while (i < FRAC_LIMIT)
-			{
-				n += noise->fractal(0, x, y, 1.5);
-				i++;
-			}
-			if (n > max)
-				max = n;
-			if (n < min)
-				min = n;
-		}
-	}
-	std::cerr << "Fractal noise - min: " << min << ", max: " << max << std::endl;
-}
-
 // --------------------------------------------------------------------------------
 // only render chunks in front of the camera
 // --------------------------------------------------------------------------------
@@ -388,7 +359,7 @@ Engine::renderChunks(void)
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
 				chk = chunks[cz][cy][cx];
-				if (chk != NULL && chk->generated)
+				if (chk != NULL)// && chk->generated)
 				{
 					if (cx == center && cy == center && cz == center)
 						chk->render();
@@ -513,7 +484,6 @@ Engine::initChunks(void)
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	block_size = chunk_size / powf(2, BLOCK_DEPTH);
 	noise_inc = chunk_size / powf(2, BLOCK_DEPTH + 2);
-	// this->printNoiseMinMaxApproximation();
 	this->noise_min = -FRAC_LIMIT;
 	this->noise_max = FRAC_LIMIT;
 	// Create initial chunk
@@ -523,29 +493,6 @@ Engine::initChunks(void)
 															CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(1.0f, 0.0f, 1.0f), false);
 	this->insertChunks();
 	this->generation();
-}
-
-inline static float
-test_perlin_speed(Noise &noise)
-{
-	clock_t			startTime = clock();
-	int				x, y, z;
-	int	const		size = 100.0f;
-	float			n;
-
-	n = 0;
-	for (x = 0.0f; x < size; ++x)
-	{
-		for (y = 0.0f; y < size; ++y)
-		{
-			for (z = 0.0f; z < size; ++z)
-			{
-				n += noise.octave_noise_3d(0, x, y, z);
-			}
-		}
-	}
-	std::cerr << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << std::endl;
-	return (n);
 }
 
 int
@@ -572,8 +519,6 @@ Engine::init(void)
 				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
 				<< "amplitude:   " << this->noise->configs.at(0).amplitude << std::endl
 				<< "persistence: " << this->noise->configs.at(0).persistence << std::endl;
-/*	std::cerr << test_perlin_speed(*this->noise) << std::endl;
-	return (0);*/
 	SDL_ShowCursor(SDL_DISABLE);
 	this->window = SDL_CreateWindow("Voxels",
 									SDL_WINDOWPOS_UNDEFINED,
