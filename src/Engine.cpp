@@ -134,7 +134,7 @@ generateChunkInThread(void *args)
 	return (NULL);
 }
 */
-inline static void
+/*inline static void
 getBlockColor(Vec3<float> &r, float &t, float &n)
 {
 	r.x = 1.0f;
@@ -164,6 +164,17 @@ getBlockColor(Vec3<float> &r, float &t, float &n)
 		r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
 	else if (n <= 0.5f)
 		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
+}*/
+
+inline static void
+getBlockColor(Vec3<float> &r, float &t, float &z)
+{
+	if (z < 0)
+		r.set(0.5f - t, 0.5f - t, 0.5f - t);
+	else if (z >= FRAC_LIMIT - 0.2)
+		r.set(0.2f - t, 0.5f - t, 0.2f - t);
+	else
+		r.set(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
 }
 
 inline static void
@@ -190,20 +201,14 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 			d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
 		}
 	}
-	else
+	else if (nz >= 0 && nz < FRAC_LIMIT)
 	{
-		u = d->noise->octave_noise_3d(0, nx, ny, nz) * 100;
+		u = d->noise->octave_noise_3d(2, nx, ny, nz);
 		if (u > 0)
 		{
-			if (n <= 0)
-			{
-				color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
-				getBlockColor(r, color_noise, nz);
-				d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
-			/*	tmp = d->chunk->search(nx, ny, nz);
-				if (tmp->getState() & GROUND)
-					tmp->remove();*/
-			}
+			color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
+			getBlockColor(r, color_noise, nz);
+			d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
 		}
 	}
 }
@@ -323,18 +328,9 @@ Engine::insertChunks(void)
 					px = camera->getPosition().x + (cx - center) * chunk_size;
 					py = camera->getPosition().y + (cy - center) * chunk_size;
 					pz = camera->getPosition().z + (cz - center) * chunk_size;
-					// check for terrain bounds
-					// if (pz <= this->noise_max && pz >= this->noise_min)
-					// {
-						new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(0.7f, 0.5f, 0.0f), false);
-						if (new_chunk != chunks[cz][cy][cx])
-							chunks[cz][cy][cx] = new_chunk;
-					// // }
-					// else
-					// {
-					// 	// terrain generation out of bounds, no chunk insertion here !
-					// 	chunks[cz][cy][cx] = NULL;
-					// }
+					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(0.7f, 0.5f, 0.0f), false);
+					if (new_chunk != chunks[cz][cy][cx])
+						chunks[cz][cy][cx] = new_chunk;
 				}
 			}
 		}
@@ -567,10 +563,10 @@ Engine::init(void)
 	this->window_height = 1400;
 	this->highlight = NULL;
 	this->noise = new Noise(42, 256);
-	srandom(time(NULL));
 	this->noise->configs.emplace_back(1, 0.3, 0.5, 0.5, 0.5);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
-	this->noise->configs.emplace_back(2, 0.8, 0.4, 0.3, 0.4);
+	this->noise->configs.emplace_back(1, 0.4, 1, 0.2, 1);
+	srandom(time(NULL));
 	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
 				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
