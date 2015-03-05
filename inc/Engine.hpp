@@ -17,6 +17,7 @@
 # include "Octree.hpp"
 # include "Chunk.hpp"
 # include "Block.hpp"
+# include "particleEngine.hpp"
 
 class Camera;
 class Octree;
@@ -55,6 +56,7 @@ public:
 	Camera *							camera;
 	Noise *								noise;
 	Player *							player;
+	particleEngine *					particles;
 	float								chunk_size; // size of a chunk
 	float								block_size; // size of a block inside a chunk
 	float								noise_inc; // noise function increment, smaller than block size -> less gaps

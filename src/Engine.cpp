@@ -545,6 +545,7 @@ Engine::init(void)
 	this->window_width = 2560;
 	this->window_height = 1440;
 	this->highlight = NULL;
+	this->particles = new particleEngine;
 	this->initSettings();
 	this->noise = new Noise(42, 256);
 	this->noise->configs.emplace_back(4, 0.8, 0.2, 0.7, 0.1);
@@ -713,6 +714,7 @@ Engine::render(void)
 										this->highlight->getCube()->getS());
 	}
 	this->renderChunks();
+	this->particles->particleGestion();
 	// this->octree->renderGround();
 	//this->renderHUD();
 	glMatrixMode(GL_MODELVIEW);
@@ -767,6 +769,11 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 				std::cerr << hit->getState();
 				BlockItem			block(Vec3<float>(hit->c.x, hit->c.y, hit->c.z));
 				hit->remove();
+				this->particles->blockDestruction(
+						Vec3<float> (this->camera->getPosition().x + inc.x * i,
+										this->camera->getPosition().y + inc.y * i,
+										this->camera->getPosition().z + inc.z * i),
+						Vec3<float>(hit->c.x, hit->c.y, hit->c.z));
 				this->player->inventory->add(block);
 				break;
 			}
