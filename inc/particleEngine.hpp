@@ -5,7 +5,7 @@
 # include <iostream>
 # include <list>
 # include <Vec3.hpp>
-# include <particle.hpp>
+# include <Particle.hpp>
 
 class particleEngine
 {

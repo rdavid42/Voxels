@@ -51,10 +51,24 @@ Particle::initForDestruction(Vec3<float> &pos, Vec3<float> &color)
 	float		velX;
 	float		velY;
 	float		velZ;
+	float		randColorX;
+	float		randColorY;
+	float		randColorZ;
 
+	randColorX = ((double) random() / RAND_MAX) / 10;
+	randColorY = ((double) random() / RAND_MAX) / 10;
+	randColorZ = ((double) random() / RAND_MAX) / 10;
+	randColorX -= ((double) random() / RAND_MAX) / 10;
+	randColorY -= ((double) random() / RAND_MAX) / 10;
+	randColorZ -= ((double) random() / RAND_MAX) / 10;
+	std::cout << randColorX << std::endl;
+	std::cout << randColorY << std::endl;
+	std::cout << randColorZ << std::endl;
 	this->_position = pos;
-	this->_color = color;
-	this->_endColor = color;
+	this->_color = Vec3<float> (color.x + randColorX,
+								color.y + randColorY,
+								color.z + randColorZ);
+	this->_endColor = this->_color;
 	this->_deltaColor = Vec3<float> (0.0f, 0.0f, 0.0f);
 	velX = ((double) random() / RAND_MAX) / 10;
 	velY = ((double) random() / RAND_MAX) / 10;
@@ -102,23 +116,23 @@ Particle::drawTriangle(void)
 		glBegin(GL_TRIANGLES);
 
 		//TRIANGLE BAS
-		glVertex3f( 0.0f, 0.01f, 0.0f);
-		glVertex3f(-0.01f,-0.01f, 0.01f);
-		glVertex3f( 0.01f,-0.01f, 0.01f);
+		glVertex3f( 0.0f, 0.001f, 0.0f);
+		glVertex3f(-0.005f,-0.005f, 0.005f);
+		glVertex3f( 0.005f,-0.005f, 0.005f);
 		//TRIANGLE DROIT
-		glVertex3f(0.0f, 0.01f, 0.0f);
-		glVertex3f(0.01f, -0.01f, 0.01f);
-		glVertex3f(0.01f, -0.01f, -0.01f);
+		glVertex3f(0.0f, 0.001f, 0.0f);
+		glVertex3f(0.005f, -0.005f, 0.005f);
+		glVertex3f(0.005f, -0.005f, -0.005f);
 
 		//TRIANGLE ARRIRE
-		glVertex3f(0.0f, 0.01f, 0.0f);
-		glVertex3f(0.01f, -0.01f, -0.01f);
-		glVertex3f(-0.01f, -0.01f, -0.01f);
+		glVertex3f(0.0f, 0.005f, 0.0f);
+		glVertex3f(0.005f, -0.005f, -0.005f);
+		glVertex3f(-0.005f, -0.005f, -0.005f);
 
 		//TRIANGLE GAUCHE
-		glVertex3f( 0.0f, 0.01f, 0.0f);
-		glVertex3f(-0.01f,-0.01f,-0.01f);
-		glVertex3f(-0.01f,-0.01f, 0.01f);
+		glVertex3f( 0.0f, 0.005f, 0.0f);
+		glVertex3f(-0.005f, -0.005f, -0.005f);
+		glVertex3f(-0.005f, -0.005f, 0.005f);
 
 		glEnd();
 	glPopMatrix();
