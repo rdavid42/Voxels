@@ -167,17 +167,37 @@ getBlockColor(Vec3<float> &r, float &t, float &n)
 }*/
 
 inline static void
-getBlockColor(Vec3<float> &r, float &t, float &z)
+getBlockColor(Vec3<float> &r, float &t, float &)
 {
-	if (z < 0)
+	// if (z < 0)
 		r.set(0.5f - t, 0.5f - t, 0.5f - t);
-	else if (z >= FRAC_LIMIT - 0.2)
+/*	else if (z >= FRAC_LIMIT - 0.2)
 		r.set(0.2f - t, 0.5f - t, 0.2f - t);
 	else
-		r.set(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
+		r.set(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);*/
 }
 
-inline static void
+static void
+generateTriangles(float const &x, float const &y, float const &z, float const &s, int *nt, Triangle<float> *t, Noise *n)
+{
+	Gridcell			g;
+	int					i;
+	float				nb[8];
+
+	g.p[0] = Vec3<float>(x, y, z);
+	g.p[1] = Vec3<float>(x + s, y, z);
+	g.p[2] = Vec3<float>(x + s, y + s, z);
+	g.p[3] = Vec3<float>(x, y + s, z);
+	g.p[4] = Vec3<float>(x, y, z + s);
+	g.p[5] = Vec3<float>(x + s, y, z + s);
+	g.p[6] = Vec3<float>(x + s, y + s, z + s);
+	g.p[7] = Vec3<float>(x, y + s, z + s);
+	for (i = 0; i < 8; ++i)
+		g.val[i] = n->octave_noise_3d(0, g.p[i].x, g.p[i].y, g.p[i].z) > 0 ? -1 : 1;
+	*nt = Polygonise(g, 0, t);
+}
+
+static void
 generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
 {
 	Vec3<float>					r;
@@ -186,31 +206,50 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 	float						u;
 	float						nx, ny, nz;
 	float						color_noise;
-	Octree						*tmp;
+	Block						*b;
+	int							nt;
+	Triangle<float>				t[5];
 
 	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
 	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
 	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
 	n = d->noise->octave_noise_3d(0, nx, ny, nz);
-	if (nz < 0)
-	{
-		if (n > 0)
+/*	if (nz < 0)
+	{*/
+		if (n > -0.5)
 		{
-			color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
+			color_noise = d->noise->octave_noise_3d(1, nx, ny, nz) / 10;
 			getBlockColor(r, color_noise, nz);
+#ifdef MARCHING_CUBES
+			// b = (Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+			nt = 0;
+			generateTriangles(nx, ny, nz, *d->block_size, &nt, t, d->noise);
+			if (nt > 0)
+			{
+				b = (Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+				if (b != NULL)
+				{
+					b->n = nt;
+					b->t = new Triangle<float>[nt];
+					for (i = 0; i < nt; ++i)
+						b->t[i] = t[i];
+				}
+			}
+#else
 			d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+#endif
 		}
-	}
-	else if (nz >= 0 && nz < FRAC_LIMIT)
+	// }
+/*	else if (nz >= 0 && nz < FRAC_LIMIT)
 	{
-		u = d->noise->octave_noise_3d(2, nx, ny, nz);
+		u = d->noise->octave_noise_3d(0, nx, ny, nz);
 		if (u > 0)
 		{
-			color_noise = d->noise->fractal(1, nx, ny, nz) / 10;
+			color_noise = d->noise->octave_noise_3d(1, nx, ny, nz) / 10;
 			getBlockColor(r, color_noise, nz);
-			d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+			generateTriangles((Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true), d->noise);
 		}
-	}
+	}*/
 }
 
 static void *
@@ -220,11 +259,7 @@ generateChunkInThread(void *args)
 	float						x, y, z;
 	int							depth;
 
-	if ((d->pos.y < *d->center - 1 || d->pos.y > *d->center + 1)
-		&& (d->pos.x < *d->center - 1 || d->pos.x > *d->center + 1))
-		depth = BLOCK_DEPTH - 1;
-	else
-		depth = BLOCK_DEPTH;
+	depth = BLOCK_DEPTH;
 	for (z = 0.0f; z < *d->chunk_size; z += *d->block_size)
 	{
 		for (y = 0.0f; y < *d->chunk_size; y += *d->block_size)
@@ -235,7 +270,7 @@ generateChunkInThread(void *args)
 			}
 		}
 	}
-	// d->chunk->generated = true;
+	d->chunk->generated = true;
 	delete d;
 	return (NULL);
 }
@@ -349,7 +384,7 @@ Engine::renderChunks(void)
 	int						cx, cy, cz;
 	Chunk const *			chk; // chunk pointer
 	Vec3<float> const &		cam = this->camera->getPosition(); // camera position
-	Vec3<float>				fwr = this->camera->getForward(); // camera forward vector
+	Vec3<float>	const		fwr = this->camera->getForward(); // camera forward vector
 	Vec3<float>				chk_cam_vec;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
@@ -359,7 +394,7 @@ Engine::renderChunks(void)
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
 				chk = chunks[cz][cy][cx];
-				if (chk != NULL)// && chk->generated)
+				if (chk != NULL && chk->generated)
 				{
 					if (cx == center && cy == center && cz == center)
 						chk->render();
@@ -510,7 +545,7 @@ Engine::init(void)
 	this->window_height = 1400;
 	this->highlight = NULL;
 	this->noise = new Noise(42, 256);
-	this->noise->configs.emplace_back(1, 0.3, 0.5, 0.5, 0.5);
+	this->noise->configs.emplace_back(1, 0.4, 0.5, 0.5, 0.5);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
 	this->noise->configs.emplace_back(1, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
@@ -531,7 +566,8 @@ Engine::init(void)
 	if (!(this->context = SDL_GL_CreateContext(this->window)))
 		return (sdlError(0));
 	SDL_SetRelativeMouseMode(SDL_TRUE);
-	glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
+	// glClearColor(0.527f, 0.804f, 0.917f, 1.0f);
+	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -871,6 +907,7 @@ Engine::loop(void)
 	Uint32			current_time = 0;
 	Uint32			elapsed_time = 0;
 	Uint32			last_time = 0;
+	clock_t			startTime;
 
 	mouse_button = false;
 	quit = 0;
@@ -913,7 +950,9 @@ Engine::loop(void)
 		this->calcFPS();
 		SDL_SetWindowTitle(this->window, fps.title.c_str());
 		this->update(elapsed_time);
+		// startTime = clock();
 		this->render();
+		// std::cerr << double(Wclock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 		SDL_GL_SwapWindow(this->window);
 	}
 }
