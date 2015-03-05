@@ -61,9 +61,6 @@ Particle::initForDestruction(Vec3<float> &pos, Vec3<float> &color)
 	randColorX -= ((double) random() / RAND_MAX) / 10;
 	randColorY -= ((double) random() / RAND_MAX) / 10;
 	randColorZ -= ((double) random() / RAND_MAX) / 10;
-	std::cout << randColorX << std::endl;
-	std::cout << randColorY << std::endl;
-	std::cout << randColorZ << std::endl;
 	this->_position = pos;
 	this->_color = Vec3<float> (color.x + randColorX,
 								color.y + randColorY,
