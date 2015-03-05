@@ -169,7 +169,8 @@ getBlockColor(Vec3<float> &r, float &t, float &n)
 inline static float
 getDensity(Noise *n, float const &x, float const &y, float const &z)
 {
-	return (n->octave_noise_3d(0, x, y, z));
+	return (n->octave_noise_3d(0, x, y, z)
+		  + n->octave_noise_3d(2, x, y, z));
 }
 
 inline static void
@@ -536,6 +537,12 @@ Engine::initChunks(void)
 	this->generation();
 }
 
+void
+Engine::initSettings(void)
+{
+	this->hide_ui = false;
+}
+
 int
 Engine::init(void)
 {
@@ -550,10 +557,11 @@ Engine::init(void)
 	this->window_width = 2560;
 	this->window_height = 1440;
 	this->highlight = NULL;
+	this->initSettings();
 	this->noise = new Noise(42, 256);
 	this->noise->configs.emplace_back(4, 0.5, 0.2, 0.7, 0.1);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
-	this->noise->configs.emplace_back(1, 0.4, 1, 0.2, 1);
+	this->noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
 	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
@@ -958,7 +966,7 @@ Engine::loop(void)
 		this->update(elapsed_time);
 		// startTime = clock();
 		this->render();
-		// std::cerr << double(Wclock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
+		// std::cerr << double(clock() - startTime) / double(CLOCKS_PER_SEC) << " seconds." << std::endl;
 		SDL_GL_SwapWindow(this->window);
 	}
 }
@@ -1365,105 +1373,3 @@ Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triang
 
 	return (ntriang);
 }
-
-#if 0
-inline static void
-generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, int const &depth)
-{
-	Vec3<float>					r;
-	int							i;
-	float						n;
-	float						t;
-
-	n = d->noise->scaled_octave_noise_3d(0, -2, 2, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5);
-	t = d->noise->fractal(1, d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, 1.5) / 5;
-	(void)depth;
-	r.x = 1.0f;
-	r.y = 1.0f;
-	r.z = 1.0f;
-	if (n >= 1.5f - t * 5)
-		r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
-	else if (n >= 1.2f)
-		r = Vec3<float>(0.9f - t, 0.9f - t, 0.9f - t);
-	else if (n >= 1.1f)
-		r = Vec3<float>(0.8f, 0.8f + t, 0.8f);
-	else if (n >= 0.3f)
-		r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
-	else if (n >= 0.2f)
-		r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
-	else if (n >= 0.0f)
-		r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
-	else if (n <= -0.7f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
-	else if (n <= -0.6f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
-	else if (n <= -0.5f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
-	else if (n <= -0.4f)
-		r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-	else if (n <= -0.1f)
-		r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
-	else if (n <= 0.5f)
-		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-#ifdef MARCHING_CUBES
-	Block *b = (Block *)d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
-	if (b != NULL)
-	{
-		Gridcell			g;
-		Vec3<float>			k;
-		float				s;
-		int					j;
-		float				nb[4];
-
-		k.set(b->getCube()->getX(), b->getCube()->getY(), b->getCube()->getZ());
-		s = b->getCube()->getS();
-		g.p[0] = Vec3<float>(k.x, k.y, k.z + s);
-		g.p[1] = Vec3<float>(k.x + s, k.y, k.z + s);
-		g.p[2] = Vec3<float>(k.x + s, k.y + s, k.z + s);
-		g.p[3] = Vec3<float>(k.x, k.y + s, k.z + s);
-		g.p[4] = Vec3<float>(k.x, k.y, k.z);
-		g.p[5] = Vec3<float>(k.x + s, k.y, k.z);
-		g.p[6] = Vec3<float>(k.x + s, k.y + s, k.z);
-		g.p[7] = Vec3<float>(k.x, k.y + s, k.z);
-		for (j = 0; j < 4; ++j)
-		{
-			nb[j] = 0.0f;
-			for (i = 0; i < FRAC_LIMIT; ++i)
-				nb[j] += d->noise->fractal(0, g.p[j].x, g.p[j].y, 1.5);
-		}
-		g.val[0] = g.p[0].z < nb[0] ? -1 : 1;
-		g.val[1] = g.p[1].z < nb[1] ? -1 : 1;
-		g.val[2] = g.p[2].z < nb[2] ? -1 : 1;
-		g.val[3] = g.p[3].z < nb[3] ? -1 : 1;
-		g.val[4] = g.p[4].z < nb[0] ? -1 : 1;
-		g.val[5] = g.p[5].z < nb[1] ? -1 : 1;
-		g.val[6] = g.p[6].z < nb[2] ? -1 : 1;
-		g.val[7] = g.p[7].z < nb[3] ? -1 : 1;
-		b->n = Polygonise(g, 0, b->t);
-	}
-#else
-	d->chunk->insert(d->chunk->getCube()->getX() + x, d->chunk->getCube()->getY() + y, n, depth, BLOCK, r);
-#endif
-}
-
-static void *
-generateChunkInThread(void *args)
-{
-	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
-	float						x, y;
-	int							depth;
-	float const					inc = *d->inc;
-
-	if (d->chunk != NULL && !d->chunk->generated)
-	{
-		depth = BLOCK_DEPTH;
-		for (y = 0.0f; y < (*d->chunk_size); y += inc)
-			for (x = 0.0f; x < (*d->chunk_size); x += inc)
-				generateBlock(d, x, y, depth);
-		d->chunk->generated = true;
-	}
-	delete d;
-	return (NULL);
-}
-
-#endif

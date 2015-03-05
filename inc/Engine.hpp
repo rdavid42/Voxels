@@ -67,6 +67,9 @@ public:
 	bool								mouse_button;
 	Block								*highlight;
 
+	// settings
+	bool								hide_ui;
+
 	Engine(void);
 	~Engine(void);
 
@@ -80,6 +83,7 @@ public:
 	int					sdlError(int code);
 	int					getDisplayMode(void);
 	int					init(void);
+	void				initSettings(void);
 	void				update(Uint32 const &elapsed_time);
 	void				render(void);
 	void				renderAxes(void);

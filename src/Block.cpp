@@ -63,6 +63,11 @@ Block::render(void) const
 		}
 	}
 	glEnd();
+	if (n == 0)
+	{
+		glColor3f(c.x, c.y, c.z);
+		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
+	}
 #else
 	glColor3f(c.x, c.y, c.z);
 	drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
