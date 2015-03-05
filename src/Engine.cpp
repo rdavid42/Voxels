@@ -170,7 +170,8 @@ inline static float
 getDensity(Noise *n, float const &x, float const &y, float const &z)
 {
 	return (n->octave_noise_3d(0, x, y, z));
-		  //+ n->octave_noise_3d(2, x, y, z));
+//		  + n->octave_noise_3d(0, x, y, z) * 0.25
+//		  + n->octave_noise_3d(0, x, y, z) * 0.5);
 }
 
 inline static void
@@ -221,42 +222,29 @@ generateBlock(Engine::cta *d, float const &x, float const &y, float const &z, in
 	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
 	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
 	density = getDensity(d->noise, nx, ny, nz);
-/*	if (nz < 0)
-	{*/
-		if (density > -0.5)
-		{
-			color_noise = d->noise->octave_noise_3d(0, nx, ny, nz) / 5;
-			getBlockColor(r, color_noise, density);
-#ifdef MARCHING_CUBES
-			// b = (Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
-			nt = 0;
-			generateTriangles(nx, ny, nz, *d->block_size, &nt, t, d->noise);
-			if (nt > 0)
-			{
-				b = static_cast<Block *>(d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true));
-				if (b != NULL)
-				{
-					b->n = nt;
-					// b->t = new Triangle<float>[nt];
-					for (i = 0; i < nt; ++i)
-						b->t[i] = t[i];
-				}
-			}
-#else
-			d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
-#endif
-		}
-	// }
-/*	else if (nz >= 0 && nz < FRAC_LIMIT)
+	if (density > -0.5)
 	{
-		u = d->noise->octave_noise_3d(0, nx, ny, nz);
-		if (u > 0)
+		color_noise = d->noise->octave_noise_3d(0, nx, ny, nz) / 5;
+		getBlockColor(r, color_noise, density);
+#ifdef MARCHING_CUBES
+		// b = (Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+		nt = 0;
+		generateTriangles(nx, ny, nz, *d->block_size, &nt, t, d->noise);
+		if (nt > 0)
 		{
-			color_noise = d->noise->octave_noise_3d(1, nx, ny, nz) / 10;
-			getBlockColor(r, color_noise, nz);
-			generateTriangles((Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true), d->noise);
+			b = static_cast<Block *>(d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true));
+			if (b != NULL)
+			{
+				b->n = nt;
+				// b->t = new Triangle<float>[nt];
+				for (i = 0; i < nt; ++i)
+					b->t[i] = t[i];
+			}
 		}
-	}*/
+#else
+		d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+#endif
+	}
 }
 
 static void *
@@ -559,7 +547,7 @@ Engine::init(void)
 	this->highlight = NULL;
 	this->initSettings();
 	this->noise = new Noise(42, 256);
-	this->noise->configs.emplace_back(4, 0.5, 0.2, 0.7, 0.1);
+	this->noise->configs.emplace_back(4, 0.8, 0.2, 0.7, 0.1);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
 	this->noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
