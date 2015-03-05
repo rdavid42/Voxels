@@ -116,11 +116,11 @@ Particle::drawTriangle(void)
 		glBegin(GL_TRIANGLES);
 
 		//TRIANGLE BAS
-		glVertex3f( 0.0f, 0.001f, 0.0f);
+		glVertex3f( 0.0f, 0.005f, 0.0f);
 		glVertex3f(-0.005f,-0.005f, 0.005f);
 		glVertex3f( 0.005f,-0.005f, 0.005f);
 		//TRIANGLE DROIT
-		glVertex3f(0.0f, 0.001f, 0.0f);
+		glVertex3f(0.0f, 0.005f, 0.0f);
 		glVertex3f(0.005f, -0.005f, 0.005f);
 		glVertex3f(0.005f, -0.005f, -0.005f);
 
