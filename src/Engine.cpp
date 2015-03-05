@@ -777,12 +777,15 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 	{
 		int			xpos;
 		int			ypos;
-		int			win_width = 1400;
+		int			win_width;
+		int			win_height;
 		GLfloat		pixel_color[3];
 		float		blockColor[3];
 
+		SDL_GetWindowSize(this->window, &win_width, &win_height);
+
 		SDL_GetMouseState(&xpos, &ypos);
-		glReadPixels(xpos, win_width - ypos, 1, 1, GL_RGB, GL_FLOAT, &pixel_color);
+		glReadPixels(xpos, win_height - ypos, 1, 1, GL_RGB, GL_FLOAT, &pixel_color);
 		blockColor[0] = pixel_color[0];
 		blockColor[1] = pixel_color[1];
 		blockColor[2] = pixel_color[2];
