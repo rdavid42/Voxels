@@ -169,8 +169,8 @@ getBlockColor(Vec3<float> &r, float &t, float &n)
 inline static float
 getDensity(Noise *n, float const &x, float const &y, float const &z)
 {
-	return (n->octave_noise_3d(0, x, y, z)
-		  + n->octave_noise_3d(2, x, y, z));
+	return (n->octave_noise_3d(0, x, y, z));
+		  //+ n->octave_noise_3d(2, x, y, z));
 }
 
 inline static void
