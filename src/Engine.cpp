@@ -517,9 +517,7 @@ Engine::initChunks(void)
 	this->noise_min = -FRAC_LIMIT;
 	this->noise_max = FRAC_LIMIT;
 	// Create initial chunk
-	chunks[center][center][center] = (Chunk *)octree->insert(camera->getPosition().x,
-															camera->getPosition().y,
-															camera->getPosition().z,
+	chunks[center][center][center] = (Chunk *)octree->insert(camera->getPosition().x, camera->getPosition().y, camera->getPosition().z,
 															CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(1.0f, 0.0f, 1.0f), false);
 	this->insertChunks();
 	this->generation();
@@ -720,11 +718,14 @@ Engine::render(void)
 // 2D
 // --------------------------------------
 	glEnable2D(0, 0);
-	drawUI();
-	drawMinimap();
+	if (!this->hide_ui)
+	{
+		drawUI();
+		drawMinimap();
 #ifdef DEBUG
-	this->drawDebugInfo();
+		this->drawDebugInfo();
 #endif
+	}
 	glDisable2D();
 // --------------------------------------
 // force gl draw
@@ -740,60 +741,73 @@ Engine::update(Uint32 const &elapsed_time)
 }
 
 void
+Engine::removeBlock(void)
+{
+	Vec3<float>			inc = this->camera->getForward();
+	Block *				hit; // block
+	Chunk *				chunk;
+	float				i;
+	float				j;
+
+	inc.x *= this->chunk_size;
+	inc.y *= this->chunk_size;
+	inc.z *= this->chunk_size;
+	i = 0.0f;
+	while (i < TARGET_DIST)
+	{
+		chunk = (Chunk *)this->octree->search(this->camera->getPosition().x + inc.x * i,
+											this->camera->getPosition().y + inc.y * i,
+											this->camera->getPosition().z + inc.z * i, EMPTY);
+		hit = (Block *)chunk->search(this->camera->getPosition().x + inc.x * i,
+									this->camera->getPosition().y + inc.y * i,
+									this->camera->getPosition().z + inc.z * i, GROUND);
+		if (hit != NULL && hit->getState() & GROUND)
+		{
+			std::cerr << hit->getState();
+			BlockItem			block(Vec3<float>(hit->c.x, hit->c.y, hit->c.z));
+			hit->remove();
+			this->player->inventory->add(block);
+			break;
+		}
+		i += 0.01f;
+	}
+}
+
+void
+Engine::addInventoryBlock(void)
+{
+	int			xpos;
+	int			ypos;
+	int			win_width;
+	int			win_height;
+	GLfloat		pixel_color[3];
+	float		blockColor[3];
+
+	SDL_GetWindowSize(this->window, &win_width, &win_height);
+
+	SDL_GetMouseState(&xpos, &ypos);
+	glReadPixels(xpos, win_height - ypos, 1, 1, GL_RGB, GL_FLOAT, &pixel_color);
+	blockColor[0] = pixel_color[0];
+	blockColor[1] = pixel_color[1];
+	blockColor[2] = pixel_color[2];
+	BlockItem			block(Vec3<float>(blockColor[0], blockColor[1], blockColor[2]));
+	this->player->inventory->add(block);
+}
+
+void
 Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 {
-	if (e.type == SDL_MOUSEBUTTONDOWN && !this->player->creative)
+	if (e.type == SDL_MOUSEBUTTONDOWN)
 	{
-		Vec3<float>			inc = this->camera->getForward();
-		Block *				hit; // block
-		Chunk *				chunk;
-		float				i;
-		float				j;
-
-		inc.x *= this->chunk_size;
-		inc.y *= this->chunk_size;
-		inc.z *= this->chunk_size;
-		i = 0.0f;
-		while (i < TARGET_DIST)
+		if (!this->player->creative)
 		{
-			chunk = (Chunk *)this->octree->search(this->camera->getPosition().x + inc.x * i,
-												this->camera->getPosition().y + inc.y * i,
-												this->camera->getPosition().z + inc.z * i, EMPTY);
-			hit = (Block *)chunk->search(this->camera->getPosition().x + inc.x * i,
-										this->camera->getPosition().y + inc.y * i,
-										this->camera->getPosition().z + inc.z * i, GROUND);
-			if (hit != NULL && hit->getState() & GROUND)
-			{
-				std::cerr << hit->getState();
-				BlockItem			block(Vec3<float>(hit->c.x, hit->c.y, hit->c.z));
-				hit->remove();
-				this->player->inventory->add(block);
-				break;
-			}
-			i += 0.01f;
+			removeBlock();
+		}
+		else
+		{
+			addInventoryBlock();
 		}
 	}
-	else if (e.type == SDL_MOUSEBUTTONDOWN)
-	{
-		int			xpos;
-		int			ypos;
-		int			win_width;
-		int			win_height;
-		GLfloat		pixel_color[3];
-		float		blockColor[3];
-
-		SDL_GetWindowSize(this->window, &win_width, &win_height);
-
-		SDL_GetMouseState(&xpos, &ypos);
-		glReadPixels(xpos, win_height - ypos, 1, 1, GL_RGB, GL_FLOAT, &pixel_color);
-		blockColor[0] = pixel_color[0];
-		blockColor[1] = pixel_color[1];
-		blockColor[2] = pixel_color[2];
-		BlockItem			block(Vec3<float>(blockColor[0], blockColor[1], blockColor[2]));
-		this->player->inventory->add(block);
-	}
-//	else
-//		this->camera->onMouseButton(e);
 }
 
 void
@@ -901,6 +915,8 @@ Engine::onKeyboard(SDL_KeyboardEvent const &e)
 			this->player->inventory->selectItem(8);
 		if (e.keysym.scancode == SDL_SCANCODE_KP_9)
 			this->player->inventory->selectItem(9);
+		if (e.keysym.scancode == SDL_SCANCODE_H)
+			this->hide_ui = !this->hide_ui;
 	}
 }
 
