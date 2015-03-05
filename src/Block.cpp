@@ -1,25 +1,20 @@
 
 #include "Block.hpp"
 
-Block::Block(void) : Octree()
+Block::Block(void) : Octree(), n(0), t(0)
 {
 	return ;
 }
 
-Block::Block(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Octree(c, x, y, z, s)
-{
-	return ;
-}
-
-Block::Block(Block const &src) : Octree(src)
+Block::Block(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s) : Octree(c, x, y, z, s), n(0), t(0)
 {
 	return ;
 }
 
 Block::~Block(void)
-{/*
+{
 	if (this->t != NULL)
-		delete [] this->t;*/
+		delete [] this->t;
 	return ;
 }
 
@@ -54,15 +49,18 @@ Block::render(void) const
 	int			i, j;
 
 	glColor3f(c.x, c.y, c.z);
-	glBegin(GL_TRIANGLES);
-	for (i = 0; i < this->n; ++i)
+	if (t != NULL)
 	{
-		for (j = 0; j < 3; ++j)
+		glBegin(GL_TRIANGLES);
+		for (i = 0; i < this->n; ++i)
 		{
-			glVertex3f(t[i].p[j].x, t[i].p[j].y, t[i].p[j].z);
+			for (j = 0; j < 3; ++j)
+			{
+				glVertex3f(t[i].p[j].x, t[i].p[j].y, t[i].p[j].z);
+			}
 		}
+		glEnd();
 	}
-	glEnd();
 	if (n == 0)
 	{
 		glColor3f(c.x, c.y, c.z);

@@ -236,7 +236,7 @@ generateBlock(Engine::cta *d, float const &x, float const &y, float const &z, in
 			if (b != NULL)
 			{
 				b->n = nt;
-				// b->t = new Triangle<float>[nt];
+				b->t = new Triangle<float>[nt];
 				for (i = 0; i < nt; ++i)
 					b->t[i] = t[i];
 			}
