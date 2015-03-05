@@ -166,6 +166,12 @@ getBlockColor(Vec3<float> &r, float &t, float &n)
 		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
 }*/
 
+inline static float
+getDensity(Noise *n, float const &x, float const &y, float const &z)
+{
+	return (n->octave_noise_3d(0, x, y, z));
+}
+
 inline static void
 getBlockColor(Vec3<float> &r, float &t, float &density)
 {
@@ -193,7 +199,7 @@ generateTriangles(float const &x, float const &y, float const &z, float const &s
 	g.p[6] = Vec3<float>(x + s, y + s, z + s);
 	g.p[7] = Vec3<float>(x, y + s, z + s);
 	for (i = 0; i < 8; ++i)
-		g.val[i] = n->octave_noise_3d(0, g.p[i].x, g.p[i].y, g.p[i].z) > 0 ? -1 : 1;
+		g.val[i] = getDensity(n, g.p[i].x, g.p[i].y, g.p[i].z) > 0 ? -1 : 1;
 	*nt = Polygonise(g, 0, t);
 }
 
@@ -213,7 +219,7 @@ generateBlock(Engine::cta *d, float const &x, float const &y, float const &z, in
 	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
 	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
 	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
-	density = d->noise->octave_noise_3d(0, nx, ny, nz);
+	density = getDensity(d->noise, nx, ny, nz);
 /*	if (nz < 0)
 	{*/
 		if (density > -0.5)
@@ -366,7 +372,7 @@ Engine::insertChunks(void)
 					px = camera->getPosition().x + (cx - center) * chunk_size;
 					py = camera->getPosition().y + (cy - center) * chunk_size;
 					pz = camera->getPosition().z + (cz - center) * chunk_size;
-					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(0.7f, 0.5f, 0.0f), false);
+					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(0.7f, 0.527f, 0.0f), false);
 					if (new_chunk != chunks[cz][cy][cx])
 						chunks[cz][cy][cx] = new_chunk;
 				}
@@ -541,11 +547,11 @@ Engine::init(void)
 	this->octree = NULL;
 	this->player = new Player;
 	this->player->name = "[MCSTF]Korky";
-	this->window_width = 1400;
-	this->window_height = 1400;
+	this->window_width = 2560;
+	this->window_height = 1440;
 	this->highlight = NULL;
 	this->noise = new Noise(42, 256);
-	this->noise->configs.emplace_back(1, 0.4, 0.5, 0.5, 0.5);
+	this->noise->configs.emplace_back(4, 0.5, 0.2, 0.7, 0.1);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
 	this->noise->configs.emplace_back(1, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
@@ -560,7 +566,7 @@ Engine::init(void)
 									SDL_WINDOWPOS_UNDEFINED,
 									this->window_width,
 									this->window_height,
-									SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+									SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN);
 	if (this->window == NULL)
 		return (sdlError(0));
 	if (!(this->context = SDL_GL_CreateContext(this->window)))
@@ -571,7 +577,7 @@ Engine::init(void)
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (float)(this->window_width / this->window_height), 0.1, OCTREE_SIZE);
+	gluPerspective(70, (double)this->window_width / (double)this->window_height, 0.1, OCTREE_SIZE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
