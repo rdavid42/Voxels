@@ -35,7 +35,7 @@ public:
 	}					t_timer;
 
 	// Chunk thread arguments
-	typedef struct		s_chunkThreadArgs
+	typedef struct
 	{
 		Noise			*noise;
 		Chunk			*chunk;
@@ -44,7 +44,7 @@ public:
 		float const		*chunk_size;
 		int				*center;
 		Vec3<int>		pos;
-	}					t_chunkThreadArgs;
+	}					cta;
 
 	t_timer								fps;
 	SDL_Window *						window;

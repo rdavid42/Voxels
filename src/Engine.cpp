@@ -167,10 +167,10 @@ getBlockColor(Vec3<float> &r, float &t, float &n)
 }*/
 
 inline static void
-getBlockColor(Vec3<float> &r, float &t, float &)
+getBlockColor(Vec3<float> &r, float &t, float &density)
 {
 	// if (z < 0)
-		r.set(0.5f - t, 0.5f - t, 0.5f - t);
+		r.set((density + 0.2) * 3 + t, (density + 0.2) * 2 + t, (density + 0.2) + t);
 /*	else if (z >= FRAC_LIMIT - 0.2)
 		r.set(0.2f - t, 0.5f - t, 0.2f - t);
 	else
@@ -198,11 +198,11 @@ generateTriangles(float const &x, float const &y, float const &z, float const &s
 }
 
 static void
-generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
+generateBlock(Engine::cta *d, float const &x, float const &y, float const &z, int const &depth)
 {
 	Vec3<float>					r;
 	int							i;
-	float						n;
+	float						density;
 	float						u;
 	float						nx, ny, nz;
 	float						color_noise;
@@ -213,13 +213,13 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
 	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
 	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
-	n = d->noise->octave_noise_3d(0, nx, ny, nz);
+	density = d->noise->octave_noise_3d(0, nx, ny, nz);
 /*	if (nz < 0)
 	{*/
-		if (n > -0.5)
+		if (density > -0.5)
 		{
-			color_noise = d->noise->octave_noise_3d(1, nx, ny, nz) / 10;
-			getBlockColor(r, color_noise, nz);
+			color_noise = d->noise->octave_noise_3d(0, nx, ny, nz) / 5;
+			getBlockColor(r, color_noise, density);
 #ifdef MARCHING_CUBES
 			// b = (Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
 			nt = 0;
@@ -255,7 +255,7 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 static void *
 generateChunkInThread(void *args)
 {
-	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
+	Engine::cta					*d = (Engine::cta *)args;
 	float						x, y, z;
 	int							depth;
 
@@ -282,7 +282,7 @@ launchGeneration(void *args)
 	int							cz;
 	int							cx, cy;
 	pthread_t					init;
-	Engine::t_chunkThreadArgs	*thread_args;
+	Engine::cta					*thread_args;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -294,7 +294,7 @@ launchGeneration(void *args)
 				{
 					if (!e->chunks[cz][cy][cx]->generated)
 					{
-						thread_args = new Engine::t_chunkThreadArgs();
+						thread_args = new Engine::cta();
 						thread_args->noise = e->noise;
 						thread_args->chunk = e->chunks[cz][cy][cx];
 						thread_args->inc = &e->noise_inc;
