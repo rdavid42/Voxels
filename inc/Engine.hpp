@@ -89,6 +89,8 @@ public:
 	void				update(Uint32 const &elapsed_time);
 	void				render(void);
 	void				renderAxes(void);
+	void				removeBlock(void);
+	void				addInventoryBlock(void);
 	void				addBlock(void);
 	void				loop(void);
 	void				renderHUD(void);
