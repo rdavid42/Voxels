@@ -17,7 +17,9 @@ Block::Block(Block const &src) : Octree(src)
 }
 
 Block::~Block(void)
-{
+{/*
+	if (this->t != NULL)
+		delete [] this->t;*/
 	return ;
 }
 

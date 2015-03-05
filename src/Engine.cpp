@@ -226,11 +226,11 @@ generateBlock(Engine::t_chunkThreadArgs *d, float const &x, float const &y, floa
 			generateTriangles(nx, ny, nz, *d->block_size, &nt, t, d->noise);
 			if (nt > 0)
 			{
-				b = (Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+				b = static_cast<Block *>(d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true));
 				if (b != NULL)
 				{
 					b->n = nt;
-					b->t = new Triangle<float>[nt];
+					// b->t = new Triangle<float>[nt];
 					for (i = 0; i < nt; ++i)
 						b->t[i] = t[i];
 				}
