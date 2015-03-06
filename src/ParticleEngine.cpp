@@ -1,19 +1,19 @@
 
-#include "particleEngine.hpp"
+#include "ParticleEngine.hpp"
 
-particleEngine::particleEngine(void)
+ParticleEngine::ParticleEngine(void)
 {
 	return ;
 }
 
-particleEngine::particleEngine(particleEngine const & src)
+ParticleEngine::ParticleEngine(ParticleEngine const & src)
 {
 	*this = src;
 
 	return ;
 }
 
-particleEngine::~particleEngine(void)
+ParticleEngine::~ParticleEngine(void)
 {
 	return ;
 }
@@ -31,14 +31,14 @@ checkDeath(Particle *toCheck)
 }
 
 void
-particleEngine::cleanDead(void)
+ParticleEngine::cleanDead(void)
 {
 	this->particleList.remove_if(checkDeath);
 	return ;
 }
 
 void
-particleEngine::blockDestruction(Vec3<float> pos, Vec3<float> color)
+ParticleEngine::blockDestruction(Vec3<float> pos, Vec3<float> color)
 {
 	Particle		*tmp;
 	int				particleNumber;
@@ -56,7 +56,7 @@ particleEngine::blockDestruction(Vec3<float> pos, Vec3<float> color)
 }
 
 void
-particleEngine::particleGestion(void)
+ParticleEngine::particleGestion(void)
 {
 
 	this->cleanDead();
@@ -69,8 +69,8 @@ particleEngine::particleGestion(void)
 	}
 }
 
-particleEngine &
-particleEngine::operator=(particleEngine const & rhs)
+ParticleEngine &
+ParticleEngine::operator=(ParticleEngine const & rhs)
 {
 	if (this != &rhs)
 	{
@@ -81,9 +81,9 @@ particleEngine::operator=(particleEngine const & rhs)
 }
 
 std::ostream&
-operator<<(std::ostream &o, particleEngine const &i)
+operator<<(std::ostream &o, ParticleEngine const &i)
 {
-	o << "Class : particleEngine" << std::endl;
+	o << "Class : ParticleEngine" << std::endl;
 	(void)i;
 	return (o);
 }

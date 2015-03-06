@@ -17,11 +17,28 @@
 # include "Octree.hpp"
 # include "Chunk.hpp"
 # include "Block.hpp"
-# include "particleEngine.hpp"
+# include "ParticleEngine.hpp"
 
 class Camera;
 class Octree;
 class Link;
+
+// Chunk thread arguments
+typedef struct
+{
+	Noise *			noise;
+	Chunk *			chunk;
+	float const *	inc;
+	float const *	block_size;
+	float const *	chunk_size;
+	int *			center;
+}					ThreadArgs;
+
+typedef struct
+{
+	int				id;
+	ThreadArgs **	pool;
+}					GenThreadArgs;
 
 class Engine
 {
@@ -35,18 +52,6 @@ public:
 		std::string		title;
 	}					t_timer;
 
-	// Chunk thread arguments
-	typedef struct
-	{
-		Noise			*noise;
-		Chunk			*chunk;
-		float const		*inc;
-		float const		*block_size;
-		float const		*chunk_size;
-		int				*center;
-		Vec3<int>		pos;
-	}					cta;
-
 	t_timer								fps;
 	SDL_Window *						window;
 	SDL_GLContext						context;
@@ -56,18 +61,20 @@ public:
 	Camera *							camera;
 	Noise *								noise;
 	Player *							player;
-	particleEngine *					particles;
+	ParticleEngine *					particles;
 	float								chunk_size; // size of a chunk
 	float								block_size; // size of a block inside a chunk
 	float								noise_inc; // noise function increment, smaller than block size -> less gaps
 	int									center; // central chunk's index, `chunks[center][center][center]`
-	Chunk								*chunks[GEN_SIZE]
+	Chunk *								chunks[GEN_SIZE]
 												[GEN_SIZE]
 												[GEN_SIZE]; // camera chunk in the center
 	float								noise_min;
 	float								noise_max;
 	bool								mouse_button;
 	Block								*highlight;
+
+	ThreadArgs *						pools[THREAD_NUMBER][POOL_SIZE];
 
 	// settings
 	bool								hide_ui;
@@ -86,6 +93,7 @@ public:
 	int					getDisplayMode(void);
 	int					init(void);
 	void				initSettings(void);
+	void				startThreads(void);
 	void				update(Uint32 const &elapsed_time);
 	void				render(void);
 	void				renderAxes(void);

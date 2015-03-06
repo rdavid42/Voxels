@@ -46,126 +46,6 @@ Engine::calcFPS(void)
 // MULTI-THREADED CHUNK GENERATION
 // --------------------------------------------------------------------------------
 
-/*
-inline static float
-generateNoise(Engine::t_chunkThreadArgs *d, float const &x, float const &y, float const &z)
-{
-	float						n;
-	float						nx, ny, nz;
-
-	nx = d->chunk->getCube()->getX() + x;// + *d->block_size / 2;
-	ny = d->chunk->getCube()->getY() + y;// + *d->block_size / 2;
-	nz = d->chunk->getCube()->getZ() + z;// + *d->block_size / 2;
-	n = d->noise->octave_noise_3d(0, nx, ny, nz);
-	return (n);
-}
-
-inline static void
-insertBlocks(float const *da, int const &s)
-{
-	int				i, j, k;
-	int const		sums_size = (powf(8, BLOCK_DEPTH) - 1) / 7; // get number of subdivisions above deepest
-	int				sums[sums_size];
-	int				x, y, z;
-
-	j = 0;
-	for (z = 0; z < s; z += 2)
-	{
-		for (y = 0; y < s; y += 2)
-		{
-			for (x = 0; x < s; x += 2)
-			{
-				sums[j] = 0;
-				for (i = 0; i < 8; ++i)
-				{
-					sums[j] += (da[(z + ((i >> 2) & 1)) * s * s
-								 + (y + ((i >> 1) & 1)) * s
-								 + (x + ((i >> 0) & 1))] > 0.0f);
-				}
-				++j;
-			}
-		}
-	}
-	for (i = 4; i < s; i <<= 1)
-	{
-		for (z = 0; z < s; z += i)
-		{
-			for (y = 0; y < s; y += i)
-			{
-				for (x = 0; x < s; x += i)
-				{
-					sums[j] = 0;
-					for (k = 0; k < 8; ++k)
-					{
-						sums[j] += sums[];
-					}
-				}
-			}
-		}
-	}
-}
-
-static void *
-generateChunkInThread(void *args)
-{
-	Engine::t_chunkThreadArgs	*d = (Engine::t_chunkThreadArgs *)args;
-	int							x, y, z;
-	static int const			s = *d->chunk_size / *d->block_size;
-	float						da[s * s * s]; // 3D density array -> index : z * s * s + y * s + x
-	int							i;
-
-	if (d->chunk != NULL && !d->chunk->generated)
-	{
-		for (z = 0; z < s; ++z)
-		{
-			for (y = 0; y < s; ++y)
-			{
-				for (x = 0; x < s; ++x)
-				{
-					i = z * s * s + y * s + x;
-					da[i] = generateNoise(d, x * *d->block_size, y * *d->block_size, z * *d->block_size);
-				}
-			}
-		}
-		insertBlocks(da, s);
-		d->chunk->generated = true;
-	}
-	delete d;
-	return (NULL);
-}
-*/
-/*inline static void
-getBlockColor(Vec3<float> &r, float &t, float &n)
-{
-	r.x = 1.0f;
-	r.y = 1.0f;
-	r.z = 1.0f;
-	if (n >= 1.5f - t * 5)
-		r = Vec3<float>(1.0f - t, 1.0f - t, 1.0f - t);
-	else if (n >= 1.2f)
-		r = Vec3<float>(0.9f - t, 0.9f - t, 0.9f - t);
-	else if (n >= 1.1f)
-		r = Vec3<float>(0.8f, 0.8f + t, 0.8f);
-	else if (n >= 0.3f)
-		r = Vec3<float>(0.1f - t, 0.4f - t, 0.1f - t);
-	else if (n >= 0.2f)
-		r = Vec3<float>(0.2f - t, 0.5f - t, 0.2f - t);
-	else if (n >= 0.0f)
-		r = Vec3<float>(81.0f / 256.0f, 55.0f / 256.0f + t, 9.0f / 256.0f);
-	else if (n <= -0.7f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.5f - t);
-	else if (n <= -0.6f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.7f - t);
-	else if (n <= -0.5f)
-		r = Vec3<float>(0.3f - t, 0.3f - t, 0.8f - t);
-	else if (n <= -0.4f)
-		r = Vec3<float>(0.96f - t, 0.894f - t, 0.647f - t);
-	else if (n <= -0.1f)
-		r = Vec3<float>(0.4f - t, 0.4f - t, 0.4f - t);
-	else if (n <= 0.5f)
-		r = Vec3<float>(0.5f - t, 0.5f - t, 0.5f - t);
-}*/
-
 inline static float
 getDensity(Noise *n, float const &x, float const &y, float const &z)
 {
@@ -190,7 +70,6 @@ generateTriangles(float const &x, float const &y, float const &z, float const &s
 {
 	Gridcell			g;
 	int					i;
-	float				nb[8];
 
 	g.p[0] = Vec3<float>(x, y, z);
 	g.p[1] = Vec3<float>(x + s, y, z);
@@ -206,12 +85,11 @@ generateTriangles(float const &x, float const &y, float const &z, float const &s
 }
 
 static void
-generateBlock(Engine::cta *d, float const &x, float const &y, float const &z, int const &depth)
+generateBlock(ThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
 {
 	Vec3<float>					r;
 	int							i;
 	float						density;
-	float						u;
 	float						nx, ny, nz;
 	float						color_noise;
 	Block						*b;
@@ -246,11 +124,11 @@ generateBlock(Engine::cta *d, float const &x, float const &y, float const &z, in
 #endif
 	}
 }
-
+/*
 static void *
 generateChunkInThread(void *args)
 {
-	Engine::cta					*d = (Engine::cta *)args;
+	ThreadArgs					*d = (ThreadArgs *)args;
 	float						x, y, z;
 	int							depth;
 
@@ -277,7 +155,7 @@ launchGeneration(void *args)
 	int							cz;
 	int							cx, cy;
 	pthread_t					init;
-	Engine::cta					*thread_args;
+	ThreadArgs					*thread_args;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -289,7 +167,7 @@ launchGeneration(void *args)
 				{
 					if (!e->chunks[cz][cy][cx]->generated)
 					{
-						thread_args = new Engine::cta();
+						thread_args = new ThreadArgs();
 						thread_args->noise = e->noise;
 						thread_args->chunk = e->chunks[cz][cy][cx];
 						thread_args->inc = &e->noise_inc;
@@ -314,7 +192,115 @@ Engine::generation(void)
 
 	pthread_create(&init, NULL, launchGeneration, this);
 	pthread_detach(init);
+}*/
+
+static void
+generateChunk(ThreadArgs *d)
+{
+	float						x, y, z;
+	int							depth;
+
+	depth = BLOCK_DEPTH;
+	for (z = 0.0f; z < *d->chunk_size; z += *d->block_size)
+	{
+		for (y = 0.0f; y < *d->chunk_size; y += *d->block_size)
+		{
+			for (x = 0.0f; x < *d->chunk_size; x += *d->block_size)
+			{
+				generateBlock(d, x, y, z, depth);
+			}
+		}
+	}
+	d->chunk->generated = true;
 }
+
+static void *
+generationThread(void *args)
+{
+	GenThreadArgs *		arg = static_cast<GenThreadArgs *>(args);
+	register int		i;
+	int const			id = arg->id;
+	ThreadArgs **		pool = arg->pool;
+
+	(void)id;
+	delete arg;
+	while (42)
+	{
+		for (i = 0; i < POOL_SIZE; ++i)
+		{
+			if (pool[i] != NULL)
+			{
+				generateChunk(pool[i]);
+				delete pool[i];
+				pool[i] = NULL;
+			}
+		}
+	}
+	return (NULL);
+}
+
+void
+Engine::startThreads(void)
+{
+	int				i, j;
+	pthread_t		init;
+	GenThreadArgs	*args;
+
+	// initialize pools
+	for (i = 0; i < THREAD_NUMBER; ++i)
+		for (j = 0; j < POOL_SIZE; ++j)
+			this->pools[i][j] = NULL;
+	// start threads
+	for (i = 0; i < THREAD_NUMBER; ++i)
+	{
+		args = new GenThreadArgs();
+		args->id = i;
+		args->pool = this->pools[i];
+		pthread_create(&init, NULL, generationThread, args);
+		pthread_detach(init);
+	}
+}
+
+void
+Engine::generation(void)
+{
+	int							cx, cy, cz;
+	int							i, j;
+
+	i = 0;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (this->chunks[cz][cy][cx] != NULL)
+				{
+					if (!this->chunks[cz][cy][cx]->generated)
+					{
+						for (j = 0; j < POOL_SIZE; ++j)
+						{
+							if (!this->pools[i][j])
+							{
+								this->pools[i][j] = new ThreadArgs();
+								this->pools[i][j]->noise = this->noise;
+								this->pools[i][j]->chunk = this->chunks[cz][cy][cx];
+								this->pools[i][j]->inc = &this->noise_inc;
+								this->pools[i][j]->block_size = &this->block_size;
+								this->pools[i][j]->chunk_size = &this->chunk_size;
+								this->pools[i][j]->center = &this->center;
+								break;
+							}
+						}
+						i++;
+						i %= THREAD_NUMBER;
+					}
+				}
+			}
+		}
+	}
+}
+
 // --------------------------------------------------------------------------------
 
 void
@@ -412,7 +398,7 @@ Engine::renderChunks(void)
 void
 Engine::drawMinimap(void)
 {
-	int					cx, cy, cz;
+	int					cx, cy;
 	static const int	mcs = MINIMAP_SIZE / GEN_SIZE; // chunk size on map
 	static const int	mx = this->window_width - MINIMAP_SIZE + MINIMAP_PADDING; // minimap x
 	static const int	my = MINIMAP_PADDING; // minimap y
@@ -433,8 +419,6 @@ Engine::drawMinimap(void)
 	glEnd();
 	// draw chunks edges
 	glBegin(GL_LINES);
-	// for (cz = 0; cz < GEN_SIZE; ++cz)
-	// {
 	for (cy = 0; cy < GEN_SIZE; ++cy)
 	{
 		for (cx = 0; cx < GEN_SIZE; ++cx)
@@ -463,7 +447,6 @@ Engine::drawMinimap(void)
 			}
 		}
 	}
-	// }
 	// draw camera direction
 	glColor3f(0.0f, 0.0f, 1.0f);
 	glVertex2i(mx + MINIMAP_SIZE / 2 - 1, my + MINIMAP_SIZE / 2);
@@ -503,7 +486,6 @@ Engine::getDisplayMode(void)
 void
 Engine::initChunks(void)
 {
-	int				i; // index
 	int				x, y, z;
 
 	for (z = 0; z < GEN_SIZE; ++z)
@@ -540,10 +522,10 @@ Engine::init(void)
 	this->octree = NULL;
 	this->player = new Player;
 	this->player->name = "[MCSTF]Korky";
-	this->window_width = 2560;
-	this->window_height = 1440;
+	this->window_width = 1920;
+	this->window_height = 1080;
 	this->highlight = NULL;
-	this->particles = new particleEngine;
+	this->particles = new ParticleEngine;
 	this->initSettings();
 	this->noise = new Noise(42, 256);
 	this->noise->configs.emplace_back(4, 0.8, 0.2, 0.7, 0.1);
@@ -561,7 +543,7 @@ Engine::init(void)
 									SDL_WINDOWPOS_UNDEFINED,
 									this->window_width,
 									this->window_height,
-									SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_FULLSCREEN);
+									SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);// | SDL_WINDOW_FULLSCREEN);
 	if (this->window == NULL)
 		return (sdlError(0));
 	if (!(this->context = SDL_GL_CreateContext(this->window)))
@@ -577,6 +559,7 @@ Engine::init(void)
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
 	// clock_t startTime = clock();
+	this->startThreads();
 	this->octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	this->initChunks();
 	glMatrixMode(GL_PROJECTION);
@@ -749,7 +732,6 @@ Engine::removeBlock(void)
 	Block *				hit; // block
 	Chunk *				chunk;
 	float				i;
-	float				j;
 
 	inc.x *= this->chunk_size;
 	inc.y *= this->chunk_size;
@@ -822,13 +804,9 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 	if (e.type == SDL_MOUSEBUTTONDOWN)
 	{
 		if (!this->player->creative)
-		{
 			removeBlock();
-		}
 		else
-		{
 			addInventoryBlock();
-		}
 	}
 }
 
@@ -836,18 +814,13 @@ void
 Engine::addBlock(void)
 {
 	Vec3<float>			inc = this->camera->getForward();
-	Octree *			hit; // block
-	Octree *			chunk;
 	float				chunkS;
 
 	chunkS = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
 	Vec3<float>	blockPos(chunkS * inc.x, chunkS * inc.y, chunkS * inc.z);
 	if (this->player->inventory->stock[this->player->inventory->selected] != NULL)
 	{
-	//		chunk = this->octree->search(this->camera->getPosition().x + inc.x * i,
-	//									this->camera->getPosition().y + inc.y * i,
-	//									this->camera->getPosition().z + inc.z * i, CHUNK);
-		hit = this->octree->insert(this->camera->getPosition().x + blockPos.x,
+		this->octree->insert(this->camera->getPosition().x + blockPos.x,
 							this->camera->getPosition().y + blockPos.y,
 							this->camera->getPosition().z + blockPos.z, BLOCK_DEPTH + CHUNK_DEPTH, BLOCK | GROUND,
 							this->player->inventory->stock[this->player->inventory->selected]->color, false);
@@ -950,7 +923,7 @@ Engine::loop(void)
 	Uint32			current_time = 0;
 	Uint32			elapsed_time = 0;
 	Uint32			last_time = 0;
-	clock_t			startTime;
+	// clock_t			startTime;
 
 	mouse_button = false;
 	quit = 0;

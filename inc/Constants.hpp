@@ -91,6 +91,7 @@
 
 # define NOISE_NOT_GENERATED		300000.0f
 
-# define THREAD_NUMBER				9
+# define THREAD_NUMBER				100
+# define POOL_SIZE					200
 
 #endif

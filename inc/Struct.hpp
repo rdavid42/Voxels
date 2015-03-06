@@ -1,7 +1,7 @@
 #ifndef STRUCT_HPP
 # define STRUCT_HPP
 
-# include <Vec3.hpp>
+# include "Vec3.hpp"
 
 typedef struct
 {
