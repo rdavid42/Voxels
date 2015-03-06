@@ -124,7 +124,9 @@ generateBlock(ThreadArgs *d, float const &x, float const &y, float const &z, int
 #endif
 	}
 }
-/*
+
+#ifndef THREAD_POOL
+
 static void *
 generateChunkInThread(void *args)
 {
@@ -174,7 +176,6 @@ launchGeneration(void *args)
 						thread_args->block_size = &e->block_size;
 						thread_args->chunk_size = &e->chunk_size;
 						thread_args->center = &e->center;
-						thread_args->pos = Vec3<int>(cx, cy, cz);
 						pthread_create(&init, NULL, generateChunkInThread, thread_args);
 						pthread_detach(init);
 					}
@@ -192,7 +193,9 @@ Engine::generation(void)
 
 	pthread_create(&init, NULL, launchGeneration, this);
 	pthread_detach(init);
-}*/
+}
+
+#else
 
 static void
 generateChunk(ThreadArgs *d)
@@ -301,6 +304,7 @@ Engine::generation(void)
 	}
 }
 
+#endif
 // --------------------------------------------------------------------------------
 
 void
@@ -559,7 +563,9 @@ Engine::init(void)
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
 	// clock_t startTime = clock();
+#ifdef THREAD_POOL
 	this->startThreads();
+#endif
 	this->octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	this->initChunks();
 	glMatrixMode(GL_PROJECTION);
