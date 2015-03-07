@@ -153,11 +153,11 @@ generateChunkInThread(void *args)
 static void *
 launchGeneration(void *args)
 {
-	Core						*e = (Core *)args;
+	Core *						e = (Core *)args;
 	int							cz;
 	int							cx, cy;
 	pthread_t					init;
-	ThreadArgs					*thread_args;
+	ThreadArgs *				thread_args;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -197,7 +197,50 @@ Core::generation(void)
 
 #else
 
+void
+Core::executeThread(void)
+{
+	Task *			task;
 
+	while (true)
+	{
+		// lock task pool and try to pick a task
+		pthread_mutex_lock(&task_mutex);
+		is_task_locked = true;
+
+		while (this->poolState != STOPPED)
+	}
+}
+
+void *
+startThread(void *arg)
+{
+	Core *			core = (Core *)arg;
+
+	core->executeThread();
+	return (0);
+}
+
+int
+Core::startThreads(void *)
+{
+	int				err;
+	int				i;
+
+	this->poolState = STARTED;
+
+	err = -1;
+	for (i = 0; i < POOL_SIZE; ++i)
+	{
+		pthread_create(&threads[i], NULL, startThread, NULL);
+		if (err != 0)
+		{
+			std::cerr << "Failed to create Thread: " << err << std::endl;
+			return (0);
+		}
+	}
+	return (1);
+}
 
 #endif
 // --------------------------------------------------------------------------------

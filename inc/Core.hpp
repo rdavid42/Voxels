@@ -22,6 +22,20 @@ class Camera;
 class Octree;
 class Link;
 
+# ifdef THREAD_POOL
+
+typedef struct
+{
+	Noise *			noise;
+	Chunk *			chunk;
+	float const *	inc;
+	float const *	block_size;
+	float const *	chunk_size;
+	int *			center;
+}					Task;
+
+# else
+
 // Chunk thread arguments
 typedef struct
 {
@@ -32,6 +46,8 @@ typedef struct
 	float const *	chunk_size;
 	int *			center;
 }					ThreadArgs;
+
+# endif
 
 class Core
 {
@@ -45,30 +61,43 @@ public:
 		std::string		title;
 	}					t_timer;
 
-	t_timer								fps;
-	SDL_Window *						window;
-	SDL_GLContext						context;
-	uint32_t							window_width;
-	uint32_t							window_height;
-	Link *								octree;
-	Camera *							camera;
-	Noise *								noise;
-	Player *							player;
-	ParticleEngine *					particles;
-	float								chunk_size; // size of a chunk
-	float								block_size; // size of a block inside a chunk
-	float								noise_inc; // noise function increment, smaller than block size -> less gaps
-	int									center; // central chunk's index, `chunks[center][center][center]`
-	Chunk *								chunks[GEN_SIZE]
-												[GEN_SIZE]
-												[GEN_SIZE]; // camera chunk in the center
-	float								noise_min;
-	float								noise_max;
-	bool								mouse_button;
-	Block								*highlight;
+	t_timer				fps;
+	SDL_Window *		window;
+	SDL_GLContext		context;
+	uint32_t			window_width;
+	uint32_t			window_height;
+	Link *				octree;
+	Camera *			camera;
+	Noise *				noise;
+	Player *			player;
+	ParticleEngine *	particles;
+	float				chunk_size; // size of a chunk
+	float				block_size; // size of a block inside a chunk
+	float				noise_inc; // noise function increment, smaller than block size -> less gaps
+	int					center; // central chunk's index, `chunks[center][center][center]`
+	Chunk *				chunks[GEN_SIZE]
+								[GEN_SIZE]
+								[GEN_SIZE]; // camera chunk in the center
+	float				noise_min;
+	float				noise_max;
+	bool				mouse_button;
+	Block				*highlight;
 
 	// settings
-	bool								hide_ui;
+	bool				hide_ui;
+
+	//thread pool
+
+# ifdef THREAD_POOL
+
+	bool				poolState;
+	pthread_cond_t		task_cond;
+	volatile bool		is_task_locked;
+	pthread_mutex_t		task_mutex;
+	pthread_t			threads[POOL_SIZE];
+	std::deque<Task *>	task_pool; // one different pool per thread
+
+# endif
 
 	Core(void);
 	~Core(void);
