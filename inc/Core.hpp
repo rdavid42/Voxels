@@ -1,6 +1,6 @@
 
-#ifndef		ENGINE_HPP
-# define	ENGINE_HPP
+#ifndef		CORE_HPP
+# define	CORE_HPP
 
 # include <iostream>
 # include <stdint.h>
@@ -8,7 +8,6 @@
 # include <unistd.h>
 # include <sstream>
 # include <string>
-# include <list>
 # include "Camera.hpp"
 # include "Noise.hpp"
 # include "Player.hpp"
@@ -34,13 +33,7 @@ typedef struct
 	int *			center;
 }					ThreadArgs;
 
-typedef struct
-{
-	int				id;
-	ThreadArgs **	pool;
-}					GenThreadArgs;
-
-class Engine
+class Core
 {
 public:
 	// FPS
@@ -74,13 +67,11 @@ public:
 	bool								mouse_button;
 	Block								*highlight;
 
-	ThreadArgs *						pools[THREAD_NUMBER][POOL_SIZE];
-
 	// settings
 	bool								hide_ui;
 
-	Engine(void);
-	~Engine(void);
+	Core(void);
+	~Core(void);
 
 	void				glEnable2D(int cam_x, int cam_y);
 	void				glDisable2D(void);
@@ -93,7 +84,6 @@ public:
 	int					getDisplayMode(void);
 	int					init(void);
 	void				initSettings(void);
-	void				startThreads(void);
 	void				update(Uint32 const &elapsed_time);
 	void				render(void);
 	void				renderAxes(void);
@@ -116,14 +106,14 @@ public:
 
 	int					Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles);
 
-	Engine &			operator=(Engine const &rhs);
+	Core &			operator=(Core const &rhs);
 
 private:
-	Engine(Engine const &src);
+	Core(Core const &src);
 
 	void				printNoiseMinMaxApproximation(void);
 };
 
-std::ostream &			operator<<(std::ostream &o, Engine const &i);
+std::ostream &			operator<<(std::ostream &o, Core const &i);
 
 #endif

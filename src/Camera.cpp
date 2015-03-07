@@ -106,7 +106,7 @@ Camera::onKeyboard(SDL_KeyboardEvent const &e)
 }
 
 void
-Camera::animate(Uint32 timeStep, Engine &e)
+Camera::animate(Uint32 timeStep, Core &e)
 {
 	float			speed = (_keyStates[_keyConfig["boost"]]) ? 10 * _speed : _speed;
 

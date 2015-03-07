@@ -2,7 +2,7 @@
 #include <iostream>
 #include <limits.h>
 #include <cstdlib>
-#include "Engine.hpp"
+#include "Core.hpp"
 #include "Biome.hpp"
 
 inline static void
@@ -19,10 +19,10 @@ check_sizes(void)
 int
 main(int argc, char **argv)
 {
-	Engine			engine;
+	Core			core;
 
 	check_sizes();
-	if (!engine.init())
+	if (!core.init())
 		return (0);
 #ifdef linux // glutInit called automatically on Mac osx
 	glutInit(&argc, argv);
@@ -30,6 +30,6 @@ main(int argc, char **argv)
 	(void)argc;
 	(void)argv;
 #endif
-	engine.loop();
+	core.loop();
 	return (0);
 }

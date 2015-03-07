@@ -5,13 +5,13 @@
 # include <iostream>
 # include <map>
 # include "Constants.hpp"
-# include "Engine.hpp"
+# include "Core.hpp"
 # include "Vec3.hpp"
 
 typedef std::map<SDL_Keycode, bool>				t_keyStates;
 typedef std::map<std::string, SDL_Keycode>		t_keyConfig;
 
-class Engine;
+class Core;
 
 class Camera
 {
@@ -24,7 +24,7 @@ public:
 	void									onKeyboard(SDL_KeyboardEvent const &e);
 	void									onMouseWheel(SDL_MouseWheelEvent const &e);
 
-	void									animate(Uint32 timeStep, Engine &e);
+	void									animate(Uint32 timeStep, Core &e);
 	void									look(void);
 
 	Vec3<float> const						&getPosition(void) const;

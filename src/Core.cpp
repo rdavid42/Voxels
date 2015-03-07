@@ -3,18 +3,18 @@
 #include <cstdlib>
 #include <ctime>
 #include <sstream>
-#include "Engine.hpp"
+#include "Core.hpp"
 #include "BlockItem.hpp"
 #include "Block.hpp"
 
 static int				Polygonise(Gridcell const &grid, double const &isolevel, Triangle<float> *triangles);
 
-Engine::Engine(void)
+Core::Core(void)
 {
 	return ;
 }
 
-Engine::~Engine(void)
+Core::~Core(void)
 {
 	SDL_Quit();
 	delete this->octree;
@@ -22,14 +22,14 @@ Engine::~Engine(void)
 }
 
 int
-Engine::sdlError(int code)
+Core::sdlError(int code)
 {
 	std::cerr << "(" << code << ") " << "SDL Error: " << SDL_GetError() << std::endl;
 	return (code);
 }
 
 void
-Engine::calcFPS(void)
+Core::calcFPS(void)
 {
 	std::ostringstream	oss;
 
@@ -153,7 +153,7 @@ generateChunkInThread(void *args)
 static void *
 launchGeneration(void *args)
 {
-	Engine						*e = (Engine *)args;
+	Core						*e = (Core *)args;
 	int							cz;
 	int							cx, cy;
 	pthread_t					init;
@@ -187,7 +187,7 @@ launchGeneration(void *args)
 }
 
 void
-Engine::generation(void)
+Core::generation(void)
 {
 	pthread_t					init;
 
@@ -197,118 +197,13 @@ Engine::generation(void)
 
 #else
 
-static void
-generateChunk(ThreadArgs *d)
-{
-	float						x, y, z;
-	int							depth;
 
-	depth = BLOCK_DEPTH;
-	for (z = 0.0f; z < *d->chunk_size; z += *d->block_size)
-	{
-		for (y = 0.0f; y < *d->chunk_size; y += *d->block_size)
-		{
-			for (x = 0.0f; x < *d->chunk_size; x += *d->block_size)
-			{
-				generateBlock(d, x, y, z, depth);
-			}
-		}
-	}
-	d->chunk->generated = true;
-}
-
-static void *
-generationThread(void *args)
-{
-	GenThreadArgs *		arg = static_cast<GenThreadArgs *>(args);
-	register int		i;
-	int const			id = arg->id;
-	ThreadArgs **		pool = arg->pool;
-
-	(void)id;
-	delete arg;
-	while (42)
-	{
-		for (i = 0; i < POOL_SIZE; ++i)
-		{
-			if (pool[i] != NULL)
-			{
-				generateChunk(pool[i]);
-				delete pool[i];
-				pool[i] = NULL;
-			}
-		}
-	}
-	return (NULL);
-}
-
-void
-Engine::startThreads(void)
-{
-	int				i, j;
-	pthread_t		init;
-	GenThreadArgs	*args;
-
-	// initialize pools
-	for (i = 0; i < THREAD_NUMBER; ++i)
-		for (j = 0; j < POOL_SIZE; ++j)
-			this->pools[i][j] = NULL;
-	// start threads
-	for (i = 0; i < THREAD_NUMBER; ++i)
-	{
-		args = new GenThreadArgs();
-		args->id = i;
-		args->pool = this->pools[i];
-		pthread_create(&init, NULL, generationThread, args);
-		pthread_detach(init);
-	}
-}
-
-void
-Engine::generation(void)
-{
-	int							cx, cy, cz;
-	int							i, j;
-
-	i = 0;
-	for (cz = 0; cz < GEN_SIZE; ++cz)
-	{
-		for (cy = 0; cy < GEN_SIZE; ++cy)
-		{
-			for (cx = 0; cx < GEN_SIZE; ++cx)
-			{
-				if (this->chunks[cz][cy][cx] != NULL)
-				{
-					if (!this->chunks[cz][cy][cx]->generated)
-					{
-						for (j = 0; j < POOL_SIZE; ++j)
-						{
-							if (!this->pools[i][j])
-							{
-								this->pools[i][j] = new ThreadArgs();
-								this->pools[i][j]->noise = this->noise;
-								this->pools[i][j]->chunk = this->chunks[cz][cy][cx];
-								this->pools[i][j]->inc = &this->noise_inc;
-								this->pools[i][j]->block_size = &this->block_size;
-								this->pools[i][j]->chunk_size = &this->chunk_size;
-								this->pools[i][j]->center = &this->center;
-								break;
-							}
-						}
-						i++;
-						i %= THREAD_NUMBER;
-					}
-				}
-			}
-		}
-	}
-}
 
 #endif
 // --------------------------------------------------------------------------------
 
 void
-Engine::generateChunks(void)
+Core::generateChunks(void)
 {
 	Chunk *			current = (Chunk *)this->octree->insert(camera->getPosition().x,
 														camera->getPosition().y,
@@ -333,7 +228,7 @@ Engine::generateChunks(void)
 }
 
 void
-Engine::insertChunks(void)
+Core::insertChunks(void)
 {
 	int					cx, cy, cz;
 	float				px, py, pz;
@@ -364,7 +259,7 @@ Engine::insertChunks(void)
 // only render chunks in front of the camera
 // --------------------------------------------------------------------------------
 void
-Engine::renderChunks(void)
+Core::renderChunks(void)
 {
 	int						cx, cy, cz;
 	Chunk const *			chk; // chunk pointer
@@ -400,7 +295,7 @@ Engine::renderChunks(void)
 // --------------------------------------------------------------------------------
 
 void
-Engine::drawMinimap(void)
+Core::drawMinimap(void)
 {
 	int					cx, cy;
 	static const int	mcs = MINIMAP_SIZE / GEN_SIZE; // chunk size on map
@@ -459,7 +354,7 @@ Engine::drawMinimap(void)
 }
 
 int
-Engine::getDisplayMode(void)
+Core::getDisplayMode(void)
 {
 	static int32_t		display_in_use = 0; /* Only using first display */
 	int32_t				i;
@@ -488,7 +383,7 @@ Engine::getDisplayMode(void)
 }
 
 void
-Engine::initChunks(void)
+Core::initChunks(void)
 {
 	int				x, y, z;
 
@@ -510,13 +405,13 @@ Engine::initChunks(void)
 }
 
 void
-Engine::initSettings(void)
+Core::initSettings(void)
 {
 	this->hide_ui = false;
 }
 
 int
-Engine::init(void)
+Core::init(void)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 		return (sdlError(0));
@@ -525,14 +420,14 @@ Engine::init(void)
 	this->fps.update = 0;
 	this->octree = NULL;
 	this->player = new Player;
-	this->player->name = "[MCSTF]Korky";
+	this->player->name = "None";
 	this->window_width = 1920;
 	this->window_height = 1080;
 	this->highlight = NULL;
 	this->particles = new ParticleEngine;
 	this->initSettings();
 	this->noise = new Noise(42, 256);
-	this->noise->configs.emplace_back(4, 0.8, 0.2, 0.7, 0.1);
+	this->noise->configs.emplace_back(4, 0.7, 0.2, 0.7, 0.1);
 	this->noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
 	this->noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
@@ -547,7 +442,7 @@ Engine::init(void)
 									SDL_WINDOWPOS_UNDEFINED,
 									this->window_width,
 									this->window_height,
-									SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);// | SDL_WINDOW_FULLSCREEN);
+									SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);//SDL_WINDOW_FULLSCREEN);
 	if (this->window == NULL)
 		return (sdlError(0));
 	if (!(this->context = SDL_GL_CreateContext(this->window)))
@@ -558,14 +453,11 @@ Engine::init(void)
 	// glViewport(0, 0, this->window_width, this->window_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(70, (double)this->window_width / (double)this->window_height, 0.1, OCTREE_SIZE);
+	gluPerspective(70, (double)this->window_width / (double)this->window_height, 0.05, OCTREE_SIZE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
 	// clock_t startTime = clock();
-#ifdef THREAD_POOL
-	this->startThreads();
-#endif
 	this->octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	this->initChunks();
 	glMatrixMode(GL_PROJECTION);
@@ -573,7 +465,7 @@ Engine::init(void)
 }
 
 void
-Engine::renderAxes(void)
+Core::renderAxes(void)
 {
 	glBegin(GL_LINES);
 	// X red
@@ -592,7 +484,7 @@ Engine::renderAxes(void)
 }
 
 void
-Engine::glEnable2D(int cam_x, int cam_y)
+Core::glEnable2D(int cam_x, int cam_y)
 {
 	int			vPort[4];
 
@@ -608,7 +500,7 @@ Engine::glEnable2D(int cam_x, int cam_y)
 }
 
 void
-Engine::glDisable2D(void)
+Core::glDisable2D(void)
 {
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -618,14 +510,14 @@ Engine::glDisable2D(void)
 }
 
 void
-Engine::drawDebugInfo(void)
+Core::drawDebugInfo(void)
 {
 	glColor3f(1.0f, 0.0f, 0.0f);
 	this->drawText(10, 20, fps.title.c_str());
 }
 
 void
-Engine::drawText(int const x, int const y, char const *text)
+Core::drawText(int const x, int const y, char const *text)
 {
 	(void)x;
 	(void)y;
@@ -639,7 +531,7 @@ Engine::drawText(int const x, int const y, char const *text)
 }
 
 void
-Engine::drawUI(void)
+Core::drawUI(void)
 {
 	std::stringstream	position;
 	int			w2 = this->window_width / 2;
@@ -676,7 +568,7 @@ Engine::drawUI(void)
 }
 
 void
-Engine::render(void)
+Core::render(void)
 {
 // --------------------------------------
 // Clear screen, see glClearColor in init for clear color
@@ -725,14 +617,14 @@ Engine::render(void)
 }
 
 void
-Engine::update(Uint32 const &elapsed_time)
+Core::update(Uint32 const &elapsed_time)
 {
 	this->camera->animate(elapsed_time, *this);
 	// std::cout << *this->camera << std::endl;
 }
 
 void
-Engine::removeBlock(void)
+Core::removeBlock(void)
 {
 	Vec3<float>			inc = this->camera->getForward();
 	Block *				hit; // block
@@ -784,7 +676,7 @@ Engine::removeBlock(void)
 }
 
 void
-Engine::addInventoryBlock(void)
+Core::addInventoryBlock(void)
 {
 	int			xpos;
 	int			ypos;
@@ -805,7 +697,7 @@ Engine::addInventoryBlock(void)
 }
 
 void
-Engine::onMouseButton(SDL_MouseButtonEvent const &e)
+Core::onMouseButton(SDL_MouseButtonEvent const &e)
 {
 	if (e.type == SDL_MOUSEBUTTONDOWN)
 	{
@@ -817,7 +709,7 @@ Engine::onMouseButton(SDL_MouseButtonEvent const &e)
 }
 
 void
-Engine::addBlock(void)
+Core::addBlock(void)
 {
 	Vec3<float>			inc = this->camera->getForward();
 	float				chunkS;
@@ -835,7 +727,7 @@ Engine::addBlock(void)
 }
 
 void
-Engine::displayWheel(void)
+Core::displayWheel(void)
 {
 	glBegin(GL_QUADS);
 	glColor3f(0.5f, 0.0f, 1.0f);
@@ -850,7 +742,7 @@ Engine::displayWheel(void)
 }
 
 void
-Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
+Core::onMouseMotion(SDL_MouseMotionEvent const &e)
 {
 	Vec3<float>			inc = this->camera->getForward();
 	Block *				hit; // block
@@ -877,13 +769,13 @@ Engine::onMouseMotion(SDL_MouseMotionEvent const &e)
 }
 
 void
-Engine::onMouseWheel(SDL_MouseWheelEvent const &e)
+Core::onMouseWheel(SDL_MouseWheelEvent const &e)
 {
 	this->camera->onMouseWheel(e);
 }
 
 void
-Engine::onKeyboard(SDL_KeyboardEvent const &e)
+Core::onKeyboard(SDL_KeyboardEvent const &e)
 {
 	this->camera->onKeyboard(e);
 
@@ -922,7 +814,7 @@ Engine::onKeyboard(SDL_KeyboardEvent const &e)
 }
 
 void
-Engine::loop(void)
+Core::loop(void)
 {
 	SDL_Event		e;
 	int32_t			quit;
@@ -979,8 +871,8 @@ Engine::loop(void)
 	}
 }
 
-Engine &
-Engine::operator=(Engine const &rhs)
+Core &
+Core::operator=(Core const &rhs)
 {
 	if (this != &rhs)
 	{
@@ -990,9 +882,9 @@ Engine::operator=(Engine const &rhs)
 }
 
 std::ostream &
-operator<<(std::ostream &o, Engine const &i)
+operator<<(std::ostream &o, Core const &i)
 {
-	o	<< "Engine: " << &i;
+	o	<< "Core: " << &i;
 	return (o);
 }
 

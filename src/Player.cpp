@@ -1,11 +1,11 @@
 
 #include "Player.hpp"
-#include "Engine.hpp"
+#include "Core.hpp"
 
 Player::Player(void)
 {
 	std::cout << "player crée" << std::endl;
-	this->inventory = new Container;
+	this->inventory = new Container();
 	this->creative = false;
 	return ;
 }
