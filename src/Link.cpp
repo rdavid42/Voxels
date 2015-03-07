@@ -164,7 +164,7 @@ Link::render(void) const
 	}*/
 	for (i = 0; i < CHD_MAX; ++i)
 	{
-		if (this->_children[i])
+		if (this->_children[i] != 0)
 			this->_children[i]->render();
 	}
 }

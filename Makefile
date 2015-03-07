@@ -11,8 +11,7 @@ PLATFORM	:=	$(shell uname)
 CC			=	g++
 HEADER		=	-I./$(INC_PATH)
 FLAGS		=	-pthread -Ofast -g -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
-VARS		=	-D_REENTRANT -D_THREAD_SAFE -DMARCHING_CUBES
-# -DTHREAD_POOL
+VARS		=	-D_REENTRANT -D_THREAD_SAFE -DMARCHING_CUBES -DTHREAD_POOL
 # -DDEBUG 
 NAME		=	voxels
 

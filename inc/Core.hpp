@@ -8,6 +8,9 @@
 # include <unistd.h>
 # include <sstream>
 # include <string>
+# ifdef THREAD_POOL
+#  include <deque>
+# endif
 # include "Camera.hpp"
 # include "Noise.hpp"
 # include "Player.hpp"
@@ -21,18 +24,18 @@
 class Camera;
 class Octree;
 class Link;
+class Core;
 
 # ifdef THREAD_POOL
 
+# define STARTED	0
+# define STOPPED	1
+
 typedef struct
 {
-	Noise *			noise;
-	Chunk *			chunk;
-	float const *	inc;
-	float const *	block_size;
-	float const *	chunk_size;
-	int *			center;
-}					Task;
+	int				i;
+	Core			*core;
+}					ThreadArgs;
 
 # else
 
@@ -87,15 +90,21 @@ public:
 	bool				hide_ui;
 
 	//thread pool
-
 # ifdef THREAD_POOL
 
-	bool				poolState;
-	pthread_cond_t		task_cond;
-	volatile bool		is_task_locked;
-	pthread_mutex_t		task_mutex;
+	bool				pool_state;
+	pthread_cond_t		task_cond[POOL_SIZE];
+	volatile bool		is_task_locked[POOL_SIZE];
+	pthread_mutex_t		task_mutex[POOL_SIZE];
 	pthread_t			threads[POOL_SIZE];
-	std::deque<Task *>	task_pool; // one different pool per thread
+	std::deque<Chunk *>	task_queue[POOL_SIZE]; // one different pool per thread
+
+	void				processChunkGeneration(Chunk *c);
+	void *				executeThread(int const &id);
+	int					startThreads(void);
+	int					stopThreads(void);
+	void				addTask(Chunk *c, int const &id);
+	void				generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
 
 # endif
 

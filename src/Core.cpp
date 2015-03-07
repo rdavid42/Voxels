@@ -16,6 +16,7 @@ Core::Core(void)
 
 Core::~Core(void)
 {
+	this->stopThreads();
 	SDL_Quit();
 	delete this->octree;
 	return ;
@@ -84,6 +85,8 @@ generateTriangles(float const &x, float const &y, float const &z, float const &s
 	*nt = Polygonise(g, 0, t);
 }
 
+#ifndef THREAD_POOL
+
 static void
 generateBlock(ThreadArgs *d, float const &x, float const &y, float const &z, int const &depth)
 {
@@ -104,7 +107,7 @@ generateBlock(ThreadArgs *d, float const &x, float const &y, float const &z, int
 	{
 		color_noise = d->noise->octave_noise_3d(0, nx, ny, nz) / 5;
 		getBlockColor(r, color_noise, density);
-#ifdef MARCHING_CUBES
+# ifdef MARCHING_CUBES
 		// b = (Block *)d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
 		nt = 0;
 		generateTriangles(nx, ny, nz, *d->block_size, &nt, t, d->noise);
@@ -119,13 +122,11 @@ generateBlock(ThreadArgs *d, float const &x, float const &y, float const &z, int
 					b->t[i] = t[i];
 			}
 		}
-#else
+# else
 		d->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
-#endif
+# endif
 	}
 }
-
-#ifndef THREAD_POOL
 
 static void *
 generateChunkInThread(void *args)
@@ -197,42 +198,171 @@ Core::generation(void)
 
 #else
 
+// THREAD POOL IMPLEMENTATION
+
 void
-Core::executeThread(void)
+Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth)
 {
-	Task *			task;
+	Vec3<float>					r;
+	int							i;
+	float						density;
+	float						nx, ny, nz;
+	float						color_noise;
+	Block						*b;
+	int							nt;
+	Triangle<float>				t[5];
 
-	while (true)
+	nx = c->getCube()->getX() + x;// + *d->block_size / 2;
+	ny = c->getCube()->getY() + y;// + *d->block_size / 2;
+	nz = c->getCube()->getZ() + z;// + *d->block_size / 2;
+	density = getDensity(this->noise, nx, ny, nz);
+	if (density > -0.5)
 	{
-		// lock task pool and try to pick a task
-		pthread_mutex_lock(&task_mutex);
-		is_task_locked = true;
-
-		while (this->poolState != STOPPED)
+		color_noise = this->noise->octave_noise_3d(0, nx, ny, nz) / 5;
+		getBlockColor(r, color_noise, density);
+#ifdef MARCHING_CUBES
+		// b = (Block *)this->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+		nt = 0;
+		generateTriangles(nx, ny, nz, this->block_size, &nt, t, this->noise);
+		if (nt > 0)
+		{
+			b = static_cast<Block *>(c->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true));
+			if (b != NULL)
+			{
+				b->n = nt;
+				b->t = new Triangle<float>[nt];
+				for (i = 0; i < nt; ++i)
+					b->t[i] = t[i];
+			}
+		}
+#else
+		c->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
+#endif
 	}
 }
 
-void *
-startThread(void *arg)
+void
+Core::processChunkGeneration(Chunk *c)
 {
-	Core *			core = (Core *)arg;
+	float						x, y, z;
+	int							depth;
 
-	core->executeThread();
+	depth = BLOCK_DEPTH;
+	for (z = 0.0f; z < this->chunk_size; z += this->block_size)
+	{
+		for (y = 0.0f; y < this->chunk_size; y += this->block_size)
+		{
+			for (x = 0.0f; x < this->chunk_size; x += this->block_size)
+			{
+				generateBlock(c, x, y, z, depth);
+			}
+		}
+	}
+	c->generated = true;
+}
+
+void *
+Core::executeThread(int const &id)
+{
+	Chunk			*chunk;
+
+	while (true)
+	{
+		// lock task queue and try to pick a task
+		pthread_mutex_lock(&this->task_mutex[id]);
+		this->is_task_locked[id] = true;
+
+		// make thread wait when pool is empty
+		while (this->pool_state != STOPPED && this->task_queue[id].empty())
+			pthread_cond_wait(&this->task_cond[id], &this->task_mutex[id]);
+
+		// stop thread when pool is destroyed
+		if (this->pool_state == STOPPED)
+		{
+			// unlock to exit
+			this->is_task_locked[id] = false;
+			pthread_mutex_unlock(&this->task_mutex[id]);
+			pthread_exit(0);
+		}
+
+		// pick task to process
+		chunk = this->task_queue[id].front();
+		this->task_queue[id].pop_front();
+
+		// unlock task queue
+		this->is_task_locked[id] = false;
+		pthread_mutex_unlock(&this->task_mutex[id]);
+
+		// process task
+		processChunkGeneration(chunk);
+	}
+	return (0);
+}
+
+static void *
+startThread(void *args)
+{
+	ThreadArgs *		ta = (ThreadArgs *)args;
+
+	ta->core->executeThread(ta->i);
+	delete ta;
 	return (0);
 }
 
 int
-Core::startThreads(void *)
+Core::stopThreads(void)
 {
 	int				err;
 	int				i;
+	void			*res;
 
-	this->poolState = STARTED;
+	// lock task queue
+	for (i = 0; i < POOL_SIZE; ++i)
+	{
+		pthread_mutex_lock(&this->task_mutex[i]);
+		this->is_task_locked[i] = true;
+	}
+
+	this->pool_state = STOPPED;
+
+	// unlock task queue
+	for (i = 0; i < POOL_SIZE; ++i)
+	{
+		this->is_task_locked[i] = false;
+		pthread_mutex_unlock(&this->task_mutex[i]);
+	}
+
+	// notify threads that they need to exit
+	for (i = 0; i < POOL_SIZE; ++i)
+		pthread_cond_broadcast(&this->task_cond[i]);
 
 	err = -1;
 	for (i = 0; i < POOL_SIZE; ++i)
 	{
-		pthread_create(&threads[i], NULL, startThread, NULL);
+		err = pthread_join(this->threads[i], &res);
+		(void)err;
+		(void)res;
+		// notify threads waiting
+		pthread_cond_broadcast(&this->task_cond[i]);
+	}
+	return (1);
+}
+
+int
+Core::startThreads(void)
+{
+	int				err;
+	int				i;
+	ThreadArgs		*ta;
+
+	this->pool_state = STARTED;
+	err = -1;
+	for (i = 0; i < POOL_SIZE; ++i)
+	{
+		ta = new ThreadArgs();
+		ta->i = i;
+		ta->core = this;
+		err = pthread_create(&threads[i], NULL, startThread, ta);
 		if (err != 0)
 		{
 			std::cerr << "Failed to create Thread: " << err << std::endl;
@@ -240,6 +370,49 @@ Core::startThreads(void *)
 		}
 	}
 	return (1);
+}
+
+void
+Core::addTask(Chunk *c, int const &id)
+{
+	// lock task queue
+	pthread_mutex_lock(&this->task_mutex[id]);
+	this->is_task_locked[id] = true;
+
+	// push task in queue
+	this->task_queue[id].push_front(c);
+
+	// wake up a thread to process task
+	pthread_cond_signal(&this->task_cond[id]);
+
+	// unlock task queue
+	this->is_task_locked[id] = false;
+	pthread_mutex_unlock(&this->task_mutex[id]);
+}
+
+void
+Core::generation(void)
+{
+	int							cx, cy, cz;
+	int							id;
+
+	id = 0;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (this->chunks[cz][cy][cx] != NULL)
+				{
+					if (!this->chunks[cz][cy][cx]->generated)
+						this->addTask(this->chunks[cz][cy][cx], id);
+					id++;
+					id %= POOL_SIZE;
+				}
+			}
+		}
+	}
 }
 
 #endif
@@ -500,6 +673,7 @@ Core::init(void)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
+	this->startThreads();
 	// clock_t startTime = clock();
 	this->octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	this->initChunks();
