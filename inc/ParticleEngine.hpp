@@ -16,7 +16,7 @@ class ParticleEngine
 
 		std::list<Particle *>	particleList;
 
-		void		blockDestruction(Vec3<float> pos, Vec3<float> color);
+		void		blockDestruction(Vec3<float> pos, Vec3<float> color, int const &particleNumber);
 		void		cleanDead(void);
 		void		particleGestion(void);
 

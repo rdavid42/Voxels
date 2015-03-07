@@ -67,11 +67,14 @@ Particle::initForDestruction(Vec3<float> &pos, Vec3<float> &color)
 								color.z + randColorZ);
 	this->_endColor = this->_color;
 	this->_deltaColor = Vec3<float> (0.0f, 0.0f, 0.0f);
-	velX = ((double) random() / RAND_MAX) / 10;
-	velY = ((double) random() / RAND_MAX) / 10;
-	velZ = ((double) random() / RAND_MAX) / 10;
+	velX = ((double) random() / RAND_MAX) / 20;
+	velY = ((double) random() / RAND_MAX) / 20;
+	velZ = ((double) random() / RAND_MAX) / 20;
+	velX -= ((double) random() / RAND_MAX) / 20;
+	velY -= ((double) random() / RAND_MAX) / 20;
+	velZ -= ((double) random() / RAND_MAX) / 20;
 	this->_velocity = Vec3<float> (velX, velY, velZ);
-	this->_acceleration = Vec3<float>(0.0f, 0.0f, -0.1f);
+	this->_acceleration = Vec3<float>(0.0f, 0.0f, -0.01f);
 	this->_lifeSpan = 50;
 	return ;
 }
