@@ -10,7 +10,7 @@
 class Block : public Octree
 {
 public:
-	int					n;
+	int					n; // Triangle number
 	Triangle<float>		*t;
 
 	Block(void);

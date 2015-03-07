@@ -877,7 +877,7 @@ Core::removeBlock(void)
 						Vec3<float> (this->camera->getPosition().x + inc.x * i,
 										this->camera->getPosition().y + inc.y * i,
 										this->camera->getPosition().z + inc.z * i),
-						Vec3<float>(hit->c.x, hit->c.y, hit->c.z));
+						Vec3<float>(hit->c.x, hit->c.y, hit->c.z), hit->n);
 				this->player->inventory->add(block);
 				break;
 			}

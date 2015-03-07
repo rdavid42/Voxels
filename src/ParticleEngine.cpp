@@ -38,13 +38,11 @@ ParticleEngine::cleanDead(void)
 }
 
 void
-ParticleEngine::blockDestruction(Vec3<float> pos, Vec3<float> color)
+ParticleEngine::blockDestruction(Vec3<float> pos, Vec3<float> color, int const & particleNumber)
 {
 	Particle		*tmp;
-	int				particleNumber;
 	int				i = 0;
 
-	particleNumber = random() % 5;
 	while (i <= particleNumber)
 	{
 		tmp = new Particle;
