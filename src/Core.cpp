@@ -553,7 +553,7 @@ Core::renderChunks(void)
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
 				chk = chunks[cz][cy][cx];
-				if (chk != NULL)// && chk->generated)
+				if (chk != NULL && chk->generated)
 				{
 					if (cx == center && cy == center && cz == center)
 						chk->render();
