@@ -412,7 +412,7 @@ Core::startThreads(void)
 			return (0);
 		}
 		else
-			std::cerr << "Thread created: " << threads[i] << std::endl;
+			std::cerr << "[" << i << "] Thread created: " << std::hex << threads[i] << std::endl;
 	}
 	return (1);
 }
@@ -776,12 +776,12 @@ Core::glDisable2D(void)
 void
 Core::drawDebugInfo(void)
 {
-	glColor3f(1.0f, 0.0f, 0.0f);
-	this->drawText(10, 20, fps.title.c_str());
+	glColor3f(1.0f, 1.0f, 1.0f);
+	this->drawText(5, 20, ("fps: " + fps.title).c_str(), GLUT_BITMAP_8_BY_13);
 }
 
 void
-Core::drawText(int const x, int const y, char const *text)
+Core::drawText(int const x, int const y, char const *text, void *font)
 {
 	(void)x;
 	(void)y;
@@ -791,30 +791,56 @@ Core::drawText(int const x, int const y, char const *text)
 
 	glRasterPos2i(x, y);
 	for (i = 0; i < len; ++i)
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, text[i]);
+		glutBitmapCharacter(font, text[i]);
 }
 
 void
 Core::drawUI(void)
 {
-	std::stringstream	position;
-	int			w2 = this->window_width / 2;
-	int			h2 = this->window_height / 2;
+	std::stringstream	str;
+	int					w2 = this->window_width / 2;
+	int					h2 = this->window_height / 2;
+	int					i, x, y;
+	int const			p = 12;
 
-	glColor3f(1.0f, 0.0f, 0.0f);
-	position << "x = ";
-	position << this->camera->getPosition().x;
-	drawText(10, 50, position.str().c_str());
-	position.clear();
-	position.str("");
-	position << "y = ";
-	position << this->camera->getPosition().y;
-	drawText(10, 80, position.str().c_str());
-	position.clear();
-	position.str("");
-	position << "z = ";
-	position << this->camera->getPosition().z;
-	drawText(10, 110, position.str().c_str());
+#ifdef DEBUG
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+	y = 32;
+	str.clear();
+	str.str("");
+	str << "x = ";
+	str << this->camera->getPosition().x;
+	drawText(5, y, str.str().c_str(), GLUT_BITMAP_8_BY_13);
+	y += p;
+	str.clear();
+	str.str("");
+	str << "y = ";
+	str << this->camera->getPosition().y;
+	drawText(5, y, str.str().c_str(), GLUT_BITMAP_8_BY_13);
+	y += p;
+	str.clear();
+	str.str("");
+	str << "z = ";
+	str << this->camera->getPosition().z;
+	drawText(5, y, str.str().c_str(), GLUT_BITMAP_8_BY_13);
+	y += p;
+
+	x = 130;
+	y = 20;
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		str.clear();
+		str.str("");
+		str << "Thread ";
+		str << "[" << i << "] ";
+		str << "tasks: ";
+		str << this->task_queue[i].size();
+		drawText(x, y, str.str().c_str(), GLUT_BITMAP_8_BY_13);
+		y += p;
+	}
+
+#endif
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glBegin(GL_LINES);
@@ -826,7 +852,7 @@ Core::drawUI(void)
 	if (this->player->creative)
 	{
 		this->displayWheel();
-		this->drawText(650, 30, "Creative Mode");
+		this->drawText(650, 30, "Creative Mode", GLUT_BITMAP_TIMES_ROMAN_24);
 	}
 	this->player->inventory->drawInventory();
 }

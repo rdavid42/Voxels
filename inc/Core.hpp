@@ -119,7 +119,7 @@ public:
 	void				drawDebugInfo(void);
 	void				drawUI(void);
 	void				calcFPS(void);
-	void				drawText(int const x, int const y, char const *text);
+	void				drawText(int const x, int const y, char const *text, void *font);
 	void				displayWheel(void);
 	int					sdlError(int code);
 	int					getDisplayMode(void);
