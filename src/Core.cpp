@@ -440,7 +440,21 @@ Core::generation(void)
 {
 	int							cx, cy, cz;
 	int							id;
+	int							i;
 
+	// clear thread task queues if they exceed TASK_QUEUE_OVERFLOW
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		if (this->task_queue[i].size() > TASK_QUEUE_OVERFLOW)
+		{
+			pthread_mutex_lock(&this->task_mutex[i]);
+			this->is_task_locked[i] = true;
+			this->task_queue[i].clear();
+			this->is_task_locked[i] = false;
+			pthread_mutex_unlock(&this->task_mutex[i]);
+		}
+	}
+	// get new chunks inside rendering area and add them to generation queues
 	id = 0;
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -826,6 +840,7 @@ Core::drawUI(void)
 	drawText(5, y, str.str().c_str(), GLUT_BITMAP_8_BY_13);
 	y += p;
 
+# ifdef THREAD_POOL
 	x = 130;
 	y = 20;
 	for (i = 0; i < this->pool_size; ++i)
@@ -839,6 +854,7 @@ Core::drawUI(void)
 		drawText(x, y, str.str().c_str(), GLUT_BITMAP_8_BY_13);
 		y += p;
 	}
+# endif
 
 #endif
 

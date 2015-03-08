@@ -90,5 +90,6 @@
 # define CAMERA_FRONT_LIMIT			-0.55 // allow more chunks rendered behind the camera
 
 # define NOISE_NOT_GENERATED		300000.0f
+# define TASK_QUEUE_OVERFLOW		1000
 
 #endif
