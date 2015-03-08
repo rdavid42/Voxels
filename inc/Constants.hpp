@@ -91,6 +91,4 @@
 
 # define NOISE_NOT_GENERATED		300000.0f
 
-# define POOL_SIZE					9
-
 #endif

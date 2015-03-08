@@ -5,6 +5,7 @@
 # include <iostream>
 # include <stdint.h>
 # include <pthread.h>
+# include <thread>
 # include <unistd.h>
 # include <sstream>
 # include <string>
@@ -92,20 +93,21 @@ public:
 	//thread pool
 # ifdef THREAD_POOL
 
-	uint32_t			pool_size;
-	bool				pool_state;
-	pthread_cond_t		task_cond[POOL_SIZE];
-	volatile bool		is_task_locked[POOL_SIZE];
-	pthread_mutex_t		task_mutex[POOL_SIZE];
-	pthread_t			threads[POOL_SIZE];
-	std::deque<Chunk *>	task_queue[POOL_SIZE]; // one different pool per thread
+	int						pool_size;
+	bool					pool_state;
+	pthread_cond_t *		task_cond;
+	volatile bool *			is_task_locked;
+	pthread_mutex_t *		task_mutex;
+	pthread_t *				threads;
+	std::deque<Chunk *> *	task_queue; // one different pool per thread
 
-	void				processChunkGeneration(Chunk *c);
-	void *				executeThread(int const &id);
-	int					startThreads(void);
-	int					stopThreads(void);
-	void				addTask(Chunk *c, int const &id);
-	void				generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
+	uint32_t				getConcurrentThreads();
+	void					processChunkGeneration(Chunk *c);
+	void *					executeThread(int const &id);
+	int						startThreads(void);
+	int						stopThreads(void);
+	void					addTask(Chunk *c, int const &id);
+	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
 
 # endif
 

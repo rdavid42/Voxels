@@ -355,7 +355,21 @@ Core::stopThreads(void)
 		pthread_mutex_destroy(&this->task_mutex[i]);
 		pthread_cond_destroy(&this->task_cond[i]);
 	}
+
+	// release memory
+	delete [] this->task_cond;
+	delete [] this->is_task_locked;
+	delete [] this->task_mutex;
+	delete [] this->threads;
+	delete [] this->task_queue;
 	return (1);
+}
+
+uint32_t
+Core::getConcurrentThreads()
+{
+	// just a hint
+	return (std::thread::hardware_concurrency());
 }
 
 int
@@ -365,7 +379,20 @@ Core::startThreads(void)
 	int				i;
 	ThreadArgs		*ta;
 
-	this->pool_size = POOL_SIZE;
+	this->pool_size = this->getConcurrentThreads() + 1;
+	if (this->pool_size <= 0)
+		this->pool_size = 1;
+	std::cerr << "Concurrent threads: " << this->pool_size << std::endl;
+	// Allocation
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		this->task_cond = new pthread_cond_t[this->pool_size];
+		this->is_task_locked = new bool[this->pool_size];
+		this->task_mutex = new pthread_mutex_t[this->pool_size];
+		this->threads = new pthread_t[this->pool_size];
+		this->task_queue = new std::deque<Chunk *>[this->pool_size];
+	}
+	// mutex and cond initialization
 	for (i = 0; i < this->pool_size; ++i)
 	{
 		pthread_mutex_init(&this->task_mutex[i], NULL);
