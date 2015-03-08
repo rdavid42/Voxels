@@ -201,6 +201,7 @@ Core::generation(void)
 #else
 
 // THREAD POOL IMPLEMENTATION
+// custom pool for chunk generation (no heap allocation for tasks)
 
 void
 Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth)
@@ -222,7 +223,7 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 	{
 		color_noise = this->noise->octave_noise_3d(0, nx, ny, nz) / 5;
 		getBlockColor(r, color_noise, density);
-#ifdef MARCHING_CUBES
+# ifdef MARCHING_CUBES
 		// b = (Block *)this->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
 		nt = 0;
 		generateTriangles(nx, ny, nz, this->block_size, &nt, t, this->noise);
@@ -237,9 +238,9 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 					b->t[i] = t[i];
 			}
 		}
-#else
+# else
 		c->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
-#endif
+# endif
 	}
 }
 
