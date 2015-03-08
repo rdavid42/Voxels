@@ -16,7 +16,9 @@ Core::Core(void)
 
 Core::~Core(void)
 {
+#ifdef THREAD_POOL
 	this->stopThreads();
+#endif
 	SDL_Quit();
 	delete this->octree;
 	return ;
@@ -317,7 +319,7 @@ Core::stopThreads(void)
 	void			*res;
 
 	// lock task queue
-	for (i = 0; i < POOL_SIZE; ++i)
+	for (i = 0; i < this->pool_size; ++i)
 	{
 		pthread_mutex_lock(&this->task_mutex[i]);
 		this->is_task_locked[i] = true;
@@ -326,24 +328,32 @@ Core::stopThreads(void)
 	this->pool_state = STOPPED;
 
 	// unlock task queue
-	for (i = 0; i < POOL_SIZE; ++i)
+	for (i = 0; i < this->pool_size; ++i)
 	{
 		this->is_task_locked[i] = false;
 		pthread_mutex_unlock(&this->task_mutex[i]);
 	}
 
 	// notify threads that they need to exit
-	for (i = 0; i < POOL_SIZE; ++i)
+	for (i = 0; i < this->pool_size; ++i)
 		pthread_cond_broadcast(&this->task_cond[i]);
 
+	// wait for threads to exit and join them
 	err = -1;
-	for (i = 0; i < POOL_SIZE; ++i)
+	for (i = 0; i < this->pool_size; ++i)
 	{
 		err = pthread_join(this->threads[i], &res);
 		(void)err;
 		(void)res;
 		// notify threads waiting
 		pthread_cond_broadcast(&this->task_cond[i]);
+	}
+
+	// destroy mutex and cond
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		pthread_mutex_destroy(&this->task_mutex[i]);
+		pthread_cond_destroy(&this->task_cond[i]);
 	}
 	return (1);
 }
@@ -355,9 +365,15 @@ Core::startThreads(void)
 	int				i;
 	ThreadArgs		*ta;
 
+	this->pool_size = POOL_SIZE;
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		pthread_mutex_init(&this->task_mutex[i], NULL);
+		pthread_cond_init(&this->task_cond[i], NULL);
+	}
 	this->pool_state = STARTED;
 	err = -1;
-	for (i = 0; i < POOL_SIZE; ++i)
+	for (i = 0; i < this->pool_size; ++i)
 	{
 		ta = new ThreadArgs();
 		ta->i = i;
@@ -368,6 +384,8 @@ Core::startThreads(void)
 			std::cerr << "Failed to create Thread: " << err << std::endl;
 			return (0);
 		}
+		else
+			std::cerr << "Thread created: " << threads[i] << std::endl;
 	}
 	return (1);
 }
@@ -408,7 +426,7 @@ Core::generation(void)
 					if (!this->chunks[cz][cy][cx]->generated)
 						this->addTask(this->chunks[cz][cy][cx], id);
 					id++;
-					id %= POOL_SIZE;
+					id %= this->pool_size;
 				}
 			}
 		}
@@ -673,7 +691,9 @@ Core::init(void)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	this->camera = new Camera(Vec3<float>(0.0f, 0.0f, 0.0f));
+#ifdef THREAD_POOL
 	this->startThreads();
+#endif
 	// clock_t startTime = clock();
 	this->octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	this->initChunks();

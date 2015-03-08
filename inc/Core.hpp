@@ -92,6 +92,7 @@ public:
 	//thread pool
 # ifdef THREAD_POOL
 
+	uint32_t			pool_size;
 	bool				pool_state;
 	pthread_cond_t		task_cond[POOL_SIZE];
 	volatile bool		is_task_locked[POOL_SIZE];
