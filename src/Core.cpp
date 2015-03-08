@@ -250,6 +250,7 @@ Core::processChunkGeneration(Chunk *c)
 	float						x, y, z;
 	int							depth;
 
+	c->generated = false;
 	depth = BLOCK_DEPTH;
 	for (z = 0.0f; z < this->chunk_size; z += this->block_size)
 	{
@@ -384,7 +385,7 @@ Core::startThreads(void)
 	if (this->pool_size <= 0)
 		this->pool_size = 1;
 	std::cerr << "Concurrent threads: " << this->pool_size << std::endl;
-	// Allocation
+	// Thread pool heap allocation, because of variable size
 	for (i = 0; i < this->pool_size; ++i)
 	{
 		this->task_cond = new pthread_cond_t[this->pool_size];
@@ -428,6 +429,8 @@ Core::addTask(Chunk *c, int const &id)
 	// push task in queue
 	this->task_queue[id].push_front(c);
 
+	while (this->task_queue[id].size() > TASK_QUEUE_OVERFLOW)
+		this->task_queue[id].pop_back();
 	// wake up a thread to process task
 	pthread_cond_signal(&this->task_cond[id]);
 
@@ -444,7 +447,7 @@ Core::generation(void)
 	int							i;
 
 	// clear thread task queues if they exceed TASK_QUEUE_OVERFLOW
-	for (i = 0; i < this->pool_size; ++i)
+/*	for (i = 0; i < this->pool_size; ++i)
 	{
 		if (this->task_queue[i].size() > TASK_QUEUE_OVERFLOW)
 		{
@@ -454,7 +457,7 @@ Core::generation(void)
 			this->is_task_locked[i] = false;
 			pthread_mutex_unlock(&this->task_mutex[i]);
 		}
-	}
+	}*/
 	// get new chunks inside rendering area and add them to generation queues
 	id = 0;
 	for (cz = 0; cz < GEN_SIZE; ++cz)
@@ -550,7 +553,7 @@ Core::renderChunks(void)
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
 				chk = chunks[cz][cy][cx];
-				if (chk != NULL && chk->generated)
+				if (chk != NULL)// && chk->generated)
 				{
 					if (cx == center && cy == center && cz == center)
 						chk->render();
@@ -848,8 +851,7 @@ Core::drawUI(void)
 	{
 		str.clear();
 		str.str("");
-		str << "Thread ";
-		str << "[" << i << "] ";
+		str << "[T" << i << "] ";
 		str << "tasks: ";
 		str << this->task_queue[i].size();
 		drawText(x, y, str.str().c_str(), GLUT_BITMAP_8_BY_13);
