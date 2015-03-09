@@ -219,14 +219,14 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 	ny = c->getCube()->getY() + y;// + *d->block_size / 2;
 	nz = c->getCube()->getZ() + z;// + *d->block_size / 2;
 	density = getDensity(this->noise, nx, ny, nz);
-	if (density > -0.5)
+	if (density > -1)
 	{
 		color_noise = this->noise->octave_noise_3d(0, nx, ny, nz) / 5;
 		getBlockColor(r, color_noise, density);
 # ifdef MARCHING_CUBES
 		// b = (Block *)this->chunk->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true);
 		nt = 0;
-		generateTriangles(nx, ny, nz, this->block_size, &nt, t, this->noise);
+		generateTriangles(nx, ny, nz, this->block_size[depth], &nt, t, this->noise);
 		if (nt > 0)
 		{
 			b = static_cast<Block *>(c->insert(nx, ny, nz, depth, BLOCK | GROUND, r, true));
@@ -252,11 +252,11 @@ Core::processChunkGeneration(Chunk *c)
 
 	c->generated = false;
 	depth = BLOCK_DEPTH;
-	for (z = 0.0f; z < this->chunk_size; z += this->block_size)
+	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
 	{
-		for (y = 0.0f; y < this->chunk_size; y += this->block_size)
+		for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
 		{
-			for (x = 0.0f; x < this->chunk_size; x += this->block_size)
+			for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
 			{
 				generateBlock(c, x, y, z, depth);
 			}
@@ -429,6 +429,7 @@ Core::addTask(Chunk *c, int const &id)
 	// push task in queue
 	this->task_queue[id].push_front(c);
 
+	// clear thread task queues if they exceed TASK_QUEUE_OVERFLOW
 	while (this->task_queue[id].size() > TASK_QUEUE_OVERFLOW)
 		this->task_queue[id].pop_back();
 	// wake up a thread to process task
@@ -446,18 +447,6 @@ Core::generation(void)
 	int							id;
 	int							i;
 
-	// clear thread task queues if they exceed TASK_QUEUE_OVERFLOW
-/*	for (i = 0; i < this->pool_size; ++i)
-	{
-		if (this->task_queue[i].size() > TASK_QUEUE_OVERFLOW)
-		{
-			pthread_mutex_lock(&this->task_mutex[i]);
-			this->is_task_locked[i] = true;
-			this->task_queue[i].clear();
-			this->is_task_locked[i] = false;
-			pthread_mutex_unlock(&this->task_mutex[i]);
-		}
-	}*/
 	// get new chunks inside rendering area and add them to generation queues
 	id = 0;
 	for (cz = 0; cz < GEN_SIZE; ++cz)
@@ -527,7 +516,12 @@ Core::insertChunks(void)
 					pz = camera->getPosition().z + (cz - center) * chunk_size;
 					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(0.7f, 0.527f, 0.0f), false);
 					if (new_chunk != chunks[cz][cy][cx])
+					{
+						new_chunk->pos.x = cx;
+						new_chunk->pos.y = cy;
+						new_chunk->pos.z = cz;
 						chunks[cz][cy][cx] = new_chunk;
+					}
 				}
 			}
 		}
@@ -665,6 +659,7 @@ void
 Core::initChunks(void)
 {
 	int				x, y, z;
+	int				i;
 
 	for (z = 0; z < GEN_SIZE; ++z)
 		for (y = 0; y < GEN_SIZE; ++y)
@@ -672,10 +667,8 @@ Core::initChunks(void)
 				chunks[z][y][x] = NULL;
 	center = (GEN_SIZE - 1) / 2;
 	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
-	block_size = chunk_size / powf(2, BLOCK_DEPTH);
-	noise_inc = chunk_size / powf(2, BLOCK_DEPTH + 2);
-	this->noise_min = -FRAC_LIMIT;
-	this->noise_max = FRAC_LIMIT;
+	for (i = 1; i < MAX_BLOCK_DEPTH; ++i)
+		block_size[i] = chunk_size / powf(2, i);
 	// Create initial chunk
 	chunks[center][center][center] = (Chunk *)octree->insert(camera->getPosition().x, camera->getPosition().y, camera->getPosition().z,
 															CHUNK_DEPTH, CHUNK | EMPTY, Vec3<float>(1.0f, 0.0f, 1.0f), false);

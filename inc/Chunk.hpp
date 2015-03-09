@@ -10,6 +10,7 @@ class Chunk : public Link
 {
 public:
 	bool			generated;
+	Vec3<uint8_t>	pos;
 
 	Chunk(void);
 	Chunk(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s);

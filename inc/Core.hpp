@@ -76,14 +76,11 @@ public:
 	Player *			player;
 	ParticleEngine *	particles;
 	float				chunk_size; // size of a chunk
-	float				block_size; // size of a block inside a chunk
-	float				noise_inc; // noise function increment, smaller than block size -> less gaps
+	float				block_size[MAX_BLOCK_DEPTH]; // size of a block inside a chunk
 	int					center; // central chunk's index, `chunks[center][center][center]`
 	Chunk *				chunks[GEN_SIZE]
 								[GEN_SIZE]
 								[GEN_SIZE]; // camera chunk in the center
-	float				noise_min;
-	float				noise_max;
 	bool				mouse_button;
 	Block				*highlight;
 
