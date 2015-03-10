@@ -81,7 +81,6 @@ public:
 	Chunk *				chunks[GEN_SIZE]
 								[GEN_SIZE]
 								[GEN_SIZE]; // camera chunk in the center
-	bool				mouse_button;
 	Block				*highlight;
 
 	// settings

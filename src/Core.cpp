@@ -1125,7 +1125,6 @@ Core::loop(void)
 	Uint32			last_time = 0;
 	// clock_t			startTime;
 
-	mouse_button = false;
 	quit = 0;
 	while (!quit)
 	{
@@ -1137,14 +1136,13 @@ Core::loop(void)
 					quit = 1;
 					break;
 				case SDL_MOUSEBUTTONDOWN:
-					mouse_button = true;
 					this->onMouseButton(e.button);
 					break;
 				case SDL_MOUSEBUTTONUP:
-					mouse_button = false;
 					this->onMouseButton(e.button);
+					break;
 				case SDL_MOUSEMOTION:
-					if (!mouse_button && !this->player->creative)
+					if (!this->player->creative)
 						this->onMouseMotion(e.motion);
 					break;
 				case SDL_MOUSEWHEEL:

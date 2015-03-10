@@ -55,7 +55,7 @@ Camera::calcVectors(void)
 	_forward.z = sin(_phi * M_PI / 180);
 	_left = up.crossProduct(_forward);
 	_left.normalize();
-	// _forward.normalize();
+	_forward.normalize();
 	_target = _position + _forward;
 }
 
@@ -63,7 +63,7 @@ void
 Camera::onMouseButton(SDL_MouseButtonEvent const &e)
 {
 	(void)e;
-	if (_wheelUp)
+/*	if (_wheelUp)
 	{
 		_verticalMotionActive = true;
 		_verticalMotionDelay = 250;
@@ -74,13 +74,14 @@ Camera::onMouseButton(SDL_MouseButtonEvent const &e)
 		_verticalMotionActive = true;
 		_verticalMotionDelay = 250;
 		_verticalMotionDir = -1;
-	}
+	}*/
 }
 
 void
 Camera::onMouseWheel(SDL_MouseWheelEvent const &e)
 {
-	if (e.y < 0)
+	(void)e;
+/*	if (e.y < 0)
 	{
 		_wheelDown = true;
 		_wheelUp = false;
@@ -89,7 +90,7 @@ Camera::onMouseWheel(SDL_MouseWheelEvent const &e)
 	{
 		_wheelUp = true;
 		_wheelDown = false;
-	}
+	}*/
 }
 
 void
@@ -118,14 +119,14 @@ Camera::animate(Uint32 timeStep, Core &e)
 		_position += _left * (speed * timeStep);
 	if (_keyStates[_keyConfig["strafe_right"]])
 		_position -= _left * (speed * timeStep);
-	if (_verticalMotionActive)
+	/*if (_verticalMotionActive)
 	{
 		if (timeStep > _verticalMotionDelay)
 			_verticalMotionActive = false;
 		else
 			_verticalMotionDelay -= timeStep;
 		_position += Vec3<float>(0, 0, _verticalMotionDir * speed * timeStep);
-	}
+	}*/
 	e.generateChunks();
 	_target = _position + _forward;
 }
