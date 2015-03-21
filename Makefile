@@ -9,8 +9,8 @@ OBJS		=	$(patsubst %.cpp, $(OBJ_PATH)%.o,$(SRCS))
 
 PLATFORM	:=	$(shell uname)
 CC			=	g++
-HEADER		=	-I./$(INC_PATH)
-FLAGS		=	-pthread -Ofast -g -Wall -Wextra -Werror -lm -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
+HEADER		=	-I./$(INC_PATH) `sdl2-config --cflags`
+FLAGS		=	-Ofast -g -Wall -Wextra -Werror -Wno-deprecated-declarations -std=gnu++11 -Wno-unused
 VARS		=	-D_REENTRANT -D_THREAD_SAFE -DMARCHING_CUBES -DDEBUG -DTHREAD_POOL
 NAME		=	voxels
 
@@ -18,10 +18,10 @@ ifeq "$(PLATFORM)" "WIN32"
 NAME		+=	.exe
 endif
 
-SDL			=	`sdl2-config --cflags --libs`
+SDL			=	`sdl2-config --libs`
 
 ifeq "$(PLATFORM)" "Darwin" #MAC
-GL			=	-framework OpenGL -framework GLUT -framework Cocoa -framework OpenCL
+GL			=	-lm -framework OpenGL -framework GLUT -framework Cocoa -framework OpenCL
 else ifeq "$(PLATFORM)" "Linux" #LINUX
 GL			=	-lGL -lGLU -lglut
 else ifeq "$(PLATFORM)" "Win32" #WINDOWS
@@ -39,7 +39,7 @@ endif
 
 $(patsubst %, $(OBJ_PATH)%,%.o): $(SRC_PATH)$(notdir %.cpp)
 	@mkdir -p $(OBJ_PATH)
-	@$(CC) -c $(FLAGS) $(VARS) $(HEADER) $(SDL) $(GL) "$<" -o "$@"
+	@$(CC) -c $(FLAGS) $(VARS) $(HEADER) "$<" -o "$@"
 
 clean:
 	@rm -rf $(OBJ_PATH)
@@ -59,11 +59,6 @@ loop:
 		fi ; \
 		sleep 1 ; \
 	done
-
-config:
-	@sed -i '.tmp' 's/bitset/'"$(NAME)"'/g' Makefile
-	@echo "Renamed executable to '"$(NAME)"'"
-	@rm -rf Makefile.tmp
 
 re: fclean all
 
