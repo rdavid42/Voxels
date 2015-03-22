@@ -1,5 +1,6 @@
 
 SRC_PATH	=	src/
+
 OBJ_PATH	=	obj/
 INC_PATH	=	inc/
 GCC_LOG		=	gcc_log_file.log
