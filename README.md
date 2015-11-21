@@ -1,2 +1,0 @@
-# Voxels
-Work in progress.
