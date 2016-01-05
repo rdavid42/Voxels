@@ -1,0 +1,42 @@
+#version 410
+
+uniform mat4					view_matrix;
+uniform mat4					proj_matrix;
+uniform mat4					obj_matrix;
+uniform float					red;
+uniform	float					green;
+uniform float					blue;
+uniform float					rred;
+uniform float					rgreen;
+uniform float					rblue;
+uniform float					emitterActive;
+
+out float						ored;
+out	float						ogreen;
+out float						oblue;
+out float						fragLife;
+out float						fragEmitterActive;
+
+layout(location = 0) in vec3	position;
+layout(location = 1) in float	life;
+
+void		main()
+{
+	float h1;
+	float h2;
+	float h3;
+	float h;
+
+	gl_Position = proj_matrix * view_matrix * obj_matrix * vec4(position, 1.0);
+	fragLife = life;
+	fragEmitterActive = emitterActive;
+	h1 = (red - position.x);
+	h2 = (green - position.y);
+	h3 = (blue - position.z);
+
+	h = sqrt(h1 * h1 + h2 * h2 + h3 * h3);
+	ored = 1 - (h * rred * 3) / 255;	
+	oblue = 1 - (h * rblue * 3) / 255;	
+	ogreen = 1 - (h * rgreen * 3) / 255;	
+
+}
