@@ -145,7 +145,7 @@ Core::loadTexture(char const *filename)
 		return (printError("Failed to load bmp !", 0));
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bmp.width, bmp.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, bmp.data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -210,9 +210,9 @@ Core::init(void)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 	buildProjectionMatrix(projMatrix, 53.13f, 0.1f, 1000.0f);
-	cameraPos.set(0.0f, 0.0f, 2.0f);
-	// cameraPos.set(5.5f, 5.5f, 5.5f);
-	cameraLookAt.set(0.0f, 0.0f, 0.0f);
+	// cameraPos.set(0.0f, 0.0f, 2.0f);
+	cameraPos.set(5.5f, 5.5f, 5.5f);
+	// cameraLookAt.set(0.0f, 0.0f, 0.0f);
 	setCamera(viewMatrix, cameraPos, cameraLookAt);
 	if (!initShaders())
 		return (0);
@@ -431,14 +431,18 @@ Core::render(void)
 	glUseProgram(program);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix.val);
-	ms.push();
-		glUniformMatrix4fv(objLoc, 1, GL_FALSE, ms.top().val);
-		glBindVertexArray(voxelVao);
-		glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
-		glBindTexture(GL_TEXTURE_2D, tex[0]);
-		glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
-	ms.pop();
+	for (int i = 0; i < 5; i++)
+	{
+		ms.push();
+			ms.translate((float)i, 0.0f, 0.0f);
+			glUniformMatrix4fv(objLoc, 1, GL_FALSE, ms.top().val);
+			glBindVertexArray(voxelVao);
+			glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
+			glBindTexture(GL_TEXTURE_2D, tex[0]);
+			glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
+		ms.pop();
+	}
 }
 
 void
