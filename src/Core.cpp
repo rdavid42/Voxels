@@ -49,187 +49,20 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 	
+	std::cerr << xpos << ", " << ypos << std::endl;
+	core->mm.set(xpos - core->lastMx, ypos - core->lastMy, 0.0f);
+	core->mm.normalize();
+	core->cameraRotate();
+	core->lastMx = xpos;
+	core->lastMy = ypos;
 	(void)core;
 	(void)xpos;
 	(void)ypos;
 }
 
-void
-Core::buildProjectionMatrix(Mat4<float> &proj, float const &fov,
-							float const &near, float const &far)
-{
-	float const			f = 1.0f / tan(fov * (M_PI / 360.0));
-	float const			ratio = (1.0f * windowWidth) / windowHeight;
-
-	proj.setIdentity();
-	proj[0] = f / ratio;
-	proj[1 * 4 + 1] = f;
-	proj[2 * 4 + 2] = (far + near) / (near - far);
-	proj[3 * 4 + 2] = (2.0f * far * near) / (near - far);
-	proj[2 * 4 + 3] = -1.0f;
-	proj[3 * 4 + 3] = 0.0f;
-}
-
-void
-Core::setViewMatrix(Mat4<float> &view, Vec3<float> const &dir,
-					Vec3<float> const &right, Vec3<float> const &up)
-{
-	/*
-	rx		ux		-dx		0
-	ry		uy		-dy		0
-	rz		uz		-dz		0
-	0		0		0		1
-	*/
-	// first column
-	view[0] = right.x;
-	view[4] = right.y;
-	view[8] = right.z;
-	view[12] = 0.0f;
-	// second column
-	view[1] = up.x;
-	view[5] = up.y;
-	view[9] = up.z;
-	view[13] = 0.0f;
-	// third column
-	view[2] = -dir.x;
-	view[6] = -dir.y;
-	view[10] = -dir.z;
-	view[14] = 0.0f;
-	// fourth column
-	view[3] = 0.0f;
-	view[7] = 0.0f;
-	view[11] = 0.0f;
-	view[15] = 1.0f;
-}
-
-void
-Core::setCamera(Mat4<float> &view, Vec3<float> const &pos, Vec3<float> const &lookAt)
-{
-	Vec3<float>		dir;
-	Vec3<float>		right;
-	Vec3<float>		up;
-	Mat4<float>		translation;
-
-	up.set(0.0f, 1.0f, 0.0f);
-	dir.set(lookAt - pos);
-	dir.normalize();
-	right.crossProduct(dir, up);
-	right.normalize();
-	up.crossProduct(right, dir);
-	up.normalize();
-	setViewMatrix(view, dir, right, up);
-	translation.setTranslation(-pos.x, -pos.y, -pos.z);
-	view.multiply(translation);
-}
-
-void
-Core::getLocations(void)
-{
-	// attribute variables
-	positionLoc = glGetAttribLocation(this->program, "position");
-	textureLoc = glGetAttribLocation(this->program, "texture");
-	// uniform variables
-	projLoc = glGetUniformLocation(this->program, "proj_matrix");
-	viewLoc = glGetUniformLocation(this->program, "view_matrix");
-	objLoc = glGetUniformLocation(this->program, "obj_matrix");
-}
-
-GLuint
-Core::loadTexture(char const *filename)
-{
-	GLuint				texture;
-	Bmp					bmp;
-
-	if (!bmp.load(filename))
-		return (printError("Failed to load bmp !", 0));
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	checkGlError(__FILE__, __LINE__);
-	return (texture);
-}
-
-void
-Core::loadTextures(void)
-{
-	tex = new GLuint[1];
-	tex[0] = loadTexture("resources/testground.bmp");
-}
-
-void
-glErrorCallback(GLenum        source,
-				GLenum        type,
-				GLuint        id,
-				GLenum        severity,
-				GLsizei       length,
-				const GLchar* message,
-				GLvoid*       userParam)
-{
-	(void)userParam;
-	(void)length;
-	std::cerr << "OpenGL Error:" << std::endl;
-	std::cerr << "=============" << std::endl;
-	std::cerr << " Object ID: " << id << std::endl;
-	std::cerr << " Severity:  " << severity << std::endl;
-	std::cerr << " Type:      " << type << std::endl;
-	std::cerr << " Source:    " << source << std::endl;
-	std::cerr << " Message:   " << message << std::endl;
-	glFinish();
-}
-
-int
-Core::init(void)
-{
-
-	windowWidth = 1920;
-	windowHeight = 1080;
-	if (!glfwInit())
-		return (0);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	window = glfwCreateWindow(windowWidth, windowHeight, "Test", NULL, NULL);
-// 	window = glfwCreateWindow(windowWidth, windowHeight,
-// 									"Particle System", glfwGetPrimaryMonitor(), NULL);
-	if (!window)
-	{
-		glfwTerminate();
-		return (0);
-	}
-	glfwSetWindowUserPointer(window, this);
-	glfwMakeContextCurrent(window); // make the opengl context of the window current on the main thread
-	glfwSwapInterval(1); // VSYNC 60 fps max
-	glfwSetKeyCallback(window, key_callback);
-	glfwSetCursorPosCallback(window, cursor_pos_callback);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glEnable(GL_DEPTH_TEST);
-	buildProjectionMatrix(projMatrix, 53.13f, 0.1f, 1000.0f);
-	// cameraPos.set(0.0f, 0.0f, 2.0f);
-	cameraPos.set(15.0f, 15.0f, 15.0f);
-	// cameraLookAt.set(0.0f, 0.0f, 0.0f);
-	setCamera(viewMatrix, cameraPos, cameraLookAt);
-	if (!initShaders())
-		return (0);
-	getLocations();
-#ifndef __APPLE__
-	if (glDebugMessageControlARB != NULL)
-	{
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
-	}
-#endif
-	multiplier = 0.0f;
-	initVoxel();
-	loadTextures();
-	return (1);
-}
+/*
+** SHADERS
+*/
 
 int
 Core::compileShader(GLuint shader, char const *filename)
@@ -331,19 +164,246 @@ Core::initShaders(void)
 	return (1);
 }
 
+// *************************************************************************************************
+
 void
-Core::update(void)
+Core::buildProjectionMatrix(Mat4<float> &proj, float const &fov,
+							float const &near, float const &far)
 {
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	float const			f = 1.0f / tan(fov * (M_PI / 360.0));
+	float const			ratio = (1.0f * windowWidth) / windowHeight;
+
+	proj.setIdentity();
+	proj[0] = f / ratio;
+	proj[1 * 4 + 1] = f;
+	proj[2 * 4 + 2] = (far + near) / (near - far);
+	proj[3 * 4 + 2] = (2.0f * far * near) / (near - far);
+	proj[2 * 4 + 3] = -1.0f;
+	proj[3 * 4 + 3] = 0.0f;
+}
+
+void
+Core::setViewMatrix(Mat4<float> &view, Vec3<float> const &dir,
+					Vec3<float> const &right, Vec3<float> const &up)
+{
+	/*
+	rx		ux		-dx		0
+	ry		uy		-dy		0
+	rz		uz		-dz		0
+	0		0		0		1
+	*/
+	// first column
+	view[0] = right.x;
+	view[4] = right.y;
+	view[8] = right.z;
+	view[12] = 0.0f;
+	// second column
+	view[1] = up.x;
+	view[5] = up.y;
+	view[9] = up.z;
+	view[13] = 0.0f;
+	// third column
+	view[2] = -dir.x;
+	view[6] = -dir.y;
+	view[10] = -dir.z;
+	view[14] = 0.0f;
+	// fourth column
+	view[3] = 0.0f;
+	view[7] = 0.0f;
+	view[11] = 0.0f;
+	view[15] = 1.0f;
+}
+
+void
+Core::getLocations(void)
+{
+	// attribute variables
+	positionLoc = glGetAttribLocation(this->program, "position");
+	textureLoc = glGetAttribLocation(this->program, "texture");
+	// uniform variables
+	projLoc = glGetUniformLocation(this->program, "proj_matrix");
+	viewLoc = glGetUniformLocation(this->program, "view_matrix");
+	objLoc = glGetUniformLocation(this->program, "obj_matrix");
+}
+
+GLuint
+Core::loadTexture(char const *filename)
+{
+	GLuint				texture;
+	Bmp					bmp;
+
+	if (!bmp.load(filename))
+		return (printError("Failed to load bmp !", 0));
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	checkGlError(__FILE__, __LINE__);
+	return (texture);
+}
+
+void
+Core::loadTextures(void)
+{
+	tex = new GLuint[1];
+	tex[0] = loadTexture("resources/testground.bmp");
+}
+
+void
+glErrorCallback(GLenum        source,
+				GLenum        type,
+				GLuint        id,
+				GLenum        severity,
+				GLsizei       length,
+				const GLchar* message,
+				GLvoid*       userParam)
+{
+	(void)userParam;
+	(void)length;
+	std::cerr << "OpenGL Error:" << std::endl;
+	std::cerr << "=============" << std::endl;
+	std::cerr << " Object ID: " << id << std::endl;
+	std::cerr << " Severity:  " << severity << std::endl;
+	std::cerr << " Type:      " << type << std::endl;
+	std::cerr << " Source:    " << source << std::endl;
+	std::cerr << " Message:   " << message << std::endl;
+	glFinish();
+}
+
+int
+Core::init(void)
+{
+
+	windowWidth = 1920;
+	windowHeight = 1080;
+	if (!glfwInit())
+		return (0);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	window = glfwCreateWindow(windowWidth, windowHeight, "Voxels", NULL, NULL);
+	const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	glfwSetWindowPos(window, mode->width / 2 - windowWidth / 2, mode->height / 2 - windowHeight / 2);
+	// window = glfwCreateWindow(windowWidth, windowHeight,
+									// "Voxels", glfwGetPrimaryMonitor(), NULL);
+	if (!window)
 	{
-		multiplier += 0.05f;
+		glfwTerminate();
+		return (0);
 	}
-	else
+	lastMx = 0.0;
+	lastMy = 0.0;
+	mm.set(0.0f, 0.0f, 0.0f);
+	glfwSetWindowUserPointer(window, this);
+	glfwMakeContextCurrent(window); // make the opengl context of the window current on the main thread
+	glfwSwapInterval(1); // VSYNC 60 fps max
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, cursor_pos_callback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwDisable(GLFW_MOUSE_CURSOR);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable(GL_DEPTH_TEST);
+	buildProjectionMatrix(projMatrix, 53.13f, 0.1f, 1000.0f);
+	cameraPos.set(15.0f, 15.0f, 15.0f);
+	cameraLookAt.set(0.0f, 0.0f, 0.0f);
+	initCamera();
+	if (!initShaders())
+		return (0);
+	getLocations();
+#ifndef __APPLE__
+	if (glDebugMessageControlARB != NULL)
 	{
-		multiplier -= 0.1f;
-		if (multiplier < 0.0f)
-			multiplier = 0.0f;
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
 	}
+#endif
+	multiplier = 0.0f;
+	initVoxel();
+	loadTextures();
+	return (1);
+}
+
+void
+Core::setCamera(Mat4<float> &view, Vec3<float> const &pos, Vec3<float> const &forward)
+{
+	Vec3<float>		right;
+	Vec3<float>		up;
+	Mat4<float>		translation;
+
+	up.set(0.0f, 1.0f, 0.0f);
+	right.crossProduct(forward, up);
+	right.normalize();
+	up.crossProduct(right, forward);
+	up.normalize();
+	setViewMatrix(view, forward, right, up);
+	translation.setTranslation(-pos.x, -pos.y, -pos.z);
+	view.multiply(translation);
+}
+
+void
+Core::initCamera(void)
+{
+	cameraPos.set(15.0f, 15.0f, 15.0f);
+	cameraLookAt.set(0.0f, 0.0f, 0.0f);
+	cameraUp.set(0.0f, 1.0f, 0.0f);
+	cameraForward.set(cameraLookAt - cameraPos);
+	cameraForward.normalize();
+	setCamera(viewMatrix, cameraPos, cameraForward);
+}
+/*
+void
+Camera::onMouseMotion(SDL_MouseMotionEvent const &e)
+{
+	_theta -= e.xrel * _sensivity; 
+	_phi -= e.yrel * _sensivity;
+	this->calcVectors();
+}
+
+void
+Camera::calcVectors(void)
+{
+	static const Vec3<float>	up(0.0f, 0.0f, 1.0f);
+	double						rtmp;
+
+	if (_phi > 89)
+		_phi = 89;
+	else if (_phi < -89)
+		_phi = -89;
+	rtmp = cos(_phi * M_PI / 180);
+	_forward.x = rtmp * cos(_theta * M_PI / 180);
+	_forward.y = rtmp * sin(_theta * M_PI / 180);
+	_forward.z = sin(_phi * M_PI / 180);
+	_left = up.crossProduct(_forward);
+	_left.normalize();
+	_forward.normalize();
+	_target = _position + _forward;
+}
+*/
+void
+Core::cameraMoveForward(void)
+{
+	cameraPos += cameraForward;
+	setCamera(viewMatrix, cameraPos, cameraForward);
+}
+
+void
+Core::cameraMoveBackward(void)
+{
+	cameraPos -= cameraForward;
+	setCamera(viewMatrix, cameraPos, cameraForward);
+}
+
+void
+Core::cameraRotate(void)
+{
+
+	setCamera(viewMatrix, cameraPos, cameraForward);
 }
 
 void
@@ -427,6 +487,25 @@ Core::initVoxel(void)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * 42, voxelIndices, GL_STATIC_DRAW);
 	// texture
 	checkGlError(__FILE__, __LINE__);
+}
+
+void
+Core::update(void)
+{
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
+		multiplier += 0.05f;
+	}
+	else
+	{
+		multiplier -= 0.1f;
+		if (multiplier < 0.0f)
+			multiplier = 0.0f;
+	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraMoveForward();
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraMoveBackward();
 }
 
 void
