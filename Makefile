@@ -10,7 +10,7 @@ OBJS		=	$(patsubst %.cpp, $(OBJ_PATH)%.o,$(SRCS))
 PLATFORM	:=	$(shell uname)
 CC			=	g++
 HEADER		=	-I./$(INC_PATH) -I./glfw/include -I/usr/local/cuda-6.5/include
-FLAGS		=	-g -O3 -Wall -Wextra -Werror -std=gnu++11
+FLAGS		=	-O2 -Wall -Wextra -Werror -std=gnu++11 
 VARS		=	\
 # -DDEBUG \
 # -DPARSER_DEBUG \
@@ -21,7 +21,7 @@ LIBS		=	$(GLFW) -lm -framework OpenGL -framework Cocoa -framework IOKit -framewo
 else ifeq "$(PLATFORM)" "Linux" #LINUX
 GLFW		=	./glfw/libglfw3_linux.a
 LIBS		=	$(GLFW) -lGL -lX11 -lXrandr -lXi -lXxf86vm -lpthread -lXcursor -lXinerama
-# -lXext -lXdamage -ldrm -lXrender 
+# -lXext -lXdamage -ldrm -lXrender
 else ifeq "$(PLATFORM)" "Win32" #WINDOWS
 GLFW		=	./glfw/libglfw3_win32.a
 LIBS		=	$(GLFW) -lopengl32 -lgdi32 -luser32 -lkernel32 -lpthread

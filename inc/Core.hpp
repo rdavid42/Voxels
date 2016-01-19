@@ -43,6 +43,8 @@ public:
 	int						texMax;
 	GLuint					*tex;
 
+	float					multiplier;
+
 	std::ostringstream		oss_ticks;
 
 	Core(void);

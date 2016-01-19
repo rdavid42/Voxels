@@ -44,7 +44,6 @@ key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-
 static void
 cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 {
@@ -211,7 +210,7 @@ Core::init(void)
 	glEnable(GL_DEPTH_TEST);
 	buildProjectionMatrix(projMatrix, 53.13f, 0.1f, 1000.0f);
 	// cameraPos.set(0.0f, 0.0f, 2.0f);
-	cameraPos.set(5.5f, 5.5f, 5.5f);
+	cameraPos.set(15.0f, 15.0f, 15.0f);
 	// cameraLookAt.set(0.0f, 0.0f, 0.0f);
 	setCamera(viewMatrix, cameraPos, cameraLookAt);
 	if (!initShaders())
@@ -226,6 +225,7 @@ Core::init(void)
 		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
 	}
 #endif
+	multiplier = 0.0f;
 	initVoxel();
 	loadTextures();
 	return (1);
@@ -334,9 +334,16 @@ Core::initShaders(void)
 void
 Core::update(void)
 {
-/*	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
-	}*/
+		multiplier += 0.05f;
+	}
+	else
+	{
+		multiplier -= 0.1f;
+		if (multiplier < 0.0f)
+			multiplier = 0.0f;
+	}
 }
 
 void
@@ -431,17 +438,23 @@ Core::render(void)
 	glUseProgram(program);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix.val);
+	glBindVertexArray(voxelVao);
+	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
+	glBindTexture(GL_TEXTURE_2D, tex[0]);
 	for (int i = 0; i < 5; i++)
 	{
-		ms.push();
-			ms.translate((float)i, 0.0f, 0.0f);
-			glUniformMatrix4fv(objLoc, 1, GL_FALSE, ms.top().val);
-			glBindVertexArray(voxelVao);
-			glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
-			glBindTexture(GL_TEXTURE_2D, tex[0]);
-			glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
-		ms.pop();
+		for (int j = 0; j < 5; j++)
+		{
+			for (int k = 0; k < 5; k++)
+			{
+				ms.push();
+					ms.translate((float)i + multiplier * (float)i, (float)k + multiplier * (float)k, (float)j + multiplier * (float)j);
+					glUniformMatrix4fv(objLoc, 1, GL_FALSE, ms.top().val);
+					glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
+				ms.pop();
+			}
+		}
 	}
 }
 
