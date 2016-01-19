@@ -34,10 +34,14 @@ public:
 	GLuint					viewLoc;
 	GLuint					objLoc;
 	GLuint					positionLoc;
-	GLuint					colorLoc;
+	GLuint					textureLoc;
 
-	GLuint					triangleVao;
-	GLuint					triangleVbo;
+	GLuint					voxelVao;
+	GLuint					voxelVbo[2];
+
+	/* Textures */
+	int						texMax;
+	GLuint					*tex;
 
 	std::ostringstream		oss_ticks;
 
@@ -51,6 +55,7 @@ public:
 	void					loop(void);
 
 	/* textures */
+	void					loadTextures(void);
 	GLuint					loadTexture(char const *filename);
 
 	/* matrices */ 
@@ -70,7 +75,7 @@ public:
 	int						initShaders(void);
 
 	/* tests */
-	void					initTriangle(void);
+	void					initVoxel(void);
 
 	Core &					operator=(Core const &rhs);
 

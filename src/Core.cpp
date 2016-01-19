@@ -128,7 +128,7 @@ Core::getLocations(void)
 {
 	// attribute variables
 	positionLoc = glGetAttribLocation(this->program, "position");
-	colorLoc = glGetAttribLocation(this->program, "color");
+	textureLoc = glGetAttribLocation(this->program, "texture");
 	// uniform variables
 	projLoc = glGetUniformLocation(this->program, "proj_matrix");
 	viewLoc = glGetUniformLocation(this->program, "view_matrix");
@@ -152,6 +152,13 @@ Core::loadTexture(char const *filename)
 	glBindTexture(GL_TEXTURE_2D, 0);
 	checkGlError(__FILE__, __LINE__);
 	return (texture);
+}
+
+void
+Core::loadTextures(void)
+{
+	tex = new GLuint[1];
+	tex[0] = loadTexture("resources/testground.bmp");
 }
 
 void
@@ -219,7 +226,8 @@ Core::init(void)
 		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
 	}
 #endif
-	initTriangle();
+	initVoxel();
+	loadTextures();
 	return (1);
 }
 
@@ -332,31 +340,84 @@ Core::update(void)
 }
 
 void
-Core::initTriangle(void)
+Core::initVoxel(void)
 {
-	GLfloat			array[18] =
+	//          y
+	//		    2----3
+	//		   /|   /|
+	//		 6----7  |
+	//		 |  0-|--1   x
+	//		 |/   | /
+	//		 4____5
+	//		z
+
+	static GLfloat const		voxelVertices[120] =
 	{
-		0.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		0.8f, 0.5f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-		0.3f, 0.7f, 0.0f,
-		0.0f, 0.0f, 1.0f
+		// vertices      | texture			C	I
+		// back
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	0	0
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, //	1	1
+		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	2	2
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, //	3	3
+		// left
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	0	4
+		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	2	5
+		0.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	4	6
+		0.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	6	7
+		// right
+		1.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	1	8
+		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	3	9
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	10
+		1.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	7	11
+		// floor
+		0.0f, 0.0f, 0.0f, 0.0f, 1.0f, //	0	12
+		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, //	1	13
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	14
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	15
+		// ceiling
+		0.0f, 1.0f, 0.0f, 0.0f, 0.0f, //	2	16
+		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	3	17
+		0.0f, 1.0f, 1.0f, 1.0f, 0.0f, //	6	18
+		1.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	7	19
+		// front
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	20
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	21
+		0.0f, 1.0f, 1.0f, 1.0f, 0.0f, //	6	22
+		1.0f, 1.0f, 1.0f, 1.0f, 1.0f  //	7	23
+	};
+	static GLushort const		voxelIndices[42] =
+	{
+		// floor
+		12, 13, 15,
+		12, 14, 15,
+		// ceiling
+		16, 17, 18,
+		17, 18, 19,
+		// back
+		0,  1,  3,
+		0,  3,  2,
+		// left
+		4,  6,  7,
+		4,  5,  7,
+		// right
+		8,  10, 11,
+		8,  9,  11,
+		// front
+		20, 21, 23,
+		20, 23, 22
 	};
 
-	glGenVertexArrays(1, &triangleVao);
-	glBindVertexArray(triangleVao);
-	glGenBuffers(1, &triangleVbo);
-	glBindBuffer(GL_ARRAY_BUFFER, triangleVbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(array), array, GL_STATIC_DRAW);
-	// glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bsize);
+	glGenVertexArrays(1, &voxelVao);
+	glBindVertexArray(voxelVao);
+	glGenBuffers(2, &voxelVbo[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 120, voxelVertices, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(positionLoc);
-	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void *)0);
-	glEnableVertexAttribArray(colorLoc);
-	glVertexAttribPointer(colorLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void *)(sizeof(GLfloat) * 3));
-	// OPENCL INTEROPERABILITY
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
+	glEnableVertexAttribArray(textureLoc);
+	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * 42, voxelIndices, GL_STATIC_DRAW);
 	// texture
 	checkGlError(__FILE__, __LINE__);
 }
@@ -372,9 +433,11 @@ Core::render(void)
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix.val);
 	ms.push();
 		glUniformMatrix4fv(objLoc, 1, GL_FALSE, ms.top().val);
-		glBindVertexArray(triangleVao);
-		glBindBuffer(GL_ARRAY_BUFFER, triangleVbo);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(voxelVao);
+		glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
+		glBindTexture(GL_TEXTURE_2D, tex[0]);
+		glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
 	ms.pop();
 }
 
