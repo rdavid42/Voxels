@@ -51,10 +51,13 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 
 	// std::cerr << xpos << ", " << ypos << std::endl;
 	// core->cameraRotate();
-	core->hangle -= ((xpos - core->lastMx) * 0.05);
 	core->vangle -= ((ypos - core->lastMy) * 0.05);
+	if (core->vangle > 89)
+		core->vangle = 89;
+	if (core->vangle < -89)
+		core->vangle = -89;
+	core->hangle -= ((xpos - core->lastMx) * 0.05);
 	core->hangle = fmod(core->hangle, 360);
-	core->vangle = fmod(core->vangle, 360);
 	glfwSetCursorPos(core->window, core->windowWidth / 2, core->windowHeight / 2);
 	//core->cameraRotate();
 	core->lastMx = core->windowWidth / 2;
