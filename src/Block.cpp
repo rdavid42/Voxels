@@ -43,10 +43,10 @@ Block::insert(float const &, float const &, float const &, uint32_t const &, int
 void
 Block::render(Core &core) const
 {
-/*	core.ms.push();
-		glUniformMatrix4fv(objLoc, 1, GL_FALSE, core.ms.top().val);
+	core.ms.push();
+		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 		glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
-	core.ms.pop();*/
+	core.ms.pop();
 	(void)core;
 }
 

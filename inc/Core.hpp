@@ -8,6 +8,8 @@
 # include "Bmp.hpp"
 # include "Link.hpp"
 
+class Link;
+
 class Core
 {
 public:

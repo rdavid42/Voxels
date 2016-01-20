@@ -148,7 +148,6 @@ void
 Link::render(Core &core) const
 {
 	int				i;
-	// float const		s = this->_cube.getS() / 2.0f;
 
 	core.ms.push();
 	for (i = 0; i < CHD_MAX; ++i)

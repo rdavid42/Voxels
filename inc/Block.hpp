@@ -5,6 +5,7 @@
 # include <iostream>
 # include "Constants.hpp"
 # include "Octree.hpp"
+# include "Core.hpp"
 
 class Block : public Octree
 {
