@@ -48,13 +48,13 @@ static void
 cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
-	
-	std::cerr << xpos << ", " << ypos << std::endl;
-	core->mm.set(xpos - core->lastMx, ypos - core->lastMy, 0.0f);
-	core->mm.normalize();
-	core->cameraRotate();
+
+	// std::cerr << xpos << ", " << ypos << std::endl;
+	core->mm.set(xpos - core->lastMx, ypos - core->lastMy, 1.0f);
+	// core->cameraRotate();
 	core->lastMx = xpos;
 	core->lastMy = ypos;
+	glfwSetCursorPos(core->window, core->windowWidth / 2, core->windowHeight / 2);
 	(void)core;
 	(void)xpos;
 	(void)ypos;
@@ -351,9 +351,11 @@ Core::initCamera(void)
 {
 	cameraPos.set(15.0f, 15.0f, 15.0f);
 	cameraLookAt.set(0.0f, 0.0f, 0.0f);
-	cameraUp.set(0.0f, 1.0f, 0.0f);
 	cameraForward.set(cameraLookAt - cameraPos);
 	cameraForward.normalize();
+	// std::cerr << cameraForward << std::endl;
+	cameraForward.normalize();
+	// std::cerr << cameraForward << std::endl;
 	setCamera(viewMatrix, cameraPos, cameraForward);
 }
 /*
@@ -402,7 +404,11 @@ Core::cameraMoveBackward(void)
 void
 Core::cameraRotate(void)
 {
+	// double			rtmp;
 
+	// std::cerr << "x: " << mm.x << ", " << "y: " << mm.y << std::endl;
+	cameraForward.normalize();
+	// mm.set(0.0f, 0.0f, 0.0f);
 	setCamera(viewMatrix, cameraPos, cameraForward);
 }
 
@@ -492,6 +498,8 @@ Core::initVoxel(void)
 void
 Core::update(void)
 {
+	setCamera(viewMatrix, cameraPos, cameraForward);
+	// std::cerr << cameraForward << std::endl;
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
 		multiplier += 0.05f;

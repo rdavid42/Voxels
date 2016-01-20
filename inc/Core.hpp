@@ -39,7 +39,6 @@ public:
 	Vec3<float>				cameraPos;
 	Vec3<float>				cameraLookAt;
 	Vec3<float>				cameraForward;
-	Vec3<float>				cameraUp;
 
 	/* mouse movement */
 	double					lastMx;
