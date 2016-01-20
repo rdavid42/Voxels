@@ -277,59 +277,87 @@ glErrorCallback(GLenum        source,
 	glFinish();
 }
 
-int
-Core::init(void)
+void
+Core::initVoxel(void)
 {
+	//          y
+	//		    2----3
+	//		   /|   /|
+	//		 6----7  |
+	//		 |  0-|--1   x
+	//		 |/   | /
+	//		 4____5
+	//		z
 
-	windowWidth = 1920;
-	windowHeight = 1080;
-	if (!glfwInit())
-		return (0);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	window = glfwCreateWindow(windowWidth, windowHeight, "Voxels", NULL, NULL);
-	const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	glfwSetWindowPos(window, mode->width / 2 - windowWidth / 2, mode->height / 2 - windowHeight / 2);
-	// window = glfwCreateWindow(windowWidth, windowHeight,
-									// "Voxels", glfwGetPrimaryMonitor(), NULL);
-	if (!window)
+	static GLfloat const		voxelVertices[120] =
 	{
-		glfwTerminate();
-		return (0);
-	}
-	lastMx = 0.0;
-	lastMy = 0.0;
-	glfwSetWindowUserPointer(window, this);
-	glfwMakeContextCurrent(window); // make the opengl context of the window current on the main thread
-	glfwSwapInterval(1); // VSYNC 60 fps max
-	glfwSetKeyCallback(window, key_callback);
-	glfwSetCursorPosCallback(window, cursor_pos_callback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	// glfwDisable(GLFW_MOUSE_CURSOR);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glEnable(GL_DEPTH_TEST);
-	buildProjectionMatrix(projMatrix, 53.13f, 0.1f, 1000.0f);
-	cameraPos.set(15.0f, 15.0f, 15.0f);
-	cameraLookAt.set(0.0f, 0.0f, 0.0f);
-	initCamera();
-	if (!initShaders())
-		return (0);
-	getLocations();
-#ifndef __APPLE__
-	if (glDebugMessageControlARB != NULL)
+		// vertices      | texture			C	I
+		// back
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	0	0
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, //	1	1
+		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	2	2
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, //	3	3
+		// left
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	0	4
+		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	2	5
+		0.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	4	6
+		0.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	6	7
+		// right
+		1.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	1	8
+		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	3	9
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	10
+		1.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	7	11
+		// floor
+		0.0f, 0.0f, 0.0f, 0.0f, 1.0f, //	0	12
+		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, //	1	13
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	14
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	15
+		// ceiling
+		0.0f, 1.0f, 0.0f, 0.0f, 0.0f, //	2	16
+		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	3	17
+		0.0f, 1.0f, 1.0f, 1.0f, 0.0f, //	6	18
+		1.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	7	19
+		// front
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	20
+		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	21
+		0.0f, 1.0f, 1.0f, 1.0f, 0.0f, //	6	22
+		1.0f, 1.0f, 1.0f, 1.0f, 1.0f  //	7	23
+	};
+	static GLushort const		voxelIndices[42] =
 	{
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
-	}
-#endif
-	multiplier = 0.0f;
-	initVoxel();
-	loadTextures();
-	return (1);
+		// floor
+		12, 13, 15,
+		12, 14, 15,
+		// ceiling
+		16, 17, 18,
+		17, 18, 19,
+		// back
+		0,  1,  3,
+		0,  3,  2,
+		// left
+		4,  6,  7,
+		4,  5,  7,
+		// right
+		8,  10, 11,
+		8,  9,  11,
+		// front
+		20, 21, 23,
+		20, 23, 22
+	};
+
+	glGenVertexArrays(1, &voxelVao);
+	glBindVertexArray(voxelVao);
+	glGenBuffers(2, &voxelVbo[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 120, voxelVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(positionLoc);
+	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
+	glEnableVertexAttribArray(textureLoc);
+	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * 42, voxelIndices, GL_STATIC_DRAW);
+	// texture
+	checkGlError(__FILE__, __LINE__);
 }
 
 void
@@ -431,87 +459,61 @@ Core::cameraRotate(void)
 	setCamera(viewMatrix, cameraPos, cameraForward);
 }
 
-void
-Core::initVoxel(void)
+int
+Core::init(void)
 {
-	//          y
-	//		    2----3
-	//		   /|   /|
-	//		 6----7  |
-	//		 |  0-|--1   x
-	//		 |/   | /
-	//		 4____5
-	//		z
 
-	static GLfloat const		voxelVertices[120] =
+	windowWidth = 1920;
+	windowHeight = 1080;
+	if (!glfwInit())
+		return (0);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	window = glfwCreateWindow(windowWidth, windowHeight, "Voxels", NULL, NULL);
+	const GLFWvidmode *mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	glfwSetWindowPos(window, mode->width / 2 - windowWidth / 2, mode->height / 2 - windowHeight / 2);
+	// window = glfwCreateWindow(windowWidth, windowHeight,
+									// "Voxels", glfwGetPrimaryMonitor(), NULL);
+	if (!window)
 	{
-		// vertices      | texture			C	I
-		// back
-		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	0	0
-		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, //	1	1
-		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	2	2
-		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, //	3	3
-		// left
-		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	0	4
-		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	2	5
-		0.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	4	6
-		0.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	6	7
-		// right
-		1.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	1	8
-		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	3	9
-		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	10
-		1.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	7	11
-		// floor
-		0.0f, 0.0f, 0.0f, 0.0f, 1.0f, //	0	12
-		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, //	1	13
-		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	14
-		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	15
-		// ceiling
-		0.0f, 1.0f, 0.0f, 0.0f, 0.0f, //	2	16
-		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	3	17
-		0.0f, 1.0f, 1.0f, 1.0f, 0.0f, //	6	18
-		1.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	7	19
-		// front
-		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	20
-		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	21
-		0.0f, 1.0f, 1.0f, 1.0f, 0.0f, //	6	22
-		1.0f, 1.0f, 1.0f, 1.0f, 1.0f  //	7	23
-	};
-	static GLushort const		voxelIndices[42] =
+		glfwTerminate();
+		return (0);
+	}
+	lastMx = 0.0;
+	lastMy = 0.0;
+	glfwSetWindowUserPointer(window, this);
+	glfwMakeContextCurrent(window); // make the opengl context of the window current on the main thread
+	glfwSwapInterval(1); // VSYNC 60 fps max
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, cursor_pos_callback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	// glfwDisable(GLFW_MOUSE_CURSOR);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glEnable(GL_DEPTH_TEST);
+	buildProjectionMatrix(projMatrix, 53.13f, 0.1f, 1000.0f);
+	cameraPos.set(15.0f, 15.0f, 15.0f);
+	cameraLookAt.set(0.0f, 0.0f, 0.0f);
+	initCamera();
+	if (!initShaders())
+		return (0);
+	getLocations();
+#ifndef __APPLE__
+	if (glDebugMessageControlARB != NULL)
 	{
-		// floor
-		12, 13, 15,
-		12, 14, 15,
-		// ceiling
-		16, 17, 18,
-		17, 18, 19,
-		// back
-		0,  1,  3,
-		0,  3,  2,
-		// left
-		4,  6,  7,
-		4,  5,  7,
-		// right
-		8,  10, 11,
-		8,  9,  11,
-		// front
-		20, 21, 23,
-		20, 23, 22
-	};
-
-	glGenVertexArrays(1, &voxelVao);
-	glBindVertexArray(voxelVao);
-	glGenBuffers(2, &voxelVbo[0]);
-	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 120, voxelVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(positionLoc);
-	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
-	glEnableVertexAttribArray(textureLoc);
-	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * 42, voxelIndices, GL_STATIC_DRAW);
-	// texture
-	checkGlError(__FILE__, __LINE__);
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
+	}
+#endif
+	multiplier = 0.0f;
+	initVoxel();
+	loadTextures();
+	octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
+	octree->insert(0.0, 0.0, 0.0, 8, BLOCK);
+	return (1);
 }
 
 void
@@ -552,20 +554,7 @@ Core::render(void)
 	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
 	glBindTexture(GL_TEXTURE_2D, tex[0]);
-	for (int i = 0; i < 5; i++)
-	{
-		for (int j = 0; j < 5; j++)
-		{
-			for (int k = 0; k < 5; k++)
-			{
-				ms.push();
-					ms.translate((float)i + multiplier * (float)i, (float)k + multiplier * (float)k, (float)j + multiplier * (float)j);
-					glUniformMatrix4fv(objLoc, 1, GL_FALSE, ms.top().val);
-					glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
-				ms.pop();
-			}
-		}
-	}
+	octree->render(*this);
 }
 
 void
