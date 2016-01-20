@@ -6,6 +6,7 @@
 # include "Mat4Stack.hpp"
 # include "Utils.hpp"
 # include "Bmp.hpp"
+# include "Link.hpp"
 
 class Core
 {
@@ -53,8 +54,9 @@ public:
 	GLuint					*tex;
 
 	float					multiplier;
-
 	std::ostringstream		oss_ticks;
+
+	Link					*octree;
 
 	Core(void);
 	~Core(void);

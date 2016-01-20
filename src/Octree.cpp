@@ -1,20 +1,23 @@
 
+#include "Constants.hpp"
 #include "Octree.hpp"
+#include "Block.hpp"
+#include "Link.hpp"
 
 Octree::Octree(void)
-	: _state(EMPTY), _cube(), _parent(NULL), c(0, 0, 0)
+	: _state(EMPTY), _cube(), _parent(NULL)
+{
+	return ;
+}
+
+Octree::Octree(Octree const &src)
+	: _state(src.getState()), _cube(src.getCube()), _parent(NULL)
 {
 	return ;
 }
 
 Octree::Octree(float const &x, float const &y, float const &z, float const &s)
-	: _state(EMPTY), _cube(x, y, z, s), _parent(NULL), c(0, 0, 0)
-{
-	return ;
-}
-
-Octree::Octree(Vec3<float> const &c, float const &x, float const &y, float const &z, float const &s)
-	: _state(EMPTY), _cube(x, y, z, s), _parent(NULL), c(c)
+	: _state(EMPTY), _cube(x, y, z, s), _parent(NULL)
 {
 	return ;
 }
@@ -24,9 +27,17 @@ Octree::~Octree(void)
 	return ;
 }
 
-// -------------------------------------------------------------------
-// Remove current octree from his parent, and set it to NULL
-// -------------------------------------------------------------------
+Octree &
+Octree::operator=(Octree const &rhs)
+{
+	if (this != &rhs)
+	{
+		this->_state = rhs.getState();
+		this->_cube = rhs.getCube();
+	}
+	return (*this);
+}
+
 void
 Octree::remove(void)
 {
@@ -45,7 +56,15 @@ Octree::remove(void)
 		}
 	}
 }
-// -------------------------------------------------------------------
+
+void
+Octree::drawCube(float const &x, float const &y, float const &z, float const &s) const
+{
+	(void)x;
+	(void)y;
+	(void)z;
+	(void)s;
+}
 
 void
 Octree::setCube(float const &x, float const &y, float const &z, float const &s)
