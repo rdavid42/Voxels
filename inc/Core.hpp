@@ -39,11 +39,14 @@ public:
 	Vec3<float>				cameraPos;
 	Vec3<float>				cameraLookAt;
 	Vec3<float>				cameraForward;
+	Vec3<float>				cameraUp;
+	Vec3<float>				cameraRight;
+	float					hangle; //horizontal camera angle
+	float					vangle; //vertical camera angle
 
 	/* mouse movement */
 	double					lastMx;
 	double					lastMy;
-	Vec3<float>				mm;
 
 	/* Textures */
 	int						texMax;
@@ -68,6 +71,8 @@ public:
 	void					cameraRotate(void);
 	void					cameraMoveForward(void);
 	void					cameraMoveBackward(void);
+	void					cameraStrafeLeft(void);
+	void					cameraStrafeRight(void);
 
 	/* textures */
 	void					loadTextures(void);

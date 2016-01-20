@@ -50,11 +50,15 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
 	// std::cerr << xpos << ", " << ypos << std::endl;
-	core->mm.set(xpos - core->lastMx, ypos - core->lastMy, 1.0f);
 	// core->cameraRotate();
-	core->lastMx = xpos;
-	core->lastMy = ypos;
+	core->hangle -= ((xpos - core->lastMx) * 0.05);
+	core->vangle -= ((ypos - core->lastMy) * 0.05);
+	core->hangle = fmod(core->hangle, 360);
+	core->vangle = fmod(core->vangle, 360);
 	glfwSetCursorPos(core->window, core->windowWidth / 2, core->windowHeight / 2);
+	//core->cameraRotate();
+	core->lastMx = core->windowWidth / 2;
+	core->lastMy = core->windowHeight / 2;
 	(void)core;
 	(void)xpos;
 	(void)ypos;
@@ -297,7 +301,6 @@ Core::init(void)
 	}
 	lastMx = 0.0;
 	lastMy = 0.0;
-	mm.set(0.0f, 0.0f, 0.0f);
 	glfwSetWindowUserPointer(window, this);
 	glfwMakeContextCurrent(window); // make the opengl context of the window current on the main thread
 	glfwSwapInterval(1); // VSYNC 60 fps max
@@ -332,16 +335,14 @@ Core::init(void)
 void
 Core::setCamera(Mat4<float> &view, Vec3<float> const &pos, Vec3<float> const &forward)
 {
-	Vec3<float>		right;
-	Vec3<float>		up;
 	Mat4<float>		translation;
 
-	up.set(0.0f, 1.0f, 0.0f);
-	right.crossProduct(forward, up);
-	right.normalize();
-	up.crossProduct(right, forward);
-	up.normalize();
-	setViewMatrix(view, forward, right, up);
+	cameraUp.set(0.0f, 1.0f, 0.0f);
+	cameraRight.crossProduct(forward, cameraUp);
+	cameraRight.normalize();
+	cameraUp.crossProduct(cameraRight, forward);
+	cameraUp.normalize();
+	setViewMatrix(view, forward, cameraRight, cameraUp);
 	translation.setTranslation(-pos.x, -pos.y, -pos.z);
 	view.multiply(translation);
 }
@@ -349,11 +350,11 @@ Core::setCamera(Mat4<float> &view, Vec3<float> const &pos, Vec3<float> const &fo
 void
 Core::initCamera(void)
 {
-	cameraPos.set(15.0f, 15.0f, 15.0f);
+	cameraPos.set(0.0f, 5.0f, 15.0f);
 	cameraLookAt.set(0.0f, 0.0f, 0.0f);
 	cameraForward.set(cameraLookAt - cameraPos);
 	cameraForward.normalize();
-	// std::cerr << cameraForward << std::endl;
+	std::cerr << cameraForward << std::endl;
 	cameraForward.normalize();
 	// std::cerr << cameraForward << std::endl;
 	setCamera(viewMatrix, cameraPos, cameraForward);
@@ -402,13 +403,31 @@ Core::cameraMoveBackward(void)
 }
 
 void
+Core::cameraStrafeRight(void)
+{
+	cameraPos += cameraRight;
+	setCamera(viewMatrix, cameraPos, cameraForward);
+}
+
+void
+Core::cameraStrafeLeft(void)
+{
+	cameraPos -= cameraRight;
+	setCamera(viewMatrix, cameraPos, cameraForward);
+}
+
+void
 Core::cameraRotate(void)
 {
-	// double			rtmp;
+	float			hr;
+	float			vr;
 
-	// std::cerr << "x: " << mm.x << ", " << "y: " << mm.y << std::endl;
+	hr = hangle * M_PI / 180;
+	vr = vangle * M_PI / 180;
+	cameraForward.set(cos(vr) * sin(hr),
+					 sin(vr),
+					 cos(vr) * cos (hr));
 	cameraForward.normalize();
-	// mm.set(0.0f, 0.0f, 0.0f);
 	setCamera(viewMatrix, cameraPos, cameraForward);
 }
 
@@ -498,8 +517,8 @@ Core::initVoxel(void)
 void
 Core::update(void)
 {
+	cameraRotate();
 	setCamera(viewMatrix, cameraPos, cameraForward);
-	// std::cerr << cameraForward << std::endl;
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
 		multiplier += 0.05f;
@@ -514,6 +533,10 @@ Core::update(void)
 		cameraMoveForward();
 	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		cameraMoveBackward();
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraStrafeLeft();
+	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraStrafeRight();
 }
 
 void
