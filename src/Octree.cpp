@@ -58,15 +58,6 @@ Octree::remove(void)
 }
 
 void
-Octree::drawCube(float const &x, float const &y, float const &z, float const &s) const
-{
-	(void)x;
-	(void)y;
-	(void)z;
-	(void)s;
-}
-
-void
 Octree::setCube(float const &x, float const &y, float const &z, float const &s)
 {
 	this->_cube = Cube(x, y, z, s);

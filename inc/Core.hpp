@@ -2,12 +2,22 @@
 #ifndef CORE_HPP
 # define CORE_HPP
 
+# include <thread>
 # include "Camera.hpp"
 # include "Shaders.hpp"
 # include "Bmp.hpp"
-# include "Link.hpp"
+# include "Chunk.hpp"
+# include "Block.hpp"
+# include "Noise.hpp"
 
-class Link;
+# define STARTED	0
+# define STOPPED	1
+
+typedef struct
+{
+	int				i;
+	Core			*core;
+}					ThreadArgs;
 
 class Core
 {
@@ -51,7 +61,32 @@ public:
 	float					multiplier;
 	std::ostringstream		oss_ticks;
 
+	/* Octree */
+
+	Noise *					noise;
 	Link					*octree;
+	float					chunk_size; // size of a chunk
+	float					block_size[MAX_BLOCK_DEPTH]; // size of a block inside a chunk
+	int						center; // central chunk's index, `chunks[center][center][center]`
+	Chunk *					chunks[GEN_SIZE]
+									[GEN_SIZE]
+									[GEN_SIZE]; // camera chunk in the center
+
+	int						pool_size;
+	bool					pool_state;
+	pthread_cond_t *		task_cond;
+	volatile bool *			is_task_locked;
+	pthread_mutex_t *		task_mutex;
+	pthread_t *				threads;
+	std::deque<Chunk *> *	task_queue; // one different pool per thread
+
+	uint32_t				getConcurrentThreads();
+	void					processChunkGeneration(Chunk *c);
+	void *					executeThread(int const &id);
+	int						startThreads(void);
+	int						stopThreads(void);
+	void					addTask(Chunk *c, int const &id);
+	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
 
 	Core(void);
 	~Core(void);
@@ -76,7 +111,9 @@ public:
 
 	void					getLocations(void);
 
-	/* tests */
+	void					generation(void);
+	void					insertChunks(void);
+	void					initChunks(void);
 	void					initVoxel(void);
 
 	Core &					operator=(Core const &rhs);

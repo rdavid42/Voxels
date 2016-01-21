@@ -92,18 +92,20 @@ Core::loadTexture(char const *filename)
 void
 Core::loadTextures(void)
 {
-	tex = new GLuint[1];
-	tex[0] = loadTexture("resources/testground.bmp");
+	tex = new GLuint[3];
+	tex[0] = loadTexture("resources/grass_bottom.bmp");
+	tex[1] = loadTexture("resources/grass_side.bmp");
+	tex[2] = loadTexture("resources/grass_up.bmp");
 }
 
 void
-glErrorCallback(GLenum        source,
-				GLenum        type,
-				GLuint        id,
-				GLenum        severity,
-				GLsizei       length,
-				const GLchar* message,
-				GLvoid*       userParam)
+glErrorCallback(GLenum			source,
+				GLenum			type,
+				GLuint			id,
+				GLenum			severity,
+				GLsizei			length,
+				const GLchar	*message,
+				GLvoid			*userParam)
 {
 	(void)userParam;
 	(void)length;
@@ -160,20 +162,14 @@ Core::initVoxel(void)
 		// front
 		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	20
 		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	21
-		0.0f, 1.0f, 1.0f, 1.0f, 0.0f, //	6	22
+		0.0f, 1.0f, 1.0f, 0.0f, 1.0f, //	6	22
 		1.0f, 1.0f, 1.0f, 1.0f, 1.0f  //	7	23
 	};
 	static GLushort const		voxelIndices[42] =
 	{
-		// floor
-		12, 13, 15,
-		12, 14, 15,
-		// ceiling
-		16, 17, 18,
-		17, 18, 19,
 		// back
-		0,  1,  3,
-		0,  3,  2,
+		2,  1,  3,
+		2,  1,  0,
 		// left
 		4,  6,  7,
 		4,  5,  7,
@@ -182,7 +178,13 @@ Core::initVoxel(void)
 		8,  9,  11,
 		// front
 		20, 21, 23,
-		20, 23, 22
+		20, 22, 23,
+		// floor
+		12, 13, 15,
+		12, 14, 15,
+		// ceiling
+		16, 17, 18,
+		17, 18, 19
 	};
 
 	glGenVertexArrays(1, &voxelVao);
@@ -198,6 +200,316 @@ Core::initVoxel(void)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * 42, voxelIndices, GL_STATIC_DRAW);
 	// texture
 	checkGlError(__FILE__, __LINE__);
+}
+
+// THREAD POOL
+/*
+inline static float
+getDensity(Noise *n, float const &x, float const &y, float const &z)
+{
+	return (n->octave_noise_3d(0, x, y, z)
+		  + n->octave_noise_3d(0, x, y, z) * 0.25
+		  + n->octave_noise_3d(0, x, y, z) * 0.5);
+	return (n->fractal(0, x, y, z));
+}
+*/
+void
+Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth)
+{
+	float						density;
+	float						nx, ny, nz;
+
+	nx = c->getCube()->getX() + x;// + *d->block_size / 2;
+	ny = c->getCube()->getY() + y;// + *d->block_size / 2;
+	nz = c->getCube()->getZ() + z;// + *d->block_size / 2;
+	// density = getDensity(this->noise, nx, ny, nz);
+	density = 0.0f;
+	for (int i = 0; i < FRAC_LIMIT; i++)
+		density += noise->fractal(0, nx, ny, nz);
+	// if (density > 0.0 && density < 0.1)
+		c->insert(nx, density, nz, depth, BLOCK | GROUND);
+}
+
+void
+Core::processChunkGeneration(Chunk *c)
+{
+	float						x, y, z;
+	int							depth;
+
+	c->generated = false;
+	depth = BLOCK_DEPTH;
+	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
+	{
+		for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
+		{
+			for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
+				generateBlock(c, x, y, z, depth);
+		}
+	}
+	c->generated = true;
+}
+
+void *
+Core::executeThread(int const &id)
+{
+	Chunk			*chunk;
+
+	while (true)
+	{
+		// lock task queue and try to pick a task
+		pthread_mutex_lock(&this->task_mutex[id]);
+		this->is_task_locked[id] = true;
+
+		// make thread wait when pool is empty
+		while (this->pool_state != STOPPED && this->task_queue[id].empty())
+			pthread_cond_wait(&this->task_cond[id], &this->task_mutex[id]);
+
+		// stop thread when pool is destroyed
+		if (this->pool_state == STOPPED)
+		{
+			// unlock to exit
+			this->is_task_locked[id] = false;
+			pthread_mutex_unlock(&this->task_mutex[id]);
+			pthread_exit(0);
+		}
+
+		// pick task to process
+		chunk = this->task_queue[id].front();
+		this->task_queue[id].pop_front();
+
+		// unlock task queue
+		this->is_task_locked[id] = false;
+		pthread_mutex_unlock(&this->task_mutex[id]);
+
+		// process task
+		processChunkGeneration(chunk);
+	}
+	return (0);
+}
+
+static void *
+startThread(void *args)
+{
+	ThreadArgs *		ta = (ThreadArgs *)args;
+
+	ta->core->executeThread(ta->i);
+	delete ta;
+	return (0);
+}
+
+int
+Core::stopThreads(void)
+{
+	int				err;
+	int				i;
+	void			*res;
+
+	// lock task queue
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		pthread_mutex_lock(&this->task_mutex[i]);
+		this->is_task_locked[i] = true;
+	}
+
+	this->pool_state = STOPPED;
+
+	// unlock task queue
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		this->is_task_locked[i] = false;
+		pthread_mutex_unlock(&this->task_mutex[i]);
+	}
+
+	// notify threads that they need to exit
+	for (i = 0; i < this->pool_size; ++i)
+		pthread_cond_broadcast(&this->task_cond[i]);
+
+	// wait for threads to exit and join them
+	err = -1;
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		err = pthread_join(this->threads[i], &res);
+		(void)err;
+		(void)res;
+		// notify threads waiting
+		pthread_cond_broadcast(&this->task_cond[i]);
+	}
+
+	// destroy mutex and cond
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		pthread_mutex_destroy(&this->task_mutex[i]);
+		pthread_cond_destroy(&this->task_cond[i]);
+	}
+
+	// release memory
+	delete [] this->task_cond;
+	delete [] this->is_task_locked;
+	delete [] this->task_mutex;
+	delete [] this->threads;
+	delete [] this->task_queue;
+	return (1);
+}
+
+uint32_t
+Core::getConcurrentThreads()
+{
+	// just a hint
+	return (std::thread::hardware_concurrency());
+}
+
+int
+Core::startThreads(void)
+{
+	int				err;
+	int				i;
+	ThreadArgs		*ta;
+
+	this->pool_size = this->getConcurrentThreads() + 1;
+	if (this->pool_size <= 0)
+		this->pool_size = 1;
+	std::cerr << "Concurrent threads: " << this->pool_size << std::endl;
+	// Thread pool heap allocation, because of variable size
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		this->task_cond = new pthread_cond_t[this->pool_size];
+		this->is_task_locked = new bool[this->pool_size];
+		this->task_mutex = new pthread_mutex_t[this->pool_size];
+		this->threads = new pthread_t[this->pool_size];
+		this->task_queue = new std::deque<Chunk *>[this->pool_size];
+	}
+	// mutex and cond initialization
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		pthread_mutex_init(&this->task_mutex[i], NULL);
+		pthread_cond_init(&this->task_cond[i], NULL);
+	}
+	this->pool_state = STARTED;
+	err = -1;
+	for (i = 0; i < this->pool_size; ++i)
+	{
+		ta = new ThreadArgs();
+		ta->i = i;
+		ta->core = this;
+		err = pthread_create(&threads[i], NULL, startThread, ta);
+		if (err != 0)
+		{
+			std::cerr << "Failed to create Thread: " << err << std::endl;
+			return (0);
+		}
+		else
+			std::cerr << "[" << i << "] Thread created: " << std::hex << threads[i] << std::endl;
+	}
+	return (1);
+}
+
+void
+Core::addTask(Chunk *c, int const &id)
+{
+	// lock task queue
+	pthread_mutex_lock(&this->task_mutex[id]);
+	this->is_task_locked[id] = true;
+
+	// push task in queue
+	this->task_queue[id].push_front(c);
+
+	// clear thread task queues if they exceed TASK_QUEUE_OVERFLOW
+	while (this->task_queue[id].size() > TASK_QUEUE_OVERFLOW)
+		this->task_queue[id].pop_back();
+	// wake up a thread to process task
+	pthread_cond_signal(&this->task_cond[id]);
+
+	// unlock task queue
+	this->is_task_locked[id] = false;
+	pthread_mutex_unlock(&this->task_mutex[id]);
+}
+
+void
+Core::generation(void)
+{
+	int							cx, cy, cz;
+	int							id;
+
+	// get new chunks inside rendering area and add them to generation queues
+	id = 0;
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (this->chunks[cz][cy][cx] != NULL)
+				{
+					if (!this->chunks[cz][cy][cx]->generated)
+						this->addTask(this->chunks[cz][cy][cx], id);
+					id++;
+					id %= this->pool_size;
+				}
+			}
+		}
+	}
+}
+
+void
+Core::insertChunks(void)
+{
+	int					cx, cy, cz;
+	float				px, py, pz;
+	Chunk *				new_chunk;
+
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				// place new chunks in the camera perimeter, ignoring the central chunk
+				if (cz != center || cy != center || cx != center)
+				{
+					px = camera.pos.x + (cx - center) * chunk_size;
+					py = camera.pos.y + (cy - center) * chunk_size;
+					pz = camera.pos.z + (cz - center) * chunk_size;
+					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY);
+					if (new_chunk != chunks[cz][cy][cx])
+					{
+						new_chunk->pos.x = cx;
+						new_chunk->pos.y = cy;
+						new_chunk->pos.z = cz;
+						chunks[cz][cy][cx] = new_chunk;
+					}
+				}
+			}
+		}
+	}
+}
+
+void
+Core::initChunks(void)
+{
+	int				x, y, z;
+	int				i;
+
+	for (z = 0; z < GEN_SIZE; ++z)
+		for (y = 0; y < GEN_SIZE; ++y)
+			for (x = 0; x < GEN_SIZE; ++x)
+				chunks[z][y][x] = NULL;
+	center = (GEN_SIZE - 1) / 2;
+	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
+	for (i = 1; i < MAX_BLOCK_DEPTH; ++i)
+		block_size[i] = chunk_size / powf(2, i);
+	// Create initial chunk
+	chunks[center][center][center] = (Chunk *)octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
+															CHUNK_DEPTH, CHUNK | EMPTY);
+	insertChunks();
+/*
+	Chunk *c = chunks[center][center][center];
+
+	std::cerr << block_size[BLOCK_DEPTH - 1] << std::endl;
+	c->insert(	c->getCube()->getX() + block_size[BLOCK_DEPTH],
+				c->getCube()->getY() + block_size[BLOCK_DEPTH],
+				c->getCube()->getZ() + block_size[BLOCK_DEPTH],
+				BLOCK_DEPTH, BLOCK | GROUND);*/
+	generation();
 }
 
 int
@@ -246,11 +558,22 @@ Core::init(void)
 		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
 	}
 #endif
+	noise = new Noise(42, 256);
+	noise->configs.emplace_back(4, 0.7, 0.2, 0.7, 0.1);
+	noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
+	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
+	srandom(time(NULL));
+	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
+				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
+				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
+				<< "amplitude:   " << this->noise->configs.at(0).amplitude << std::endl
+				<< "persistence: " << this->noise->configs.at(0).persistence << std::endl;
 	multiplier = 0.0f;
 	initVoxel();
 	loadTextures();
+	startThreads();
 	octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
-	octree->insert(0.0, 0.0, 0.0, 8, BLOCK);
+	initChunks();
 	return (1);
 }
 
@@ -291,8 +614,9 @@ Core::render(void)
 	glBindVertexArray(voxelVao);
 	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
-	glBindTexture(GL_TEXTURE_2D, tex[0]);
-	octree->render(*this);
+	ms.push();
+		octree->render(*this);
+	ms.pop();
 }
 
 void

@@ -1,4 +1,5 @@
 
+#include "Core.hpp"
 #include "Chunk.hpp"
 
 Chunk::Chunk(void) : Link(), generated(false)
@@ -20,23 +21,16 @@ void
 Chunk::render(Core &core) const
 {
 	int			i;
-#ifdef DEBUG
-	if (this->generated)
-		glColor3f(0.7f, 0.5f, 0.0f);
-	else
-		glColor3f(1.0f, 0.0f, 0.0f);
-	drawCubeRidges(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
-#endif
-/*	if (this->_state & GROUND)
-	{
-		glColor3f(c.x, c.y, c.z);
-		drawCube(this->_cube.getX(), this->_cube.getY(), this->_cube.getZ(), this->_cube.getS());
-	}*/
-	for (i = 0; i < CHD_MAX; ++i)
-	{
-		if (this->_children[i] != NULL)
-			this->_children[i]->render(core);
-	}
+
+	// std::cerr << _cube.getS() << std::endl;
+	// core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
+	// core.ms.push();
+		for (i = 0; i < CHD_MAX; ++i)
+		{
+			if (this->_children[i] != NULL)
+				this->_children[i]->render(core);
+		}
+	// core.ms.pop();
 }
 
 Chunk

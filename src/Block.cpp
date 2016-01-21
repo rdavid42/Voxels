@@ -44,10 +44,16 @@ void
 Block::render(Core &core) const
 {
 	core.ms.push();
+		core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
+		// std::cerr << _cube.getX() << "," << _cube.getY() << "," << _cube.getZ() << "," << _cube.getS() << std::endl;
 		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
-		glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
+		glBindTexture(GL_TEXTURE_2D, core.tex[1]);
+		glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
+		glBindTexture(GL_TEXTURE_2D, core.tex[0]);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 24));
+		glBindTexture(GL_TEXTURE_2D, core.tex[2]);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 30));
 	core.ms.pop();
-	(void)core;
 }
 
 Block

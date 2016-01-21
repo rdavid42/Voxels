@@ -34,7 +34,9 @@ Link::createChild(uint32_t const &i, float const &x, float const &y, float const
 	if (state & CHUNK)
 		this->_children[i] = new Chunk(x, y, z, s);
 	else if (state & BLOCK)
+	{
 		this->_children[i] = new Block(x, y, z, s);
+	}
 	else
 		this->_children[i] = new Link(x, y, z, s);
 	this->_children[i]->setParent(this);
@@ -131,13 +133,15 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 					if ((depth - 1) == 0)
 						this->createChild(i, nx, ny, nz, s, state);
 					else
-						this->createChild(i, nx, ny, nz, s, 0);
+						this->createChild(i, nx, ny, nz, s, EMPTY);
 					this->_state = 0;
 					return (this->_children[i]->insert(x, y, z, depth - 1, state));
 				}
 			}
 			else if (this->_children[i]->getCube()->vertexInside(x, y, z))
+			{
 				return (this->_children[i]->insert(x, y, z, depth - 1, state));
+			}
 		}
 	}
 	return (NULL);
@@ -149,13 +153,14 @@ Link::render(Core &core) const
 {
 	int				i;
 
-	core.ms.push();
-	for (i = 0; i < CHD_MAX; ++i)
-	{
-		if (this->_children[i] != 0)
-			this->_children[i]->render(core);
-	}
-	core.ms.pop();
+	// core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
+	// core.ms.push();
+		for (i = 0; i < CHD_MAX; ++i)
+		{
+			if (this->_children[i] != 0)
+				this->_children[i]->render(core);
+		}
+	// core.ms.pop();
 }
 
 Octree *

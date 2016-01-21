@@ -1,6 +1,6 @@
 
-#ifndef		CHUNK_HPP
-# define	CHUNK_HPP
+#ifndef CHUNK_HPP
+# define CHUNK_HPP
 
 # include <iostream>
 # include "Constants.hpp"

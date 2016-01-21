@@ -5,7 +5,8 @@
 # include <iostream>
 # include "Constants.hpp"
 # include "Octree.hpp"
-# include "Core.hpp"
+
+class Core;
 
 class Link : public Octree
 {
