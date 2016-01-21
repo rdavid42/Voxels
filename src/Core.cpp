@@ -28,13 +28,13 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
-	core->vangle -= ((ypos - core->lastMy) * 0.05);
-	if (core->vangle > 89)
-		core->vangle = 89;
-	if (core->vangle < -89)
-		core->vangle = -89;
-	core->hangle -= ((xpos - core->lastMx) * 0.05);
-	core->hangle = fmod(core->hangle, 360);
+	core->camera.vangle -= ((ypos - core->lastMy) * 0.05);
+	if (core->camera.vangle > 89)
+		core->camera.vangle = 89;
+	if (core->camera.vangle < -89)
+		core->camera.vangle = -89;
+	core->camera.hangle -= ((xpos - core->lastMx) * 0.05);
+	core->camera.hangle = fmod(core->camera.hangle, 360);
 	glfwSetCursorPos(core->window, core->windowWidth / 2, core->windowHeight / 2);
 	core->lastMx = core->windowWidth / 2;
 	core->lastMy = core->windowHeight / 2;
@@ -56,38 +56,6 @@ Core::buildProjectionMatrix(Mat4<float> &proj, float const &fov,
 	proj[3 * 4 + 2] = (2.0f * far * near) / (near - far);
 	proj[2 * 4 + 3] = -1.0f;
 	proj[3 * 4 + 3] = 0.0f;
-}
-
-void
-Core::setViewMatrix(Mat4<float> &view, Vec3<float> const &dir,
-					Vec3<float> const &right, Vec3<float> const &up)
-{
-	/*
-	rx		ux		-dx		0
-	ry		uy		-dy		0
-	rz		uz		-dz		0
-	0		0		0		1
-	*/
-	// first column
-	view[0] = right.x;
-	view[4] = right.y;
-	view[8] = right.z;
-	view[12] = 0.0f;
-	// second column
-	view[1] = up.x;
-	view[5] = up.y;
-	view[9] = up.z;
-	view[13] = 0.0f;
-	// third column
-	view[2] = -dir.x;
-	view[6] = -dir.y;
-	view[10] = -dir.z;
-	view[14] = 0.0f;
-	// fourth column
-	view[3] = 0.0f;
-	view[7] = 0.0f;
-	view[11] = 0.0f;
-	view[15] = 1.0f;
 }
 
 void
@@ -235,7 +203,6 @@ Core::initVoxel(void)
 int
 Core::init(void)
 {
-
 	windowWidth = 1920;
 	windowHeight = 1080;
 	if (!glfwInit())
@@ -266,9 +233,7 @@ Core::init(void)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
 	buildProjectionMatrix(projMatrix, 53.13f, 0.1f, 1000.0f);
-	cameraPos.set(15.0f, 15.0f, 15.0f);
-	cameraLookAt.set(0.0f, 0.0f, 0.0f);
-	initCamera();
+	camera.init();
 	if (!initShaders(vertexShader, fragmentShader, program))
 		return (0);
 	getLocations();
@@ -292,8 +257,8 @@ Core::init(void)
 void
 Core::update(void)
 {
-	cameraRotate();
-	setCamera(viewMatrix, cameraPos, cameraForward);
+	camera.rotate();
+	camera.set();
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
 		multiplier += 0.05f;
@@ -305,13 +270,13 @@ Core::update(void)
 			multiplier = 0.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cameraMoveForward();
+		camera.moveForward();
 	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cameraMoveBackward();
+		camera.moveBackward();
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cameraStrafeLeft();
+		camera.strafeLeft();
 	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cameraStrafeRight();
+		camera.strafeRight();
 }
 
 void
@@ -322,7 +287,7 @@ Core::render(void)
 	(void)ftime;
 	glUseProgram(program);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, viewMatrix.val);
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, camera.view.val);
 	glBindVertexArray(voxelVao);
 	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);

@@ -2,8 +2,7 @@
 #ifndef CORE_HPP
 # define CORE_HPP
 
-# include "Mat4.hpp"
-# include "Mat4Stack.hpp"
+# include "Camera.hpp"
 # include "Shaders.hpp"
 # include "Bmp.hpp"
 # include "Link.hpp"
@@ -37,6 +36,9 @@ public:
 
 	GLuint					voxelVao;
 	GLuint					voxelVbo[2];
+
+	/* Camera */
+	Camera					camera;
 
 	/* mouse movement */
 	double					lastMx;

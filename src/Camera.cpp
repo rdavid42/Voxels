@@ -1,8 +1,47 @@
 
 #include "Camera.hpp"
 
+Camera::Camera(void)
+{
+}
+
+Camera::~Camera(void)
+{
+}
+
 void
-Camera::set(Mat4<float> &view, Vec3<float> const &pos, Vec3<float> const &forward)
+Camera::setView(void)
+{
+	/*
+	rx		ux		-dx		0
+	ry		uy		-dy		0
+	rz		uz		-dz		0
+	0		0		0		1
+	*/
+	// first column
+	view[0] = right.x;
+	view[4] = right.y;
+	view[8] = right.z;
+	view[12] = 0.0f;
+	// second column
+	view[1] = up.x;
+	view[5] = up.y;
+	view[9] = up.z;
+	view[13] = 0.0f;
+	// third column
+	view[2] = -forward.x;
+	view[6] = -forward.y;
+	view[10] = -forward.z;
+	view[14] = 0.0f;
+	// fourth column
+	view[3] = 0.0f;
+	view[7] = 0.0f;
+	view[11] = 0.0f;
+	view[15] = 1.0f;
+}
+
+void
+Camera::set(void)
 {
 	Mat4<float>		translation;
 
@@ -11,7 +50,7 @@ Camera::set(Mat4<float> &view, Vec3<float> const &pos, Vec3<float> const &forwar
 	right.normalize();
 	up.crossProduct(right, forward);
 	up.normalize();
-	setViewMatrix(view, forward, right, up);
+	setView();
 	translation.setTranslation(-pos.x, -pos.y, -pos.z);
 	view.multiply(translation);
 }
@@ -25,35 +64,35 @@ Camera::init(void)
 	forward.normalize();
 	std::cerr << forward << std::endl;
 	forward.normalize();
-	setCamera(viewMatrix, pos, forward);
+	set();
 }
 
 void
 Camera::moveForward(void)
 {
 	pos += forward;
-	setCamera(viewMatrix, pos, forward);
+	set();
 }
 
 void
 Camera::moveBackward(void)
 {
 	pos -= forward;
-	setCamera(viewMatrix, pos, forward);
+	set();
 }
 
 void
 Camera::strafeRight(void)
 {
 	pos += right;
-	setCamera(viewMatrix, pos, forward);
+	set();
 }
 
 void
 Camera::strafeLeft(void)
 {
-	pos -= cameraRight;
-	setCamera(viewMatrix, pos, forward);
+	pos -= right;
+	set();
 }
 
 void
@@ -65,8 +104,8 @@ Camera::rotate(void)
 	hr = hangle * M_PI / 180;
 	vr = vangle * M_PI / 180;
 	forward.set(cos(vr) * sin(hr),
-					 sin(vr),
-					 cos(vr) * cos (hr));
+				sin(vr),
+				cos(vr) * cos (hr));
 	forward.normalize();
-	setCamera(viewMatrix, pos, forward);
+	set();
 }
