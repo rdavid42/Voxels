@@ -32,5 +32,6 @@ int					printError(std::ostream &msg, int const &code);
 int					printError(std::string const &msg, int const &code);
 void *				printError(std::string const &msg);
 std::string			getFileContents(std::string const &filename);
+void				checkGlError(std::string file, int line);
 
 #endif

@@ -11,27 +11,6 @@ Core::~Core(void)
 	glfwTerminate();
 }
 
-void
-checkGlError(std::string file, int line)
-{
-	GLenum		err;
-
-	err = glGetError();
-	if (err != GL_NO_ERROR)
-	{
-		if (err == GL_INVALID_ENUM)
-			std::cerr << "GL: Invalid enum in " << file << " line " << line << std::endl;
-		else if (err == GL_INVALID_VALUE)
-			std::cerr << "GL: Invalid value in " << file << " line " << line << std::endl;
-		else if (err == GL_INVALID_OPERATION)
-			std::cerr << "GL: Invalid operation in " << file << " line " << line << std::endl;
-		else if (err == GL_INVALID_FRAMEBUFFER_OPERATION)
-			std::cerr << "GL: Invalid framebuffer operation in " << file << " line " << line << std::endl;
-		else if (err == GL_OUT_OF_MEMORY)
-			std::cerr << "GL: Out of memory in " << file << " line " << line << std::endl;
-	}
-}
-
 static void
 key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
@@ -49,8 +28,6 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
-	// std::cerr << xpos << ", " << ypos << std::endl;
-	// core->cameraRotate();
 	core->vangle -= ((ypos - core->lastMy) * 0.05);
 	if (core->vangle > 89)
 		core->vangle = 89;
@@ -59,116 +36,8 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	core->hangle -= ((xpos - core->lastMx) * 0.05);
 	core->hangle = fmod(core->hangle, 360);
 	glfwSetCursorPos(core->window, core->windowWidth / 2, core->windowHeight / 2);
-	//core->cameraRotate();
 	core->lastMx = core->windowWidth / 2;
 	core->lastMy = core->windowHeight / 2;
-	(void)core;
-	(void)xpos;
-	(void)ypos;
-}
-
-/*
-** SHADERS
-*/
-
-int
-Core::compileShader(GLuint shader, char const *filename)
-{
-	GLint			logsize;
-	GLint			state;
-	char			*compileLog;
-
-	glCompileShader(shader);
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &state);
-	if (state != GL_TRUE)
-	{
-		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logsize);
-		compileLog = new char[logsize + 1];
-		std::memset(compileLog, '\0', logsize + 1);
-		glGetShaderInfoLog(shader, logsize, &logsize, compileLog);
-		std::cerr	<< "Failed to compile shader `"
-					<< filename
-					<< "`: " << std::endl
-					<< compileLog;
-		delete compileLog;
-		return (0);
-	}
-	return (1);
-}
-
-GLuint
-Core::loadShader(GLenum type, char const *filename)
-{
-	GLuint			shader;
-	char			*source;
-
-	shader = glCreateShader(type);
-	if (shader == 0)
-		return (printError("Failed to create shader !", 0));
-	if (!(source = readFile(filename)))
-		return (printError("Failed to read file !", 0));
-	glShaderSource(shader, 1, (char const **)&source, 0);
-	if (!compileShader(shader, filename))
-		return (0);
-	delete source;
-	return (shader);
-}
-
-int
-Core::loadShaders(void)
-{
-	if (!(vertexShader = loadShader(GL_VERTEX_SHADER, "./shaders/vertex_shader.gls")))
-		return (printError("Failed to load vertex shader !", 0));
-	if (!(fragmentShader = loadShader(GL_FRAGMENT_SHADER, "./shaders/fragment_shader.gls")))
-		return (printError("Failed to load fragment shader !", 0));
-	return (1);
-}
-
-int
-Core::linkProgram(GLuint &program)
-{
-	GLint			logSize;
-	GLint			state;
-	char			*linkLog;
-
-	glLinkProgram(program);
-	glGetProgramiv(program, GL_LINK_STATUS, &state);
-	if (state != GL_TRUE)
-	{
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
-		linkLog = new char[logSize + 1];
-		std::memset(linkLog, '\0', logSize + 1);
-		glGetProgramInfoLog(program, logSize, &logSize, linkLog);
-		std::cerr	<< "Failed to link program !" << std::endl
-					<< linkLog;
-		delete [] linkLog;
-		return (0);
-	}
-	return (1);
-}
-
-void
-Core::deleteShaders(void)
-{
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-}
-
-int
-Core::initShaders(void)
-{
-	if (!loadShaders())
-		return (0);
-	if (!(program = glCreateProgram()))
-		return (printError("Failed to create program !", 0));
-	glAttachShader(program, vertexShader);
-	glAttachShader(program, fragmentShader);
-	glBindFragDataLocation(program, 0, "out_fragment");
-	if (!linkProgram(program))
-		return (0);
-	checkGlError(__FILE__, __LINE__);
-	deleteShaders();
-	return (1);
 }
 
 // *************************************************************************************************
@@ -363,105 +232,6 @@ Core::initVoxel(void)
 	checkGlError(__FILE__, __LINE__);
 }
 
-void
-Core::setCamera(Mat4<float> &view, Vec3<float> const &pos, Vec3<float> const &forward)
-{
-	Mat4<float>		translation;
-
-	cameraUp.set(0.0f, 1.0f, 0.0f);
-	cameraRight.crossProduct(forward, cameraUp);
-	cameraRight.normalize();
-	cameraUp.crossProduct(cameraRight, forward);
-	cameraUp.normalize();
-	setViewMatrix(view, forward, cameraRight, cameraUp);
-	translation.setTranslation(-pos.x, -pos.y, -pos.z);
-	view.multiply(translation);
-}
-
-void
-Core::initCamera(void)
-{
-	cameraPos.set(0.0f, 5.0f, 15.0f);
-	cameraLookAt.set(0.0f, 0.0f, 0.0f);
-	cameraForward.set(cameraLookAt - cameraPos);
-	cameraForward.normalize();
-	std::cerr << cameraForward << std::endl;
-	cameraForward.normalize();
-	// std::cerr << cameraForward << std::endl;
-	setCamera(viewMatrix, cameraPos, cameraForward);
-}
-/*
-void
-Camera::onMouseMotion(SDL_MouseMotionEvent const &e)
-{
-	_theta -= e.xrel * _sensivity; 
-	_phi -= e.yrel * _sensivity;
-	this->calcVectors();
-}
-
-void
-Camera::calcVectors(void)
-{
-	static const Vec3<float>	up(0.0f, 0.0f, 1.0f);
-	double						rtmp;
-
-	if (_phi > 89)
-		_phi = 89;
-	else if (_phi < -89)
-		_phi = -89;
-	rtmp = cos(_phi * M_PI / 180);
-	_forward.x = rtmp * cos(_theta * M_PI / 180);
-	_forward.y = rtmp * sin(_theta * M_PI / 180);
-	_forward.z = sin(_phi * M_PI / 180);
-	_left = up.crossProduct(_forward);
-	_left.normalize();
-	_forward.normalize();
-	_target = _position + _forward;
-}
-*/
-void
-Core::cameraMoveForward(void)
-{
-	cameraPos += cameraForward;
-	setCamera(viewMatrix, cameraPos, cameraForward);
-}
-
-void
-Core::cameraMoveBackward(void)
-{
-	cameraPos -= cameraForward;
-	setCamera(viewMatrix, cameraPos, cameraForward);
-}
-
-void
-Core::cameraStrafeRight(void)
-{
-	cameraPos += cameraRight;
-	setCamera(viewMatrix, cameraPos, cameraForward);
-}
-
-void
-Core::cameraStrafeLeft(void)
-{
-	cameraPos -= cameraRight;
-	setCamera(viewMatrix, cameraPos, cameraForward);
-}
-
-void
-Core::cameraRotate(void)
-{
-	float			hr;
-	float			vr;
-
-	hr = hangle * M_PI / 180;
-	vr = vangle * M_PI / 180;
-	cameraForward.set(cos(vr) * sin(hr),
-					 sin(vr),
-					 cos(vr) * cos (hr));
-	cameraForward.normalize();
-	setCamera(viewMatrix, cameraPos, cameraForward);
-}
-
 int
 Core::init(void)
 {
@@ -499,7 +269,7 @@ Core::init(void)
 	cameraPos.set(15.0f, 15.0f, 15.0f);
 	cameraLookAt.set(0.0f, 0.0f, 0.0f);
 	initCamera();
-	if (!initShaders())
+	if (!initShaders(vertexShader, fragmentShader, program))
 		return (0);
 	getLocations();
 #ifndef __APPLE__

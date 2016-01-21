@@ -4,7 +4,7 @@
 
 # include "Mat4.hpp"
 # include "Mat4Stack.hpp"
-# include "Utils.hpp"
+# include "Shaders.hpp"
 # include "Bmp.hpp"
 # include "Link.hpp"
 
@@ -38,15 +38,6 @@ public:
 	GLuint					voxelVao;
 	GLuint					voxelVbo[2];
 
-	/* Camera */
-	Vec3<float>				cameraPos;
-	Vec3<float>				cameraLookAt;
-	Vec3<float>				cameraForward;
-	Vec3<float>				cameraUp;
-	Vec3<float>				cameraRight;
-	float					hangle; //horizontal camera angle
-	float					vangle; //vertical camera angle
-
 	/* mouse movement */
 	double					lastMx;
 	double					lastMy;
@@ -70,13 +61,6 @@ public:
 	void					loop(void);
 
 	/* Camera */
-	void					initCamera(void);
-	void					setCamera(Mat4<float> &view, Vec3<float> const &pos, Vec3<float> const &forward);
-	void					cameraRotate(void);
-	void					cameraMoveForward(void);
-	void					cameraMoveBackward(void);
-	void					cameraStrafeLeft(void);
-	void					cameraStrafeRight(void);
 
 	/* textures */
 	void					loadTextures(void);
@@ -88,14 +72,7 @@ public:
 	void					buildProjectionMatrix(Mat4<float> &proj, float const &fov,
 												float const &near, float const &far);
 
-	/* shaders */
 	void					getLocations(void);
-	int						compileShader(GLuint shader, char const *filename);
-	GLuint					loadShader(GLenum type, char const *filename);
-	int						loadShaders(void);
-	int						linkProgram(GLuint &p);
-	void					deleteShaders(void);
-	int						initShaders(void);
 
 	/* tests */
 	void					initVoxel(void);
