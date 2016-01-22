@@ -25,11 +25,14 @@ Chunk::render(Core &core) const
 	// std::cerr << _cube.getS() << std::endl;
 	// core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
 	// core.ms.push();
+	// if (generated)
+	// {
 		for (i = 0; i < CHD_MAX; ++i)
 		{
 			if (this->_children[i] != NULL)
 				this->_children[i]->render(core);
 		}
+	// }
 	// core.ms.pop();
 }
 

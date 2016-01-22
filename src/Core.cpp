@@ -216,34 +216,33 @@ getDensity(Noise *n, float const &x, float const &y, float const &z)
 void
 Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth)
 {
-	float						density;
+	float						altitude;
 	float						nx, ny, nz;
 
-	nx = c->getCube()->getX() + x;// + *d->block_size / 2;
-	ny = c->getCube()->getY() + y;// + *d->block_size / 2;
-	nz = c->getCube()->getZ() + z;// + *d->block_size / 2;
-	// density = getDensity(this->noise, nx, ny, nz);
-	density = 0.0f;
+	nx = c->getCube()->getX() + x;
+	ny = c->getCube()->getY() + y;
+	nz = c->getCube()->getZ() + z;
+	altitude = 0.0f;
 	for (int i = 0; i < FRAC_LIMIT; i++)
-		density += noise->fractal(0, nx, ny, nz);
-	// if (density > 0.0 && density < 0.1)
-		c->insert(nx, density, nz, depth, BLOCK | GROUND);
+		altitude += noise->fractal(0, nx, ny, nz) * 3;
+	if (altitude > 0)
+		c->insert(nx, altitude, nz, depth, BLOCK | GROUND);
 }
 
 void
 Core::processChunkGeneration(Chunk *c)
 {
-	float						x, y, z;
+	float						x, z;
 	int							depth;
 
 	c->generated = false;
 	depth = BLOCK_DEPTH;
 	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
 	{
-		for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
+		for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
 		{
-			for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
-				generateBlock(c, x, y, z, depth);
+			c->insert(c->getCube()->getX() + x, 0.0f, c->getCube()->getZ() + z, depth, BLOCK | GROUND);
+			// generateBlock(c, x, 0, z, depth);
 		}
 	}
 	c->generated = true;
@@ -470,6 +469,7 @@ Core::insertChunks(void)
 					py = camera.pos.y + (cy - center) * chunk_size;
 					pz = camera.pos.z + (cz - center) * chunk_size;
 					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY);
+					new_chunk->generated = false;
 					if (new_chunk != chunks[cz][cy][cx])
 					{
 						new_chunk->pos.x = cx;
@@ -501,14 +501,14 @@ Core::initChunks(void)
 	chunks[center][center][center] = (Chunk *)octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
 															CHUNK_DEPTH, CHUNK | EMPTY);
 	insertChunks();
-/*
+
 	Chunk *c = chunks[center][center][center];
 
 	std::cerr << block_size[BLOCK_DEPTH - 1] << std::endl;
-	c->insert(	c->getCube()->getX() + block_size[BLOCK_DEPTH],
-				c->getCube()->getY() + block_size[BLOCK_DEPTH],
-				c->getCube()->getZ() + block_size[BLOCK_DEPTH],
-				BLOCK_DEPTH, BLOCK | GROUND);*/
+	c->insert(	c->getCube()->getX(),
+				c->getCube()->getY(),
+				c->getCube()->getZ(),
+				BLOCK_DEPTH, BLOCK | GROUND);
 	generation();
 }
 
