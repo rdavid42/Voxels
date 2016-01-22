@@ -203,8 +203,8 @@ Core::initVoxel(void)
 }
 
 // THREAD POOL
-/*
-inline static float
+
+float
 getDensity(Noise *n, float const &x, float const &y, float const &z)
 {
 	return (n->octave_noise_3d(0, x, y, z)
@@ -212,21 +212,36 @@ getDensity(Noise *n, float const &x, float const &y, float const &z)
 		  + n->octave_noise_3d(0, x, y, z) * 0.5);
 	return (n->fractal(0, x, y, z));
 }
-*/
+
+void
+Core::initNoises(void)
+{
+	noise = new Noise(42, 256);
+	noise->configs.emplace_back(4, 0.7, 0.2, 0.7, 0.1);
+	noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
+	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
+	srandom(time(NULL));
+	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
+				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
+				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
+				<< "amplitude:   " << this->noise->configs.at(0).amplitude << std::endl
+				<< "persistence: " << this->noise->configs.at(0).persistence << std::endl;
+}
+
 void
 Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth)
 {
-	float						altitude;
+	float						n;
 	float						nx, ny, nz;
 
 	nx = c->getCube()->getX() + x;
 	ny = c->getCube()->getY() + y;
 	nz = c->getCube()->getZ() + z;
-	altitude = 0.0f;
+	n = 0.0f;
 	for (int i = 0; i < FRAC_LIMIT; i++)
-		altitude += noise->fractal(0, nx, ny, nz) * 3;
-	if (altitude > 0)
-		c->insert(nx, altitude, nz, depth, BLOCK | GROUND);
+		n += noise->fractal(0, nx, y, nz);
+	// if (density > 0.9 && altitude < 0.5)
+	c->insert(nx, n, nz, depth, BLOCK | GROUND);
 }
 
 void
@@ -239,11 +254,15 @@ Core::processChunkGeneration(Chunk *c)
 	depth = BLOCK_DEPTH;
 	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
 	{
-		for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
-		{
-			c->insert(c->getCube()->getX() + x, 0.0f, c->getCube()->getZ() + z, depth, BLOCK | GROUND);
-			// generateBlock(c, x, 0, z, depth);
-		}
+		// for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
+		// {
+			for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
+			{
+				c->insert(c->getCube()->getX() + x, 0.0f, c->getCube()->getZ() + z, depth, BLOCK | GROUND);
+				// density = noise->fractal(0, nx, ny, nz) / 3;
+				generateBlock(c, x, 1.5, z, depth);
+			}
+		// }
 	}
 	c->generated = true;
 }
@@ -501,14 +520,14 @@ Core::initChunks(void)
 	chunks[center][center][center] = (Chunk *)octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
 															CHUNK_DEPTH, CHUNK | EMPTY);
 	insertChunks();
-
+/*
 	Chunk *c = chunks[center][center][center];
 
 	std::cerr << block_size[BLOCK_DEPTH - 1] << std::endl;
 	c->insert(	c->getCube()->getX(),
 				c->getCube()->getY(),
 				c->getCube()->getZ(),
-				BLOCK_DEPTH, BLOCK | GROUND);
+				BLOCK_DEPTH, BLOCK | GROUND);*/
 	generation();
 }
 
@@ -558,16 +577,7 @@ Core::init(void)
 		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
 	}
 #endif
-	noise = new Noise(42, 256);
-	noise->configs.emplace_back(4, 0.7, 0.2, 0.7, 0.1);
-	noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
-	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
-	srandom(time(NULL));
-	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
-				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
-				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
-				<< "amplitude:   " << this->noise->configs.at(0).amplitude << std::endl
-				<< "persistence: " << this->noise->configs.at(0).persistence << std::endl;
+	initNoises();
 	multiplier = 0.0f;
 	initVoxel();
 	loadTextures();
