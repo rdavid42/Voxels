@@ -93,10 +93,11 @@ Core::loadTexture(char const *filename)
 void
 Core::loadTextures(void)
 {
-	tex = new GLuint[3];
-	tex[0] = loadTexture("resources/grass_bottom.bmp");
-	tex[1] = loadTexture("resources/grass_side.bmp");
-	tex[2] = loadTexture("resources/grass_up.bmp");
+	tex = new GLuint[1];
+	tex[0] = loadTexture("resources/grassblock.bmp");
+	// tex[0] = loadTexture("resources/grass_bottom.bmp");
+	// tex[1] = loadTexture("resources/grass_side.bmp");
+	// tex[2] = loadTexture("resources/grass_up.bmp");
 }
 
 void
@@ -136,37 +137,37 @@ Core::initVoxel(void)
 	{
 		// vertices      | texture			C	I
 		// back
-		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	0	0
-		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, //	1	1
-		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	2	2
-		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, //	3	3
+		0.0f, 0.0f, 0.0f, 0.00f, 0.00f, //	0	0
+		1.0f, 0.0f, 0.0f, 0.25f, 0.00f, //	1	1
+		0.0f, 1.0f, 0.0f, 0.00f, 1.00f, //	2	2
+		1.0f, 1.0f, 0.0f, 0.25f, 1.00f, //	3	3
 		// left
-		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	0	4
-		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	2	5
-		0.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	4	6
-		0.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	6	7
+		0.0f, 0.0f, 0.0f, 0.00f, 0.00f, //	0	4
+		0.0f, 1.0f, 0.0f, 0.00f, 1.00f, //	2	5
+		0.0f, 0.0f, 1.0f, 0.25f, 0.00f, //	4	6
+		0.0f, 1.0f, 1.0f, 0.25f, 1.00f, //	6	7
 		// right
-		1.0f, 0.0f, 0.0f, 0.0f, 0.0f, //	1	8
-		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	3	9
-		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	10
-		1.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	7	11
+		1.0f, 0.0f, 0.0f, 0.00f, 0.00f, //	1	8
+		1.0f, 1.0f, 0.0f, 0.00f, 1.00f, //	3	9
+		1.0f, 0.0f, 1.0f, 0.25f, 0.00f, //	5	10
+		1.0f, 1.0f, 1.0f, 0.25f, 1.00f, //	7	11
 		// floor
-		0.0f, 0.0f, 0.0f, 0.0f, 1.0f, //	0	12
-		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, //	1	13
-		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	14
-		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	15
+		0.0f, 0.0f, 0.0f, 0.25f, 1.00f, //	0	12
+		1.0f, 0.0f, 0.0f, 0.50f, 1.00f, //	1	13
+		0.0f, 0.0f, 1.0f, 0.25f, 0.00f, //	4	14
+		1.0f, 0.0f, 1.0f, 0.50f, 0.00f, //	5	15
 		// ceiling
-		0.0f, 1.0f, 0.0f, 0.0f, 0.0f, //	2	16
-		1.0f, 1.0f, 0.0f, 0.0f, 1.0f, //	3	17
-		0.0f, 1.0f, 1.0f, 1.0f, 0.0f, //	6	18
-		1.0f, 1.0f, 1.0f, 1.0f, 1.0f, //	7	19
+		0.0f, 1.0f, 0.0f, 0.50f, 0.00f, //	2	16
+		1.0f, 1.0f, 0.0f, 0.50f, 1.00f, //	3	17
+		0.0f, 1.0f, 1.0f, 0.75f, 0.00f, //	6	18
+		1.0f, 1.0f, 1.0f, 0.75f, 1.00f, //	7	19
 		// front
-		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, //	4	20
-		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, //	5	21
-		0.0f, 1.0f, 1.0f, 0.0f, 1.0f, //	6	22
-		1.0f, 1.0f, 1.0f, 1.0f, 1.0f  //	7	23
+		0.0f, 0.0f, 1.0f, 0.00f, 0.0f, //	4	20
+		1.0f, 0.0f, 1.0f, 0.25f, 0.0f, //	5	21
+		0.0f, 1.0f, 1.0f, 0.00f, 1.0f, //	6	22
+		1.0f, 1.0f, 1.0f, 0.25f, 1.0f  //	7	23
 	};
-	static GLushort const		voxelIndices[42] =
+	static GLushort const		voxelIndices[36] =
 	{
 		// back
 		2,  1,  3,
@@ -198,7 +199,7 @@ Core::initVoxel(void)
 	glEnableVertexAttribArray(textureLoc);
 	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * 42, voxelIndices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * 36, voxelIndices, GL_STATIC_DRAW);
 	// texture
 	checkGlError(__FILE__, __LINE__);
 }
@@ -623,9 +624,6 @@ Core::render(void)
 	glUseProgram(program);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, camera.view.val);
-	glBindVertexArray(voxelVao);
-	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
 	ms.push();
 		octree->render(*this);
 	ms.pop();
@@ -639,6 +637,10 @@ Core::loop(void)
 
 	frames = 0.0;
 	lastTime = glfwGetTime();
+	glBindVertexArray(voxelVao);
+	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
+	glBindTexture(GL_TEXTURE_2D, tex[0]);
 	while (!glfwWindowShouldClose(window))
 	{
 		currentTime = glfwGetTime();
