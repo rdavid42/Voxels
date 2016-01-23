@@ -9,13 +9,19 @@
 class Chunk : public Link
 {
 public:
+	GLuint			vao;
+	GLuint			mesh;
+	int				meshSize;
+	bool			generating;
 	bool			generated;
-	Vec3<uint8_t>	pos;
+	bool			renderDone;
+	Vec3<uint8_t>	pos; // position relative to other chunks
 
 	Chunk(void);
 	Chunk(float const &x, float const &y, float const &z, float const &s);
 	virtual ~Chunk(void);
 
+	void				createMesh(void);
 	virtual	void		render(Core &core) const;
 
 	Chunk				&operator=(Chunk const &rhs);

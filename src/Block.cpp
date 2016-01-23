@@ -43,12 +43,13 @@ Block::insert(float const &, float const &, float const &, uint32_t const &, int
 void
 Block::render(Core &core) const
 {
-	core.ms.push();
+	(void)core;
+/*	core.ms.push();
 		core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
 		core.ms.scale(_cube.getS(), _cube.getS(), _cube.getS());
 		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
-	core.ms.pop();
+	core.ms.pop();*/
 }
 
 Block

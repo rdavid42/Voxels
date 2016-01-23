@@ -18,22 +18,33 @@ Chunk::~Chunk(void)
 }
 
 void
+Chunk::createMesh(void)
+{
+
+}
+
+void
 Chunk::render(Core &core) const
 {
+	(void)core;
+	if (renderDone)
+	{
+		// std::cerr << this << ": meshSize: " << meshSize << std::endl;
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh);
+		core.ms.push();
+			// core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
+			glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
+			glDrawArrays(GL_TRIANGLES, 0, meshSize);
+		core.ms.pop();
+	}
 	int			i;
 
-	// std::cerr << _cube.getS() << std::endl;
-	// core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
-	// core.ms.push();
-	// if (generated)
-	// {
-		for (i = 0; i < CHD_MAX; ++i)
-		{
-			if (this->_children[i] != NULL)
-				this->_children[i]->render(core);
-		}
-	// }
-	// core.ms.pop();
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (this->_children[i] != NULL)
+			this->_children[i]->render(core);
+	}
 }
 
 Chunk

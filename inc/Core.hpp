@@ -3,6 +3,8 @@
 # define CORE_HPP
 
 # include <thread>
+# include <vector>
+# include <list>
 # include "Camera.hpp"
 # include "Shaders.hpp"
 # include "Bmp.hpp"
@@ -87,6 +89,7 @@ public:
 	int						stopThreads(void);
 	void					addTask(Chunk *c, int const &id);
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
+	void					generateChunkMesh(Chunk *chunk, int const &depth);
 
 	Core(void);
 	~Core(void);

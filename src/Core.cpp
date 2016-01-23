@@ -82,8 +82,8 @@ Core::loadTexture(char const *filename)
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	checkGlError(__FILE__, __LINE__);
@@ -162,10 +162,10 @@ Core::initVoxel(void)
 		0.0f, 1.0f, 1.0f, 0.75f, 0.00f, //	6	18
 		1.0f, 1.0f, 1.0f, 0.75f, 1.00f, //	7	19
 		// front
-		0.0f, 0.0f, 1.0f, 0.00f, 0.0f, //	4	20
-		1.0f, 0.0f, 1.0f, 0.25f, 0.0f, //	5	21
-		0.0f, 1.0f, 1.0f, 0.00f, 1.0f, //	6	22
-		1.0f, 1.0f, 1.0f, 0.25f, 1.0f  //	7	23
+		0.0f, 0.0f, 1.0f, 0.00f, 0.00f, //	4	20
+		1.0f, 0.0f, 1.0f, 0.25f, 0.00f, //	5	21
+		0.0f, 1.0f, 1.0f, 0.00f, 1.00f, //	6	22
+		1.0f, 1.0f, 1.0f, 0.25f, 1.00f  //	7	23
 	};
 	static GLushort const		voxelIndices[36] =
 	{
@@ -204,6 +204,156 @@ Core::initVoxel(void)
 	checkGlError(__FILE__, __LINE__);
 }
 
+inline void
+addVertexToMesh(std::list<GLfloat> &mesh,
+				float const &x, float const &y, float const &z,
+				float const &tx, float const &ty)
+{
+	mesh.push_back(x);
+	mesh.push_back(y);
+	mesh.push_back(z);
+	mesh.push_back(tx);
+	mesh.push_back(ty);
+}
+
+void
+Core::generateChunkMesh(Chunk *chunk, int const &depth)
+{
+	float					x, y, z;
+	float					cx, cy, cz;
+	// float					bx, by, bz;
+	Octree					*current, *up, *down, *front, *back, *left, *right;
+	float const				bs = this->block_size[depth];
+	std::list<GLfloat>		mesh;
+
+	cx = chunk->getCube()->getX();
+	cy = chunk->getCube()->getY();
+	cz = chunk->getCube()->getZ();
+/*
+	// vertices      | texture			C	I
+	// back
+	0.0f, 0.0f, 0.0f, 0.00f, 0.00f, //	0	0 // 2,  1,  3
+	1.0f, 0.0f, 0.0f, 0.25f, 0.00f, //	1	1 // 2,  1,  0
+	0.0f, 1.0f, 0.0f, 0.00f, 1.00f, //	2	2
+	1.0f, 1.0f, 0.0f, 0.25f, 1.00f, //	3	3
+	// left
+	0.0f, 0.0f, 0.0f, 0.00f, 0.00f, //	0	4 // 4,  6,  7
+	0.0f, 1.0f, 0.0f, 0.00f, 1.00f, //	2	5 // 4,  5,  7
+	0.0f, 0.0f, 1.0f, 0.25f, 0.00f, //	4	6
+	0.0f, 1.0f, 1.0f, 0.25f, 1.00f, //	6	7
+	// right
+	1.0f, 0.0f, 0.0f, 0.00f, 0.00f, //	1	8 // 8,  10, 11
+	1.0f, 1.0f, 0.0f, 0.00f, 1.00f, //	3	9 // 8,  9,  11
+	1.0f, 0.0f, 1.0f, 0.25f, 0.00f, //	5	10
+	1.0f, 1.0f, 1.0f, 0.25f, 1.00f, //	7	11
+	// floor
+	0.0f, 0.0f, 0.0f, 0.25f, 1.00f, //	0	12 // 12, 13, 15
+	1.0f, 0.0f, 0.0f, 0.50f, 1.00f, //	1	13 // 12, 14, 15
+	0.0f, 0.0f, 1.0f, 0.25f, 0.00f, //	4	14
+	1.0f, 0.0f, 1.0f, 0.50f, 0.00f, //	5	15
+	// ceiling
+	0.0f, 1.0f, 0.0f, 0.50f, 0.00f, //	2	16 // 16, 17, 18
+	1.0f, 1.0f, 0.0f, 0.50f, 1.00f, //	3	17 // 17, 18, 19
+	0.0f, 1.0f, 1.0f, 0.75f, 0.00f, //	6	18
+	1.0f, 1.0f, 1.0f, 0.75f, 1.00f, //	7	19
+	// front
+	0.0f, 0.0f, 1.0f, 0.00f, 0.00f, //	4	20 // 20, 21, 23
+	1.0f, 0.0f, 1.0f, 0.25f, 0.00f, //	5	21 // 20, 22, 23
+	0.0f, 1.0f, 1.0f, 0.00f, 1.00f, //	6	22
+	1.0f, 1.0f, 1.0f, 0.25f, 1.00f  //	7	23*/
+	for (z = cz; z < cz + this->chunk_size; z += bs)
+	{
+		for (y = cy; y < cy + this->chunk_size; y += bs)
+		{
+			for (x = cx; x < cx + this->chunk_size; x += bs)
+			{
+				current = chunk->search(x, y, z, BLOCK);
+				if (current)
+				{
+					// std::cerr << current->getCube()->getS() << ", " << current->getState() << std::endl;
+					back = chunk->search(x, y, z - bs, BLOCK);
+					if (!back)
+					{
+						addVertexToMesh(mesh, x, y + bs, z, 0.00f, 1.00f);
+						addVertexToMesh(mesh, x + bs, y, z, 0.25f, 0.00f);
+						addVertexToMesh(mesh, x, y, z, 0.00f, 0.00f);
+						addVertexToMesh(mesh, x, y + bs, z, 0.00f, 1.00f);
+						addVertexToMesh(mesh, x + bs, y, z, 0.25f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z, 0.25f, 1.00f);
+					}
+					left = chunk->search(x - bs, y, z, BLOCK);
+					if (!left)
+					{
+						addVertexToMesh(mesh, x, y, z, 0.00f, 0.00f);
+						addVertexToMesh(mesh, x, y, z + bs, 0.25f, 0.00f);
+						addVertexToMesh(mesh, x, y + bs, z + bs, 0.25f, 1.00f);
+						addVertexToMesh(mesh, x, y, z, 0.00f, 0.00f);
+						addVertexToMesh(mesh, x, y + bs, z, 0.00f, 1.00f);
+						addVertexToMesh(mesh, x, y + bs, z + bs, 0.25f, 1.00f);
+					}
+					right = chunk->search(x + bs, y, z, BLOCK);
+					if (!right)
+					{
+						addVertexToMesh(mesh, x + bs, y, z, 0.00f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y, z + bs, 0.25f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z + bs, 0.25f, 1.00f);
+						addVertexToMesh(mesh, x + bs, y, z, 0.00f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z, 0.00f, 1.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z + bs, 0.25f, 1.00f);
+					}
+					down = chunk->search(x, y - bs, z, BLOCK);
+					if (!down)
+					{
+						addVertexToMesh(mesh, x, y, z, 0.25f, 1.00f);
+						addVertexToMesh(mesh, x + bs, y, z, 0.50f, 1.00f);
+						addVertexToMesh(mesh, x + bs, y, z + bs, 0.50f, 0.00f);
+						addVertexToMesh(mesh, x, y, z, 0.25f, 1.00f);
+						addVertexToMesh(mesh, x, y, z + bs, 0.25f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y, z + bs, 0.50f, 0.00f);
+					}
+					up = chunk->search(x, y + bs, z, BLOCK);
+					if (!up)
+					{
+						addVertexToMesh(mesh, x, y + bs, z + bs, 0.50f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z + bs, 0.50f, 1.00f);
+						addVertexToMesh(mesh, x, y + bs, z, 0.75f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z + bs, 0.50f, 1.00f);
+						addVertexToMesh(mesh, x, y + bs, z, 0.75f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z, 0.75f, 1.00f);
+					}
+					front = chunk->search(x, y, z + bs, BLOCK);
+					if (!front)
+					{
+						addVertexToMesh(mesh, x, y, z + bs, 0.00f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y, z + bs, 0.25f, 0.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z + bs, 0.25f, 1.00f);
+						addVertexToMesh(mesh, x, y, z + bs, 0.00f, 0.00f);
+						addVertexToMesh(mesh, x, y + bs, z + bs, 0.00f, 1.00f);
+						addVertexToMesh(mesh, x + bs, y + bs, z + bs, 0.25f, 1.00f);
+					}
+				}
+			}
+		}
+	}
+	std::vector<GLfloat> copy
+	{
+		std::make_move_iterator(std::begin(mesh)),
+		std::make_move_iterator(std::end(mesh))
+	};
+	// std::cerr << "size: " << (int)mesh.size() << std::endl;
+	chunk->meshSize = mesh.size() / 5;
+	// std::cerr << chunk->meshSize << std::endl;
+	glGenVertexArrays(1, &chunk->vao);
+	glBindVertexArray(chunk->vao);
+	glGenBuffers(1, &chunk->mesh);
+	glBindBuffer(GL_ARRAY_BUFFER, chunk->mesh);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * mesh.size(), &copy[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(positionLoc);
+	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
+	glEnableVertexAttribArray(textureLoc);
+	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
+}
+
 // THREAD POOL
 
 float
@@ -223,7 +373,7 @@ Core::initNoises(void)
 	noise->configs.emplace_back(1, 0.3, 0.1, 0.7, 4.0);
 	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
-	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
+	std::cerr	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
 				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
 				<< "amplitude:   " << this->noise->configs.at(0).amplitude << std::endl
@@ -244,7 +394,7 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 		n += noise->fractal(1, nx, y, nz);
 	// c->insert(nx, n, nz, depth, BLOCK | GROUND);
 	for (; n > -5.0f; n -= this->block_size[depth])
-		c->insert(nx, n, nz, depth, BLOCK | GROUND);
+		c->insert(nx, n, nz, depth, BLOCK);
 }
 
 void
@@ -253,6 +403,8 @@ Core::processChunkGeneration(Chunk *c)
 	float						x, z;
 	int							depth;
 
+	if (c->generated)
+		return ;
 	c->generated = false;
 	depth = BLOCK_DEPTH;
 	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
@@ -267,6 +419,7 @@ Core::processChunkGeneration(Chunk *c)
 			}
 		// }
 	}
+	// generateChunkMesh(c, depth);
 	c->generated = true;
 }
 
@@ -296,14 +449,17 @@ Core::executeThread(int const &id)
 
 		// pick task to process
 		chunk = this->task_queue[id].front();
-		this->task_queue[id].pop_front();
+		if (chunk != 0)
+		{
+			this->task_queue[id].pop_front();
 
-		// unlock task queue
-		this->is_task_locked[id] = false;
-		pthread_mutex_unlock(&this->task_mutex[id]);
+			// unlock task queue
+			this->is_task_locked[id] = false;
+			pthread_mutex_unlock(&this->task_mutex[id]);
 
-		// process task
-		processChunkGeneration(chunk);
+			// process task
+			processChunkGeneration(chunk);
+		}
 	}
 	return (0);
 }
@@ -459,12 +615,21 @@ Core::generation(void)
 		{
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
-				if (this->chunks[cz][cy][cx] != NULL)
+				if (chunks[cz][cy][cx] != NULL)
 				{
-					if (!this->chunks[cz][cy][cx]->generated)
-						this->addTask(this->chunks[cz][cy][cx], id);
+					if (!chunks[cz][cy][cx]->generated && !chunks[cz][cy][cx]->generating)
+					{
+						chunks[cz][cy][cx]->generating = true;
+						addTask(chunks[cz][cy][cx], id);
+					}
+					if (chunks[cz][cy][cx]->generated && !chunks[cz][cy][cx]->renderDone)
+					{
+						// std::cerr << &chunks[cz][cy][cx] << std::endl;
+						generateChunkMesh(chunks[cz][cy][cx], BLOCK_DEPTH);
+						chunks[cz][cy][cx]->renderDone = true;
+					}
 					id++;
-					id %= this->pool_size;
+					id %= pool_size;
 				}
 			}
 		}
@@ -492,6 +657,8 @@ Core::insertChunks(void)
 					pz = camera.pos.z + (cz - center) * chunk_size;
 					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY);
 					new_chunk->generated = false;
+					new_chunk->generating = false;
+					new_chunk->renderDone = false;
 					if (new_chunk != chunks[cz][cy][cx])
 					{
 						new_chunk->pos.x = cx;
@@ -522,7 +689,11 @@ Core::initChunks(void)
 	// Create initial chunk
 	chunks[center][center][center] = (Chunk *)octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
 															CHUNK_DEPTH, CHUNK | EMPTY);
+	chunks[center][center][center]->generated = false;
+	chunks[center][center][center]->generating = false;
+	chunks[center][center][center]->renderDone = false;
 	insertChunks();
+	std::cerr << 1 << std::endl;
 /*
 	Chunk *c = chunks[center][center][center];
 
@@ -531,7 +702,6 @@ Core::initChunks(void)
 				c->getCube()->getY(),
 				c->getCube()->getZ(),
 				BLOCK_DEPTH, BLOCK | GROUND);*/
-	generation();
 }
 
 int
@@ -576,13 +746,13 @@ Core::init(void)
 	{
 		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
+		// glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		// glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
 	}
 #endif
 	initNoises();
 	multiplier = 0.0f;
-	initVoxel();
+	// initVoxel();
 	loadTextures();
 	startThreads();
 	octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
@@ -593,6 +763,7 @@ Core::init(void)
 void
 Core::update(void)
 {
+	generation();
 	camera.rotate();
 	camera.set();
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
@@ -619,13 +790,18 @@ void
 Core::render(void)
 {
 	float		ftime = glfwGetTime();
+	int			x, y, z;
 
 	(void)ftime;
 	glUseProgram(program);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, camera.view.val);
 	ms.push();
-		octree->render(*this);
+		for (z = 0; z < GEN_SIZE; ++z)
+			for (y = 0; y < GEN_SIZE; ++y)
+				for (x = 0; x < GEN_SIZE; ++x)
+					chunks[z][y][x]->render(*this);
+		// octree->render(*this);
 	ms.pop();
 }
 
@@ -637,9 +813,9 @@ Core::loop(void)
 
 	frames = 0.0;
 	lastTime = glfwGetTime();
-	glBindVertexArray(voxelVao);
-	glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
+	// glBindVertexArray(voxelVao);
+	// glBindBuffer(GL_ARRAY_BUFFER, voxelVbo[0]);
+	// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, voxelVbo[1]);
 	glBindTexture(GL_TEXTURE_2D, tex[0]);
 	while (!glfwWindowShouldClose(window))
 	{

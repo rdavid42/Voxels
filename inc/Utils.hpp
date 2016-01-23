@@ -1,19 +1,6 @@
 #ifndef UTILS_HPP
 # define UTILS_HPP
 
-# if defined(__APPLE_CC__)
-#  ifndef GLFW_INCLUDE_GLCOREARB
-#   define GLFW_INCLUDE_GLCOREARB
-#  endif
-#  ifndef GLFW_INCLUDE_GLEXT
-#   define GLFW_INCLUDE_GLEXT
-#  endif
-# else
-#  define GL_GLEXT_PROTOTYPES
-# endif
-
-# include <GLFW/glfw3.h>
-
 # include <cstring>
 # include <ostream>
 # include <sys/stat.h>
@@ -23,6 +10,8 @@
 # include <fcntl.h>
 # include <unistd.h>
 # include <sstream>
+
+# include "Constants.hpp"
 
 # define BUFSIZE	4096
 

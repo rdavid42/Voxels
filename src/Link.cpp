@@ -34,9 +34,7 @@ Link::createChild(uint32_t const &i, float const &x, float const &y, float const
 	if (state & CHUNK)
 		this->_children[i] = new Chunk(x, y, z, s);
 	else if (state & BLOCK)
-	{
 		this->_children[i] = new Block(x, y, z, s);
-	}
 	else
 		this->_children[i] = new Link(x, y, z, s);
 	this->_children[i]->setParent(this);
@@ -86,11 +84,11 @@ Link::search(float const &x, float const &y, float const &z, int const &state)
 		{
 			if (this->_children[i] != NULL)
 			{
-				if ((child = this->_children[i]->search(x, y, z)) != NULL)
+				if ((child = this->_children[i]->search(x, y, z, state)) != NULL)
 					break;
 			}
 		}
-		return (child == NULL ? this : child);
+		return (child == NULL ? NULL : child);
 	}
 	else
 		return (NULL);
@@ -153,14 +151,12 @@ Link::render(Core &core) const
 {
 	int				i;
 
-	// core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
-	// core.ms.push();
-		for (i = 0; i < CHD_MAX; ++i)
-		{
-			if (this->_children[i] != 0)
-				this->_children[i]->render(core);
-		}
-	// core.ms.pop();
+	(void)core;
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (this->_children[i] != 0)
+			this->_children[i]->render(core);
+	}
 }
 
 Octree *
