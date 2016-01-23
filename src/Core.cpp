@@ -7,6 +7,7 @@ Core::Core(void)
 
 Core::~Core(void)
 {
+	stopThreads();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
@@ -81,8 +82,8 @@ Core::loadTexture(char const *filename)
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_REPEAT);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	checkGlError(__FILE__, __LINE__);
@@ -218,7 +219,7 @@ Core::initNoises(void)
 {
 	noise = new Noise(42, 256);
 	noise->configs.emplace_back(4, 0.7, 0.2, 0.7, 0.1);
-	noise->configs.emplace_back(FRAC_LIMIT, 10.0, 0.3, 0.2, 0.7);
+	noise->configs.emplace_back(1, 0.3, 0.1, 0.7, 4.0);
 	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
 	std::cout	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
@@ -232,16 +233,17 @@ void
 Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth)
 {
 	float						n;
-	float						nx, ny, nz;
+	float						nx, nz;
 
 	nx = c->getCube()->getX() + x;
-	ny = c->getCube()->getY() + y;
+	// ny = c->getCube()->getY() + y;
 	nz = c->getCube()->getZ() + z;
 	n = 0.0f;
-	for (int i = 0; i < FRAC_LIMIT; i++)
-		n += noise->fractal(0, nx, y, nz);
-	// if (density > 0.9 && altitude < 0.5)
-	c->insert(nx, n, nz, depth, BLOCK | GROUND);
+	for (int i = 0; i < 4.0f; i++)
+		n += noise->fractal(1, nx, y, nz);
+	// c->insert(nx, n, nz, depth, BLOCK | GROUND);
+	for (; n > -5.0f; n -= this->block_size[depth])
+		c->insert(nx, n, nz, depth, BLOCK | GROUND);
 }
 
 void
@@ -258,7 +260,7 @@ Core::processChunkGeneration(Chunk *c)
 		// {
 			for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
 			{
-				c->insert(c->getCube()->getX() + x, 0.0f, c->getCube()->getZ() + z, depth, BLOCK | GROUND);
+				// c->insert(c->getCube()->getX() + x, 0.0f, c->getCube()->getZ() + z, depth, BLOCK | GROUND);
 				// density = noise->fractal(0, nx, ny, nz) / 3;
 				generateBlock(c, x, 1.5, z, depth);
 			}

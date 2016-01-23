@@ -45,6 +45,7 @@ Block::render(Core &core) const
 {
 	core.ms.push();
 		core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
+		core.ms.scale(0.25, 0.25, 0.25);
 		// std::cerr << _cube.getX() << "," << _cube.getY() << "," << _cube.getZ() << "," << _cube.getS() << std::endl;
 		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 		glBindTexture(GL_TEXTURE_2D, core.tex[1]);

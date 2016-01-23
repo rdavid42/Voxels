@@ -10,7 +10,7 @@ OBJS		=	$(patsubst %.cpp, $(OBJ_PATH)%.o,$(SRCS))
 PLATFORM	:=	$(shell uname)
 CC			=	g++
 HEADER		=	-I./$(INC_PATH) -I./glfw/include -I/usr/local/cuda-6.5/include -I.
-FLAGS		=	-O2 -Wall -Wextra -Werror -std=gnu++11 
+FLAGS		=	-O2 -Wall -Wextra -Werror -std=gnu++11 -pedantic
 VARS		=	\
 # -DDEBUG \
 # -DPARSER_DEBUG \
