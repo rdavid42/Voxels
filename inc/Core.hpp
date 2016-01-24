@@ -117,7 +117,6 @@ public:
 	void					generation(void);
 	void					insertChunks(void);
 	void					initChunks(void);
-	void					initVoxel(void);
 	void					initNoises(void);
 
 	Core &					operator=(Core const &rhs);
