@@ -29,11 +29,9 @@ Chunk::render(Core &core) const
 	(void)core;
 	if (renderDone)
 	{
-		// std::cerr << this << ": meshSize: " << meshSize << std::endl;
 		glBindVertexArray(vao);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		core.ms.push();
-			// core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
 			glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 			glDrawArrays(GL_TRIANGLES, 0, meshSize);
 		core.ms.pop();

@@ -3,18 +3,21 @@
 # define CHUNK_HPP
 
 # include <iostream>
+# include <vector>
 # include "Constants.hpp"
 # include "Link.hpp"
 
 class Chunk : public Link
 {
 public:
-	GLuint			vao;
-	GLuint			mesh;
-	int				meshSize;
-	bool			generating;
-	bool			generated;
-	bool			renderDone;
+	std::vector<GLfloat>	mesh;
+	GLuint					vao;
+	GLuint					vbo;
+	int						meshSize;
+	bool					generating;
+	bool					generated;
+	bool					renderDone;
+
 	Vec3<uint8_t>	pos; // position relative to other chunks
 
 	Chunk(void);
