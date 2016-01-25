@@ -1,14 +1,20 @@
 #version 410
 
 uniform sampler2D				tex;
+uniform float					renderVoxelRidges;
 
 in vec2							frag_texture;
+in vec3							frag_color;
 
 out vec4						outputColor;
 
 void main(void)
 {
-	vec4		color = texture(tex, frag_texture);
+	vec4		color;
 
+	if (renderVoxelRidges == 1.0f)
+		color = vec4(1.0f, 1.0f, 1.0f, 0.0f);
+	else
+		color = texture(tex, frag_texture);
 	outputColor = color;
 }

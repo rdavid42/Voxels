@@ -27,7 +27,8 @@ public:
 	virtual Octree *	insert(float const &, float const &, float const &, uint32_t const &, int32_t const &) { return (NULL); }
 	virtual Octree *	search(float const &, float const &, float const &) { return (NULL); }
 	virtual Octree *	search(float const &, float const &, float const &, int const &) { return (NULL); }
-	virtual void		render(Core &core) const {(void)core;}
+	virtual void		render(Core &core) const { (void)core; }
+	virtual void		renderRidges(Core &core) const { (void)core; }
 	void				setCube(float const &x, float const &y, float const &z, float const &s);
 	void				setState(int32_t const &state);
 	void				setParent(Octree *parent);

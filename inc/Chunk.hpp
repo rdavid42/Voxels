@@ -26,6 +26,7 @@ public:
 
 	void				createMesh(void);
 	virtual	void		render(Core &core) const;
+	virtual	void		renderRidges(Core &core) const;
 
 	Chunk				&operator=(Chunk const &rhs);
 

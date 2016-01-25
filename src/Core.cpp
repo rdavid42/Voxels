@@ -63,12 +63,14 @@ void
 Core::getLocations(void)
 {
 	// attribute variables
-	positionLoc = glGetAttribLocation(this->program, "position");
-	textureLoc = glGetAttribLocation(this->program, "texture");
+	positionLoc = glGetAttribLocation(program, "position");
+	textureLoc = glGetAttribLocation(program, "texture");
+	colorLoc = glGetAttribLocation(program, "color");
 	// uniform variables
-	projLoc = glGetUniformLocation(this->program, "proj_matrix");
-	viewLoc = glGetUniformLocation(this->program, "view_matrix");
-	objLoc = glGetUniformLocation(this->program, "obj_matrix");
+	projLoc = glGetUniformLocation(program, "proj_matrix");
+	viewLoc = glGetUniformLocation(program, "view_matrix");
+	objLoc = glGetUniformLocation(program, "obj_matrix");
+	renderVoxelRidgesLoc = glGetUniformLocation(program, "renderVoxelRidges");
 }
 
 GLuint
@@ -119,6 +121,61 @@ glErrorCallback(GLenum			source,
 	std::cerr << " Source:    " << source << std::endl;
 	std::cerr << " Message:   " << message << std::endl;
 	glFinish();
+}
+
+void
+Core::createSelectionCube(void)
+{
+
+	//          y
+	//		    2----3
+	//		   /|   /|
+	//		 6----7  |
+	//		 |  0-|--1   x
+	//		 |/   | /
+	//		 4____5
+	//		z
+
+	selectionVerticesSize = 24;
+	selectionIndicesSize = 24;
+
+	static GLfloat const		vertices[24] =
+	{
+		// vertices      | texture			C	I
+		0.0f, 0.0f, 0.0f, // 0
+		1.0f, 0.0f, 0.0f, // 1
+		0.0f, 1.0f, 0.0f, // 2
+		1.0f, 1.0f, 0.0f, // 3
+		0.0f, 0.0f, 1.0f, // 4
+		1.0f, 0.0f, 1.0f, // 5
+		0.0f, 1.0f, 1.0f, // 6
+		1.0f, 1.0f, 1.0f  // 7
+	};
+	static GLushort const		indices[24] =
+	{
+		0, 1,
+		0, 2,
+		3, 1,
+		3, 2,
+		4, 5,
+		4, 6,
+		7, 5,
+		7, 6,
+		2, 6,
+		3, 7,
+		0, 4,
+		1, 5
+	};
+
+	glGenVertexArrays(1, &selectionVao);
+	glBindVertexArray(selectionVao);
+	glGenBuffers(2, &selectionVbo[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, selectionVbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * selectionVerticesSize, vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(positionLoc);
+	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void *)0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, selectionVbo[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * selectionIndicesSize, indices, GL_STATIC_DRAW);
 }
 
 inline void
@@ -613,6 +670,7 @@ Core::init(void)
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, cursor_pos_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glLineWidth(5.0f);
 	// glfwDisable(GLFW_MOUSE_CURSOR);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
@@ -626,14 +684,14 @@ Core::init(void)
 	{
 		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-		// glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-		// glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
+		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
 	}
 #endif
 	initNoises();
 	multiplier = 0.0f;
-	// initVoxel();
 	loadTextures();
+	createSelectionCube();
 	startThreads();
 	octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	initChunks();
@@ -658,11 +716,11 @@ Core::update(void)
 	}
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.moveForward();
-	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		camera.moveBackward();
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		camera.strafeLeft();
-	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.strafeRight();
 }
 
@@ -673,15 +731,23 @@ Core::render(void)
 	int			x, y, z;
 
 	(void)ftime;
-	glUseProgram(program);
-	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, camera.view.val);
 	ms.push();
+		// render meshes
+		glUniform1f(renderVoxelRidgesLoc, 0.0f);
+		glBindTexture(GL_TEXTURE_2D, tex[0]);
 		for (z = 0; z < GEN_SIZE; ++z)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)
 					chunks[z][y][x]->render(*this);
-		// octree->render(*this);
+		// render chunks ridges
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glUniform1f(renderVoxelRidgesLoc, 1.0f);
+		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
+		for (z = 0; z < GEN_SIZE; ++z)
+			for (y = 0; y < GEN_SIZE; ++y)
+				for (x = 0; x < GEN_SIZE; ++x)
+					chunks[z][y][x]->renderRidges(*this);
 	ms.pop();
 }
 
@@ -693,7 +759,8 @@ Core::loop(void)
 
 	frames = 0.0;
 	lastTime = glfwGetTime();
-	glBindTexture(GL_TEXTURE_2D, tex[0]);
+	glUseProgram(program);
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	while (!glfwWindowShouldClose(window))
 	{
 		currentTime = glfwGetTime();

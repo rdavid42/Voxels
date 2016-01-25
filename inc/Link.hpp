@@ -23,6 +23,7 @@ public:
 	virtual Octree *	search(float const &x, float const &y, float const &z);
 	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state);
 	virtual void		render(Core &core) const;
+	virtual void		renderRidges(Core &core) const;
 
 	Octree *			getChild(uint32_t const &i);
 	void				setChild(uint32_t const &i, Octree *const child);

@@ -45,6 +45,8 @@ public:
 	GLuint					objLoc;
 	GLuint					positionLoc;
 	GLuint					textureLoc;
+	GLuint					colorLoc;
+	GLuint					renderVoxelRidgesLoc;
 
 	GLuint					voxelVao;
 	GLuint					voxelVbo[2];
@@ -62,6 +64,12 @@ public:
 
 	float					multiplier;
 	std::ostringstream		oss_ticks;
+
+	/* selection */
+	GLuint					selectionVao;
+	GLuint					selectionVbo[2];
+	int						selectionVerticesSize;
+	int						selectionIndicesSize;
 
 	/* Octree */
 
@@ -117,6 +125,7 @@ public:
 	void					generation(void);
 	void					insertChunks(void);
 	void					initChunks(void);
+	void					createSelectionCube(void);
 	void					initNoises(void);
 
 	Core &					operator=(Core const &rhs);

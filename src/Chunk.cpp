@@ -32,13 +32,25 @@ Chunk::render(Core &core) const
 		if (meshSize > 0)
 		{
 			glBindVertexArray(vao);
-			glBindBuffer(GL_ARRAY_BUFFER, vbo);
 			core.ms.push();
 				glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 				glDrawArrays(GL_TRIANGLES, 0, meshSize);
 			core.ms.pop();
 		}
 	}
+}
+
+void
+Chunk::renderRidges(Core &core) const
+{
+	(void)core;
+	glBindVertexArray(core.selectionVao);
+	core.ms.push();
+	core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
+	core.ms.scale(_cube.getS(), _cube.getS(), _cube.getS());
+		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
+		glDrawElements(GL_LINES, core.selectionIndicesSize, GL_UNSIGNED_SHORT, (void *)0);
+	core.ms.pop();
 }
 
 Chunk

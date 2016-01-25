@@ -159,6 +159,19 @@ Link::render(Core &core) const
 	}
 }
 
+void
+Link::renderRidges(Core &core) const
+{
+	int				i;
+
+	(void)core;
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (this->_children[i] != 0)
+			this->_children[i]->render(core);
+	}
+}
+
 Octree *
 Link::getChild(uint32_t const &i)
 {
