@@ -263,8 +263,7 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 	n = 0.0f;
 	for (int i = 0; i < 10.0f; i++)
 		n += noise->fractal(1, nx, y, nz);
-	// c->insert(nx, n, nz, depth, BLOCK | GROUND);
-	for (; n > -50.0f; n -= this->block_size[depth])
+	for (; n > -25.0f; n -= this->block_size[depth])
 		c->insert(nx, n, nz, depth, BLOCK);
 }
 
@@ -513,7 +512,7 @@ Core::generation(void)
 							glEnableVertexAttribArray(textureLoc);
 							glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
 							chunk->mesh.clear();
-							// delete mesh vector internal memory
+							// destroy mesh vector
 							std::vector<GLfloat>().swap(chunk->mesh);
 						}
 						chunk->renderDone = true;
