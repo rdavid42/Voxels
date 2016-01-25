@@ -637,7 +637,8 @@ Core::getClosestBlock(void)
 {
 	Vec3<float>			pos;
 	int					i;
-	int const			dist = 10; // blocks max distance
+	int const			precision = 5;
+	int const			dist = 10 * precision; // blocks max distance
 	Block				*block;
 
 	pos = camera.pos;
@@ -646,7 +647,7 @@ Core::getClosestBlock(void)
 		block = reinterpret_cast<Block *>(octree->search(pos.x, pos.y, pos.z, BLOCK));
 		if (block)
 			return (block);
-		pos += camera.forward * block_size[BLOCK_DEPTH];
+		pos += camera.forward * (block_size[BLOCK_DEPTH] / precision);
 	}
 	return (NULL);
 }
