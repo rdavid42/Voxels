@@ -41,6 +41,16 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	core->lastMy = core->windowHeight / 2;
 }
 
+void
+mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
+{
+	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
+
+	(void)mods;
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    	core->updateLeftClick();
+}
+
 // *************************************************************************************************
 
 void
@@ -298,8 +308,8 @@ Core::initNoises(void) // multithread
 	// amplitude range   : > 0.0
 	// persistence range : 0.0 - 1.0
 	noise->configs.emplace_back(4, 15, 1.0, 0.1, 0.3);
+	noise->configs.emplace_back(1, 0.3, 10, 0.7, 4.0);
 	noise->configs.emplace_back(1, 0.3, 0.1, 0.7, 4.0);
-	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
 	std::cerr	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
@@ -311,17 +321,17 @@ Core::initNoises(void) // multithread
 void
 Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) // multithread
 {
-	float						n;
+	float						altitude;
 	float						nx, nz;
 
 	nx = c->getCube()->getX() + x;
 	// ny = c->getCube()->getY() + y;
 	nz = c->getCube()->getZ() + z;
-	n = 0.0f;
+	altitude = 0.0f;
 	for (int i = 0; i < 10.0f; i++)
-		n += noise->fractal(1, nx, y, nz);
-	for (; n > -25.0f; n -= this->block_size[depth])
-		c->insert(nx, n, nz, depth, BLOCK);
+		altitude += noise->fractal(1, nx, y, nz);
+	for (; altitude > -25.0f; altitude -= this->block_size[depth])
+		c->insert(nx, altitude, nz, depth, BLOCK);
 }
 
 void
@@ -531,6 +541,23 @@ Core::addTask(Chunk *c, int const &id)
 }
 
 void
+Core::generateChunkGLMesh(Chunk *chunk)
+{
+	glGenVertexArrays(1, &chunk->vao);
+	glBindVertexArray(chunk->vao);
+	glGenBuffers(1, &chunk->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * chunk->mesh.size(), &chunk->mesh[0], GL_STATIC_DRAW);
+	glEnableVertexAttribArray(positionLoc);
+	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
+	glEnableVertexAttribArray(textureLoc);
+	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
+	chunk->mesh.clear();
+	// destroy mesh vector
+	std::vector<GLfloat>().swap(chunk->mesh);
+}
+
+void
 Core::generation(void)
 {
 	int							cx, cy, cz;
@@ -556,22 +583,9 @@ Core::generation(void)
 					if (chunk->generated && !chunk->renderDone)
 					{
 						// wait for the chunk generation and allocate the opengl mesh
-						// opengl functions cannot be called from a thread so we do it on the main thread (current gl context)
+						// opengl functions cannot be called from a thread so we do it on the main thread (current OpenGL context)
 						if (chunk->meshSize > 0)
-						{
-							glGenVertexArrays(1, &chunk->vao);
-							glBindVertexArray(chunk->vao);
-							glGenBuffers(1, &chunk->vbo);
-							glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
-							glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * chunk->mesh.size(), &chunk->mesh[0], GL_STATIC_DRAW);
-							glEnableVertexAttribArray(positionLoc);
-							glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
-							glEnableVertexAttribArray(textureLoc);
-							glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
-							chunk->mesh.clear();
-							// destroy mesh vector
-							std::vector<GLfloat>().swap(chunk->mesh);
-						}
+							generateChunkGLMesh(chunk);
 						chunk->renderDone = true;
 					}
 					id++;
@@ -616,6 +630,25 @@ Core::insertChunks(void)
 			}
 		}
 	}
+}
+
+Block *
+Core::getClosestBlock(void)
+{
+	Vec3<float>			pos;
+	int					i;
+	int const			dist = 10; // blocks max distance
+	Block				*block;
+
+	pos = camera.pos;
+	for (i = 0; i < dist; ++i)
+	{
+		block = reinterpret_cast<Block *>(octree->search(pos.x, pos.y, pos.z, BLOCK));
+		if (block)
+			return (block);
+		pos += camera.forward * block_size[BLOCK_DEPTH];
+	}
+	return (NULL);
 }
 
 void
@@ -669,8 +702,8 @@ Core::init(void)
 	glfwSwapInterval(1); // VSYNC 60 fps max
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetCursorPosCallback(window, cursor_pos_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glLineWidth(5.0f);
 	// glfwDisable(GLFW_MOUSE_CURSOR);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_DEPTH_TEST);
@@ -699,6 +732,23 @@ Core::init(void)
 }
 
 void
+Core::updateLeftClick(void)
+{
+	Chunk			*chunk;
+
+	if (closestBlock != NULL)
+	{
+		chunk = closestBlock->getChunk();
+		closestBlock->destroy();
+		glBindVertexArray(chunk->vao);
+		glDeleteBuffers(1, &chunk->vbo);
+		generateChunkMesh(chunk, BLOCK_DEPTH);
+		generateChunkGLMesh(chunk);
+		// closestBlock->
+	}
+}
+
+void
 Core::update(void)
 {
 	generation();
@@ -722,6 +772,7 @@ Core::update(void)
 		camera.strafeLeft();
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.strafeRight();
+	closestBlock = getClosestBlock();
 }
 
 void
@@ -748,6 +799,8 @@ Core::render(void)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)
 					chunks[z][y][x]->renderRidges(*this);
+		if (closestBlock != NULL)
+			closestBlock->renderRidges(*this);
 	ms.pop();
 }
 

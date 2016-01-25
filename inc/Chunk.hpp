@@ -18,15 +18,16 @@ public:
 	bool					generated;
 	bool					renderDone;
 
-	Vec3<uint8_t>	pos; // position relative to other chunks
+	Vec3<uint8_t>			pos; // position relative to other chunks
 
 	Chunk(void);
 	Chunk(float const &x, float const &y, float const &z, float const &s);
 	virtual ~Chunk(void);
 
-	void				createMesh(void);
 	virtual	void		render(Core &core) const;
 	virtual	void		renderRidges(Core &core) const;
+	virtual void		deleteChild(Octree *child);
+	virtual Chunk *		getChunk(void);
 
 	Chunk				&operator=(Chunk const &rhs);
 

@@ -81,6 +81,7 @@ public:
 	Chunk *					chunks[GEN_SIZE]
 									[GEN_SIZE]
 									[GEN_SIZE]; // camera chunk in the center
+	Block					*closestBlock;
 
 	int						pool_size;
 	bool					pool_state;
@@ -98,12 +99,15 @@ public:
 	void					addTask(Chunk *c, int const &id);
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
 	void					generateChunkMesh(Chunk *chunk, int const &depth);
+	void					generateChunkGLMesh(Chunk *chunk);
+	Block					*getClosestBlock(void);
 
 	Core(void);
 	~Core(void);
 
 	/* core */
 	int						init(void);
+	void					updateLeftClick(void);
 	void					update(void);
 	void					render(void);
 	void					loop(void);

@@ -1,5 +1,6 @@
 
 #include "Block.hpp"
+#include "Core.hpp"
 
 Block::Block(void) : Octree()
 {
@@ -13,6 +14,22 @@ Block::Block(float const &x, float const &y, float const &z, float const &s) : O
 
 Block::~Block(void)
 {
+	return ;
+}
+
+Chunk *
+Block::getChunk(void)
+{
+	if (_parent != NULL)
+		return (_parent->getChunk());
+	return (NULL);
+}
+
+void
+Block::destroy(void)
+{
+	if (_parent != NULL)
+		_parent->deleteChild(this);
 	return ;
 }
 
@@ -44,12 +61,19 @@ void
 Block::render(Core &core) const
 {
 	(void)core;
-/*	core.ms.push();
-		core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
-		core.ms.scale(_cube.getS(), _cube.getS(), _cube.getS());
+}
+
+void
+Block::renderRidges(Core &core) const
+{
+	(void)core;
+	glBindVertexArray(core.selectionVao);
+	core.ms.push();
+	core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
+	core.ms.scale(_cube.getS(), _cube.getS(), _cube.getS());
 		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void *)(sizeof(GLushort) * 0));
-	core.ms.pop();*/
+		glDrawElements(GL_LINES, core.selectionIndicesSize, GL_UNSIGNED_SHORT, (void *)0);
+	core.ms.pop();
 }
 
 Block
