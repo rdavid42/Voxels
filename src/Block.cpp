@@ -43,7 +43,7 @@ Block::search(float const &x, float const &y, float const &z)
 // -------------------------------------------------------------------
 
 Octree *
-Block::search(float const &x, float const &y, float const &z, int const &state)
+Block::search(float const &x, float const &y, float const &z, int const &state, bool const &)
 {
 	if (this->_cube.vertexInside(x, y, z) && this->_state == state)
 		return (this);

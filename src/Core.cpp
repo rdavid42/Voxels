@@ -224,10 +224,10 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 		{
 			for (x = cx; x < cx + chunk_size; x += bs)
 			{
-				current = chunk->search(x, y, z, BLOCK);
+				current = chunk->search(x, y, z, BLOCK, true);
 				if (current)
 				{
-					up = chunk->search(x, y + bs, z, BLOCK); // up
+					up = chunk->search(x, y + bs, z, BLOCK, true); // top
 					if (!up)
 					{
 						addVertexToMesh(chunk->mesh, x,		 y + bs, z + bs, t[2][1], t[2][2]);
@@ -240,7 +240,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 					s = 0;
 					if (up)
 						s = 1;
-					tmp = chunk->search(x, y, z - bs, BLOCK); // back
+					tmp = chunk->search(x, y, z - bs, BLOCK, true); // back
 					if (!tmp)
 					{
 						addVertexToMesh(chunk->mesh, x,		 y + bs, z, t[s][0], t[s][3]);
@@ -250,7 +250,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(chunk->mesh, x + bs, y,		 z, t[s][1], t[s][2]);
 						addVertexToMesh(chunk->mesh, x + bs, y + bs, z, t[s][1], t[s][3]);
 					}
-					tmp = chunk->search(x - bs, y, z, BLOCK); // left
+					tmp = chunk->search(x - bs, y, z, BLOCK, true); // left
 					if (!tmp)
 					{
 						addVertexToMesh(chunk->mesh, x, y,		z,		t[s][0], t[s][2]);
@@ -260,7 +260,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(chunk->mesh, x, y + bs, z,		t[s][0], t[s][3]);
 						addVertexToMesh(chunk->mesh, x, y + bs, z + bs, t[s][1], t[s][3]);
 					}
-					tmp = chunk->search(x + bs, y, z, BLOCK); // right
+					tmp = chunk->search(x + bs, y, z, BLOCK, true); // right
 					if (!tmp)
 					{
 						addVertexToMesh(chunk->mesh, x + bs, y,		 z,		 t[s][0], t[s][2]);
@@ -270,7 +270,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(chunk->mesh, x + bs, y + bs, z,		 t[s][0], t[s][3]);
 						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[s][1], t[s][3]);
 					}
-					tmp = chunk->search(x, y - bs, z, BLOCK); // bottom
+					tmp = chunk->search(x, y - bs, z, BLOCK, true); // bottom
 					if (!tmp)
 					{
 						addVertexToMesh(chunk->mesh, x,		 y, z,		t[1][0], t[1][3]);
@@ -280,7 +280,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(chunk->mesh, x,		 y, z + bs, t[1][0], t[1][2]);
 						addVertexToMesh(chunk->mesh, x + bs, y, z + bs, t[1][1], t[1][2]);
 					}
-					tmp = chunk->search(x, y, z + bs, BLOCK); // front
+					tmp = chunk->search(x, y, z + bs, BLOCK, true); // front
 					if (!tmp)
 					{
 						addVertexToMesh(chunk->mesh, x,		 y,		 z + bs, t[s][0], t[s][2]);
@@ -297,7 +297,13 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	chunk->meshSize = chunk->mesh.size() / 5;
 	// std::cerr << chunk->meshSize << std::endl;
 }
+/*
+void
+Core::simplifyChunkMesh(void)
+{
 
+}
+*/
 void
 Core::initNoises(void) // multithread
 {
@@ -637,14 +643,14 @@ Core::getClosestBlock(void)
 {
 	Vec3<float>			pos;
 	int					i;
-	int const			precision = 5;
+	int const			precision = 10;
 	int const			dist = 10 * precision; // blocks max distance
 	Block				*block;
 
 	pos = camera.pos;
 	for (i = 0; i < dist; ++i)
 	{
-		block = reinterpret_cast<Block *>(octree->search(pos.x, pos.y, pos.z, BLOCK));
+		block = reinterpret_cast<Block *>(octree->search(pos.x, pos.y, pos.z, BLOCK, false));
 		if (block)
 			return (block);
 		pos += camera.forward * (block_size[BLOCK_DEPTH] / precision);
@@ -667,8 +673,8 @@ Core::initChunks(void)
 	for (i = 1; i < MAX_BLOCK_DEPTH; ++i)
 		block_size[i] = chunk_size / powf(2, i);
 	// Create initial chunk
-	chunks[center][center][center] = (Chunk *)octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
-															CHUNK_DEPTH, CHUNK | EMPTY);
+	chunks[center][center][center] = static_cast<Chunk *>(octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
+																		CHUNK_DEPTH, CHUNK | EMPTY));
 	chunks[center][center][center]->generated = false;
 	chunks[center][center][center]->generating = false;
 	chunks[center][center][center]->renderDone = false;
@@ -745,7 +751,6 @@ Core::updateLeftClick(void)
 		glDeleteBuffers(1, &chunk->vbo);
 		generateChunkMesh(chunk, BLOCK_DEPTH);
 		generateChunkGLMesh(chunk);
-		// closestBlock->
 	}
 }
 
