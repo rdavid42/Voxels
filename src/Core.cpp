@@ -293,12 +293,16 @@ Core::initNoises(void) // multithread
 {
 	noise = new Noise(42, 256);
 	// octaves range     : 1.0 - 6.0
-	// frequency range   : 1.0 - 16.0
+	// frequency range   : 0.0 - 1.0
 	// lacunarity range  : ?
 	// amplitude range   : > 0.0
-	// persistence range : 0.0 - 1.0
-	noise->configs.emplace_back(4, 15, 1.0, 0.1, 0.3);
-	noise->configs.emplace_back(1, 0.3, 0.1, 0.7, 4.0);
+	// persistence range : 0.0 - 10
+	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 0.1); //bruit 3d test
+	noise->configs.emplace_back(6, 0.008, 1.0, 0.9, 1.0); //bruit 3d équilibré
+	noise->configs.emplace_back(2, 0.008, 10.0, 0.9, 1.0); //bruit 3d monde des reves
+	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop
+	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La valléee Danna
+	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.
 	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
 	srandom(time(NULL));
 	std::cerr	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
@@ -309,25 +313,48 @@ Core::initNoises(void) // multithread
 }
 
 void
-Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) // multithread
+Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) // multithread
 {
 	float						n;
-	float						nx, nz;
+	float						nx, nz, ny;
+	int							i;
 
+	
 	nx = c->getCube()->getX() + x;
-	// ny = c->getCube()->getY() + y;
+	ny = c->getCube()->getY() + y;
 	nz = c->getCube()->getZ() + z;
 	n = 0.0f;
+	for (i = 0; i < 3; i++)
+		n += noise->octave_noise_3d(i, nx, ny, nz);
+	n /= (i + 1);
+	if (ny > 0)
+	{
+		n /= (ny / ycap);
+		if (n > 0.9)
+			c->insert(nx, ny, nz, depth, BLOCK);
+	}
+	c->insert(nx, 0, nz, depth, BLOCK);
+}
+
+void
+Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) // multithread
+{
+	float                        altitude;
+	float                        nx, nz;
+
+	nx = c->getCube()->getX() + x;
+	nz = c->getCube()->getZ() + z;
+	altitude = 0.0f;
 	for (int i = 0; i < 10.0f; i++)
-		n += noise->fractal(1, nx, y, nz);
-	for (; n > -25.0f; n -= this->block_size[depth])
-		c->insert(nx, n, nz, depth, BLOCK);
+		altitude += noise->fractal(2, nx, y, nz);
+	for (; altitude > -10.0f; altitude -= this->block_size[depth])
+		  c->insert(nx, altitude, nz, depth, BLOCK);
 }
 
 void
 Core::processChunkGeneration(Chunk *chunk) // multithread
 {
-	float						x, z;
+	float						x, z, y;
 	int							depth;
 
 	if (chunk->generated)
@@ -342,7 +369,11 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 			{
 				// chunk->insert(chunk->getCube()->getX() + x, 0.0f, chunk->getCube()->getZ() + z, depth, BLOCK | GROUND);
 				// density = noise->fractal(0, nx, ny, nz) / 3;
-				generateBlock(chunk, x, 1.5, z, depth);
+				for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
+				{
+					generateBlock3d(chunk, x, y, z, depth, 50);
+					//generateBlock(chunk, x, 1.5, z, depth);
+				}
 			}
 		// }
 	}

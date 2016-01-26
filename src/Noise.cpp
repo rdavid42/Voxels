@@ -262,8 +262,8 @@ Noise::octave_noise_3d(int const &ci, float const &x, float const &y, float cons
 {
     // We have to keep track of the largest possible amplitude,
     // because each octave adds more, and we need a value in [-1, 1].
-    float				maxAmplitude = 0.0f;
-    float				total = 0.0f;
+    float				maxAmplitude =  0;
+    float				total = 0;
     float				frequency;
     float				amplitude;
     int					i;
@@ -273,18 +273,18 @@ Noise::octave_noise_3d(int const &ci, float const &x, float const &y, float cons
     amplitude = n->amplitude;
     for(i = 0; i < n->octaves; ++i)
     {
-        total += this->raw_noise_3d(x * frequency, y * frequency, z * frequency) * amplitude;
+        total += this->scaled_raw_noise_3d(0, 1, x * frequency, y * frequency, z * frequency) * amplitude;
         maxAmplitude += amplitude;
         frequency *= n->lacunarity;
         amplitude *= n->persistence;
     }
-    return (total / maxAmplitude);
-}
+	return ((total / maxAmplitude));
+} 
 
 float
 Noise::fractal(int const &ci, float const &x, float const &y, float const &z)
 {
-	float				maxAmplitude = 0.0f;
+	float				maxAmplitude = 0;
 	float				total = 0.0f;
 	float				frequency;
 	float				amplitude;
