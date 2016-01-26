@@ -18,9 +18,22 @@ Chunk::~Chunk(void)
 }
 
 void
-Chunk::createMesh(void)
+Chunk::deleteChild(Octree *child)
 {
+	for (int i = 0; i < CHD_MAX; ++i)
+	{
+		if (_children[i] == child)
+		{
+			delete _children[i];
+			_children[i] = NULL;
+		}
+	}
+}
 
+Chunk *
+Chunk::getChunk(void)
+{
+	return (this);
 }
 
 void

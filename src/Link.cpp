@@ -25,6 +25,37 @@ Link::~Link(void)
 	}
 }
 
+Chunk *
+Link::getChunk(void)
+{
+	if (_parent != NULL)
+		return (_parent->getChunk());
+	return (NULL);
+}
+
+void
+Link::deleteChild(Octree *child)
+{
+	int			childCount;
+
+	childCount = 0;
+	for (int i = 0; i < CHD_MAX; ++i)
+	{
+		if (_children[i] == child)
+		{
+			delete _children[i];
+			_children[i] = NULL;
+		}
+		if (_children[i] != NULL)
+			childCount++;
+	}
+	if (childCount == 0)
+	{
+		if (_parent != NULL)
+			_parent->deleteChild(this);
+	}
+}
+
 // -------------------------------------------------------------------
 // Creates a child with octree state specified
 // -------------------------------------------------------------------

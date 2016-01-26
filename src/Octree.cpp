@@ -39,25 +39,6 @@ Octree::operator=(Octree const &rhs)
 }
 
 void
-Octree::remove(void)
-{
-	int			i;
-	Octree *	parent = this->_parent;
-
-	if (parent != NULL)
-	{
-		for (i = 0; i < CHD_MAX; ++i)
-		{
-			if (parent->getChild(i) != NULL && parent->getChild(i) == this)
-			{
-				delete parent->getChild(i);
-				parent->setChild(i, NULL);
-			}
-		}
-	}
-}
-
-void
 Octree::setCube(float const &x, float const &y, float const &z, float const &s)
 {
 	this->_cube = Cube(x, y, z, s);
