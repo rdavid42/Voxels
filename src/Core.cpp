@@ -713,14 +713,11 @@ Core::init(void)
 	if (!initShaders(vertexShader, fragmentShader, program))
 		return (0);
 	getLocations();
-#ifndef __APPLE__
-	if (glDebugMessageControlARB != NULL)
-	{
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-		glDebugMessageCallbackARB((GLDEBUGPROCARB)glErrorCallback, NULL);
-	}
+#ifndef __APPLE__ // Mac osx doesnt support opengl 4.3+
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, NULL, GL_FALSE);
+	glDebugMessageCallback((GLDEBUGPROCARB)glErrorCallback, NULL);
 #endif
 	initNoises();
 	multiplier = 0.0f;
@@ -793,7 +790,7 @@ Core::render(void)
 				for (x = 0; x < GEN_SIZE; ++x)
 					chunks[z][y][x]->render(*this);
 		// render chunks ridges
-		glBindTexture(GL_TEXTURE_2D, 0);
+		// glBindTexture(GL_TEXTURE_2D, 0);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
 		for (z = 0; z < GEN_SIZE; ++z)

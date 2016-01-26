@@ -27,7 +27,7 @@ GLFW		=	./glfw/libglfw3_win32.a
 LIBS		=	$(GLFW) -lopengl32 -lgdi32 -luser32 -lkernel32 -lpthread
 endif
 
-NAME		=	test
+NAME		=	voxels
 
 all: $(NAME)
 
