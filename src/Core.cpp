@@ -47,8 +47,8 @@ mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
 	(void)mods;
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-    	core->updateLeftClick();
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+		core->updateLeftClick();
 }
 
 // *************************************************************************************************
@@ -75,8 +75,8 @@ Core::getLocations(void)
 	// attribute variables
 	positionLoc = glGetAttribLocation(program, "position");
 	textureLoc = glGetAttribLocation(program, "texture");
-	colorLoc = glGetAttribLocation(program, "color");
 	// uniform variables
+	colorLoc = glGetUniformLocation(program, "color");
 	projLoc = glGetUniformLocation(program, "proj_matrix");
 	viewLoc = glGetUniformLocation(program, "view_matrix");
 	objLoc = glGetUniformLocation(program, "obj_matrix");
@@ -106,7 +106,7 @@ void
 Core::loadTextures(void)
 {
 	tex = new GLuint[1];
-	tex[0] = loadTexture("resources/grassblock.bmp");
+	tex[0] = loadTexture("resources/atlas.bmp");
 	// tex[0] = loadTexture("resources/grass_bottom.bmp");
 	// tex[1] = loadTexture("resources/grass_side.bmp");
 	// tex[2] = loadTexture("resources/grass_up.bmp");
@@ -148,7 +148,6 @@ Core::createSelectionCube(void)
 
 	selectionVerticesSize = 24;
 	selectionIndicesSize = 24;
-
 	static GLfloat const		vertices[24] =
 	{
 		// vertices      | texture			C	I
@@ -208,14 +207,19 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	Block					*current;
 	Octree					*tmp, *up;
 	float const				bs = block_size[depth];
-	float const				t[2][3][4] =
+	float const				t[3][3][4] =
 	{
 		{ // DIRT
-			{ 0.0f,  0.25f, 0.0f, 1.0f }, // grass/dirt
-			{ 0.25f, 0.5f,  0.0f, 1.0f }, // dirt
-			{ 0.5f,  0.75f, 0.0f, 1.0f }  // grass
+			{ 0.0f,  0.2f, 0.0f, 1.0f }, // grass/dirt
+			{ 0.2f, 0.4f,  0.0f, 1.0f }, // dirt
+			{ 0.4f,  0.6f, 0.0f, 1.0f }  // grass
 		},
 		{ // STONE
+			{ 0.75f, 1.0f, 0.0f, 1.0f },
+			{ 0.75f, 1.0f, 0.0f, 1.0f },
+			{ 0.75f, 1.0f, 0.0f, 1.0f }
+		},
+		{ // COAL
 			{ 0.75f, 1.0f, 0.0f, 1.0f },
 			{ 0.75f, 1.0f, 0.0f, 1.0f },
 			{ 0.75f, 1.0f, 0.0f, 1.0f }
@@ -343,11 +347,12 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 	float						n;
 	float						nx, nz, ny;
 	int							i;
-	
+
 	nx = c->getCube()->getX() + x;
 	ny = c->getCube()->getY() + y;
 	nz = c->getCube()->getZ() + z;
-	
+
+
 	n = 0.0f;
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, nx, ny, nz);
@@ -358,7 +363,7 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 		if (n > 0.9)
 			c->insert(nx, ny, nz, depth, BLOCK, DIRT);
 	}
-	c->insert(nx, 0, nz, depth, BLOCK, DIRT);
+	// c->insert(nx, 0, nz, depth, BLOCK, DIRT);
 }
 
 void
@@ -373,7 +378,7 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 	for (int i = 0; i < 10.0f; i++)
 		altitude += noise->fractal(2, nx, y, nz);
 	for (; altitude > -25.0f; altitude -= this->block_size[depth])
-		  c->insert(nx, altitude, nz, depth, BLOCK, DIRT);
+		c->insert(nx, altitude, nz, depth, BLOCK, DIRT);
 }
 
 void
@@ -655,22 +660,25 @@ Core::insertChunks(void)
 		{
 			for (cx = 0; cx < GEN_SIZE; ++cx)
 			{
-				// place new chunks in the camera perimeter, ignoring the central chunk
-				if (cz != center || cy != center || cx != center)
+				if (chunks[cz][cy][cx] == NULL)
 				{
-					px = camera.pos.x + (cx - center) * chunk_size;
-					py = camera.pos.y + (cy - center) * chunk_size;
-					pz = camera.pos.z + (cz - center) * chunk_size;
-					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, NONE);
-					new_chunk->generated = false;
-					new_chunk->generating = false;
-					new_chunk->renderDone = false;
-					if (new_chunk != chunks[cz][cy][cx])
+					// place new chunks in the camera perimeter, ignoring the central chunk
+					if (cz != center || cy != center || cx != center)
 					{
-						new_chunk->pos.x = cx;
-						new_chunk->pos.y = cy;
-						new_chunk->pos.z = cz;
-						chunks[cz][cy][cx] = new_chunk;
+						px = camera.pos.x + (cx - center) * chunk_size;
+						py = camera.pos.y + (cy - center) * chunk_size;
+						pz = camera.pos.z + (cz - center) * chunk_size;
+						new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE);
+						new_chunk->generated = false;
+						new_chunk->generating = false;
+						new_chunk->renderDone = false;
+						if (new_chunk != chunks[cz][cy][cx])
+						{
+							new_chunk->pos.x = cx;
+							new_chunk->pos.y = cy;
+							new_chunk->pos.z = cz;
+							chunks[cz][cy][cx] = new_chunk;
+						}
 					}
 				}
 			}
@@ -714,7 +722,7 @@ Core::initChunks(void)
 		block_size[i] = chunk_size / powf(2, i);
 	// Create initial chunk
 	chunks[center][center][center] = static_cast<Chunk *>(octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
-																		CHUNK_DEPTH, CHUNK | EMPTY, NONE));
+																		CHUNK_DEPTH, CHUNK, NONE));
 	chunks[center][center][center]->generated = false;
 	chunks[center][center][center]->generating = false;
 	chunks[center][center][center]->renderDone = false;
@@ -763,7 +771,7 @@ Core::init(void)
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, NULL, GL_FALSE);
-	glDebugMessageCallback((GLDEBUGPROCARB)glErrorCallback, NULL);
+	glDebugMessageCallback((GLDEBUGPROC)glErrorCallback, NULL);
 #endif
 	initNoises();
 	multiplier = 0.0f;
@@ -772,6 +780,7 @@ Core::init(void)
 	startThreads();
 	octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	initChunks();
+	closestBlock = 0;
 	return (1);
 }
 
@@ -792,8 +801,66 @@ Core::updateLeftClick(void)
 }
 
 void
+Core::updateChunks(void)
+{
+/*	Chunk						*central;
+	int							x, y, z;
+	Vec3<int>					dir;
+	Chunk						*newChunks[GEN_SIZE][GEN_SIZE][GEN_SIZE];
+	std::list<Chunk *>			delChunks;
+
+	for (z = 0; z < GEN_SIZE; ++z)
+		for (y = 0; y < GEN_SIZE; ++y)
+			for (x = 0; x < GEN_SIZE; ++x)
+				newChunks[z][y][x] = NULL;
+	central = reinterpret_cast<Chunk *>(octree->search(camera.pos.x, camera.pos.y, camera.pos.z, CHUNK, false));
+	// std::cerr << central << std::endl;
+	if (central != chunks[center][center][center])
+	{
+		dir.set(0, 0, 0);
+		for (z = 0; z < GEN_SIZE; ++z)
+		{
+			for (y = 0; y < GEN_SIZE; ++y)
+			{
+				for (x = 0; x < GEN_SIZE; ++x)
+				{
+					if (central == chunks[z][y][x])
+					{
+						dir.set(x - center, y - center, z - center);
+						break;
+					}
+				}
+			}
+		}
+		if (dir.x == 0 && dir.y == 0 && dir.z == 0)
+			return ; // outside of the generation area
+		for (z = 0; z < GEN_SIZE; ++z)
+		{
+			for (y = 0; y < GEN_SIZE; ++y)
+			{
+				for (x = 0; x < GEN_SIZE; ++x)
+				{
+					if (x - dir.x < 0 || x - dir.x >= GEN_SIZE
+					||	y - dir.y < 0 || y - dir.y >= GEN_SIZE
+					||	z - dir.z < 0 || z - dir.z >= GEN_SIZE)
+						delChunks.push_front(chunks[z][y][x]);
+					else
+						newChunks[z - dir.z][y - dir.y][x - dir.x] = chunks[z][y][x];
+				}
+			}
+		}
+		newChunks[center][center][center] = central;
+	}
+	insertChunks();*/
+}
+
+void
 Core::update(void)
 {
+/*	for (int z = 0; z < GEN_SIZE; ++z)
+		for (int y = 0; y < GEN_SIZE; ++y)
+			for (int x = 0; x < GEN_SIZE; ++x)
+				std::cerr << chunks[z][y][x]->getState() << std::endl;*/
 	generation();
 	camera.rotate();
 	camera.set();
@@ -814,6 +881,7 @@ Core::update(void)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.strafeRight();
 	closestBlock = getClosestBlock();
+	updateChunks();
 }
 
 void
@@ -833,9 +901,10 @@ Core::render(void)
 				for (x = 0; x < GEN_SIZE; ++x)
 					chunks[z][y][x]->render(*this);
 		// render chunks ridges
-		// glBindTexture(GL_TEXTURE_2D, 0);
+		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
+		// octree->renderRidges(*this);
 		for (z = 0; z < GEN_SIZE; ++z)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)

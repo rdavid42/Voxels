@@ -2,6 +2,7 @@
 #include "Link.hpp"
 #include "Chunk.hpp"
 #include "Block.hpp"
+#include "Core.hpp"
 
 Link::Link(void) : Octree()
 {
@@ -172,8 +173,7 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 					if ((depth - 1) == 0)
 						createChild(i, nx, ny, nz, s, state);
 					else
-						createChild(i, nx, ny, nz, s, EMPTY);
-					_state = 0;
+						createChild(i, nx, ny, nz, s, LINK);
 					return (_children[i]->insert(x, y, z, depth - 1, state, type));
 				}
 			}

@@ -90,6 +90,7 @@ public:
 									[GEN_SIZE]; // camera chunk in the center
 	Block					*closestBlock;
 
+	/* Thread pool */
 	int						pool_size;
 	bool					pool_state;
 	pthread_cond_t *		task_cond;
@@ -97,6 +98,9 @@ public:
 	pthread_mutex_t *		task_mutex;
 	pthread_t *				threads;
 	std::deque<Chunk *> *	task_queue; // one different pool per thread
+
+	Core(void);
+	~Core(void);
 
 	uint32_t				getConcurrentThreads();
 	void					processChunkGeneration(Chunk *c);
@@ -111,12 +115,10 @@ public:
 	void					generateChunkGLMesh(Chunk *chunk);
 	Block					*getClosestBlock(void);
 
-	Core(void);
-	~Core(void);
-
 	/* core */
 	int						init(void);
 	void					updateLeftClick(void);
+	void					updateChunks(void);
 	void					update(void);
 	void					render(void);
 	void					loop(void);

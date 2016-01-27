@@ -3,18 +3,14 @@
 uniform mat4					view_matrix;
 uniform mat4					proj_matrix;
 uniform mat4					obj_matrix;
-uniform float					renderVoxelRidges;
 
 in vec3							position;
 in vec2							texture;
-in vec3							color;
 
 out vec2						frag_texture;
-out vec3						frag_color;
 
 void		main()
 {
 	gl_Position = proj_matrix * view_matrix * obj_matrix * vec4(position, 1.0);
 	frag_texture = texture;
-	frag_color = color;
 }

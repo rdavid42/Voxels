@@ -4,11 +4,13 @@
 
 Chunk::Chunk(void) : Link(), generated(false)
 {
+	_state = CHUNK;
 	return ;
 }
 
 Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s), generated(false)
 {
+	_state = CHUNK;
 	return ;
 }
 
@@ -57,7 +59,6 @@ void
 Chunk::renderRidges(Core &core) const
 {
 	(void)core;
-	glBindVertexArray(core.selectionVao);
 	core.ms.push();
 	core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
 	core.ms.scale(_cube.getS(), _cube.getS(), _cube.getS());
