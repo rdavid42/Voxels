@@ -341,6 +341,7 @@ void
 Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) // multithread
 {
 	float						n;
+	float						nstone;
 	float						nx, nz, ny;
 	int							i;
 	
@@ -349,16 +350,18 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 	nz = c->getCube()->getZ() + z;
 	
 	n = 0.0f;
+	nstone = noise->fractal(5, nx, ny, nz);
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, nx, ny, nz);
 	n /= (i + 1);
 	if (ny > 0)
 	{
 		n /= (ny / ycap);
-		if (n > 0.9)
+		if (n > 0.90 && n < 0.95 && nstone < 0.6)
 			c->insert(nx, ny, nz, depth, BLOCK, DIRT);
+		else if (n > 0.90)
+			c->insert(nx, ny, nz, depth, BLOCK, STONE);
 	}
-	c->insert(nx, 0, nz, depth, BLOCK, DIRT);
 }
 
 void
