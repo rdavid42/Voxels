@@ -211,18 +211,18 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	{
 		{ // DIRT
 			{ 0.0f,  0.2f, 0.0f, 1.0f }, // grass/dirt
-			{ 0.2f, 0.4f,  0.0f, 1.0f }, // dirt
+			{ 0.2f,	 0.4f, 0.0f, 1.0f }, // dirt
 			{ 0.4f,  0.6f, 0.0f, 1.0f }  // grass
 		},
 		{ // STONE
-			{ 0.75f, 1.0f, 0.0f, 1.0f },
-			{ 0.75f, 1.0f, 0.0f, 1.0f },
-			{ 0.75f, 1.0f, 0.0f, 1.0f }
+			{ 0.6f, 0.8f, 0.0f, 1.0f },
+			{ 0.6f, 0.8f, 0.0f, 1.0f },
+			{ 0.6f, 0.8f, 0.0f, 1.0f }
 		},
 		{ // COAL
-			{ 0.75f, 1.0f, 0.0f, 1.0f },
-			{ 0.75f, 1.0f, 0.0f, 1.0f },
-			{ 0.75f, 1.0f, 0.0f, 1.0f }
+			{ 0.8f, 1.0f, 0.0f, 1.0f },
+			{ 0.8f, 1.0f, 0.0f, 1.0f },
+			{ 0.8f, 1.0f, 0.0f, 1.0f }
 		}
 	};
 	int						s; // side texture index
@@ -326,13 +326,13 @@ Core::initNoises(void) // multithread
 	// lacunarity range  : ?
 	// amplitude range   : > 0.0
 	// persistence range : 0.0 - 10
-	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 0.1); //bruit 3d test
-	noise->configs.emplace_back(6, 0.008, 1.0, 0.9, 1.0); //bruit 3d équilibré
-	noise->configs.emplace_back(2, 0.008, 10.0, 0.9, 1.0); //bruit 3d monde des reves
-	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop
-	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La valléee Danna
-	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.
-	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
+	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 0.1); //bruit 3d test					//	0
+	noise->configs.emplace_back(6, 0.008, 1.0, 0.9, 1.0); //bruit 3d équilibré				//	1
+	noise->configs.emplace_back(2, 0.008, 10.0, 0.9, 1.0); //bruit 3d monde des reves		//	2
+	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop		//	3
+	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La valléee Danna				//	4
+	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.					//	5
+	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);											//	6
 	srandom(time(NULL));
 	std::cerr	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
@@ -345,6 +345,8 @@ void
 Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) // multithread
 {
 	float						n;
+	float						nstone;
+	float						ncoal;
 	float						nx, nz, ny;
 	int							i;
 
@@ -354,16 +356,27 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 
 
 	n = 0.0f;
+	nstone = noise->fractal(5, nx, ny, nz);
+	ncoal = nstone;
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, nx, ny, nz);
 	n /= (i + 1);
 	if (ny > 0)
 	{
 		n /= (ny / ycap);
-		if (n > 0.9)
-			c->insert(nx, ny, nz, depth, BLOCK, DIRT);
+		if (n > 0.90)
+		{
+			if (n < 0.95 && nstone < 0.6)
+			c->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+			else
+			{
+				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
+					c->insert(nx, ny, nz, depth, BLOCK, COAL);
+				else
+					c->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
+			}
+		}
 	}
-	// c->insert(nx, 0, nz, depth, BLOCK, DIRT);
 }
 
 void
