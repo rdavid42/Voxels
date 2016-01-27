@@ -36,7 +36,7 @@ Block::destroy(void)
 Octree *
 Block::search(float const &x, float const &y, float const &z)
 {
-	if (this->_cube.vertexInside(x, y, z))
+	if (_cube.vertexInside(x, y, z))
 		return (this);
 	return (NULL);
 }
@@ -45,15 +45,16 @@ Block::search(float const &x, float const &y, float const &z)
 Octree *
 Block::search(float const &x, float const &y, float const &z, int const &state, bool const &)
 {
-	if (this->_cube.vertexInside(x, y, z) && this->_state == state)
+	if (_cube.vertexInside(x, y, z) && _state == state)
 		return (this);
 	return (NULL);
 }
 
 Octree *
-Block::insert(float const &, float const &, float const &, uint32_t const &, int32_t const &state)
+Block::insert(float const &, float const &, float const &, uint32_t const &, int32_t const &state, int const &type)
 {
-	this->setState(state);
+	this->type = type;
+	setState(state);
 	return (this);
 }
 

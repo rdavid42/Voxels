@@ -12,13 +12,15 @@ class Core;
 class Block : public Octree
 {
 public:
+	int				type;
+
 	Block(void);
 	Block(float const &x, float const &y, float const &z, float const &s);
 	virtual ~Block(void);
 
 	virtual Octree *	search(float const &x, float const &y, float const &z);
 	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state, bool const &allowOutside);
-	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state);
+	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, int const &type);
 	virtual void		render(Core &core) const;
 	virtual void		renderRidges(Core &core) const;
 	void				destroy(void);

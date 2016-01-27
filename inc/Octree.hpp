@@ -24,7 +24,7 @@ public:
 	Octree(Octree const &src);
 	virtual ~Octree(void);
 
-	virtual Octree *	insert(float const &, float const &, float const &, uint32_t const &, int32_t const &) { return (NULL); }
+	virtual Octree *	insert(float const &, float const &, float const &, uint32_t const &, int32_t const &, int const &) { return (NULL); }
 	virtual Octree *	search(float const &, float const &, float const &) { return (NULL); }
 	virtual Octree *	search(float const &, float const &, float const &, int const &, bool const &) { return (NULL); }
 	virtual void		render(Core &core) const { (void)core; }

@@ -19,7 +19,7 @@ public:
 	virtual ~Link(void);
 
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state);
-	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state);
+	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, int const &type);
 	virtual Octree *	search(float const &x, float const &y, float const &z);
 	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state, bool const &allowOutside);
 	virtual void		render(Core &core) const;

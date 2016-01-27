@@ -297,13 +297,13 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	chunk->meshSize = chunk->mesh.size() / 5;
 	// std::cerr << chunk->meshSize << std::endl;
 }
-/*
-void
-Core::simplifyChunkMesh(void)
-{
 
+void
+Core::simplifyChunkMesh(Chunk *chunk)
+{
+	(void)chunk;
 }
-*/
+
 void
 Core::initNoises(void) // multithread
 {
@@ -347,9 +347,9 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 	{
 		n /= (ny / ycap);
 		if (n > 0.9)
-			c->insert(nx, ny, nz, depth, BLOCK);
+			c->insert(nx, ny, nz, depth, BLOCK, DIRT);
 	}
-	c->insert(nx, 0, nz, depth, BLOCK);
+	c->insert(nx, 0, nz, depth, BLOCK, DIRT);
 }
 
 void
@@ -364,7 +364,7 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 	for (int i = 0; i < 10.0f; i++)
 		altitude += noise->fractal(2, nx, y, nz);
 	for (; altitude > -25.0f; altitude -= this->block_size[depth])
-		  c->insert(nx, altitude, nz, depth, BLOCK);
+		  c->insert(nx, altitude, nz, depth, BLOCK, DIRT);
 }
 
 void
@@ -652,7 +652,7 @@ Core::insertChunks(void)
 					px = camera.pos.x + (cx - center) * chunk_size;
 					py = camera.pos.y + (cy - center) * chunk_size;
 					pz = camera.pos.z + (cz - center) * chunk_size;
-					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY);
+					new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK | EMPTY, NONE);
 					new_chunk->generated = false;
 					new_chunk->generating = false;
 					new_chunk->renderDone = false;
@@ -705,7 +705,7 @@ Core::initChunks(void)
 		block_size[i] = chunk_size / powf(2, i);
 	// Create initial chunk
 	chunks[center][center][center] = static_cast<Chunk *>(octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
-																		CHUNK_DEPTH, CHUNK | EMPTY));
+																		CHUNK_DEPTH, CHUNK | EMPTY, NONE));
 	chunks[center][center][center]->generated = false;
 	chunks[center][center][center]->generating = false;
 	chunks[center][center][center]->renderDone = false;
@@ -789,9 +789,7 @@ Core::update(void)
 	camera.rotate();
 	camera.set();
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-	{
 		multiplier += 0.05f;
-	}
 	else
 	{
 		multiplier -= 0.1f;

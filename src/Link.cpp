@@ -139,7 +139,7 @@ Link::createChild(uint32_t const &i, float const &x, float const &y, float const
 // Insert an Octree in another
 // -------------------------------------------------------------------
 Octree *
-Link::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state)
+Link::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, int const &type)
 {
 	// size never changes for children.
 	float			nx;
@@ -174,11 +174,11 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 					else
 						createChild(i, nx, ny, nz, s, EMPTY);
 					_state = 0;
-					return (_children[i]->insert(x, y, z, depth - 1, state));
+					return (_children[i]->insert(x, y, z, depth - 1, state, type));
 				}
 			}
 			else if (_children[i]->getCube()->vertexInside(x, y, z))
-				return (_children[i]->insert(x, y, z, depth - 1, state));
+				return (_children[i]->insert(x, y, z, depth - 1, state, type));
 		}
 	}
 	return (NULL);
