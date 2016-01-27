@@ -25,7 +25,8 @@ typedef enum
 {
 	NONE,
 	DIRT,
-	STONE
+	STONE,
+	COAL
 }					block_type;
 
 class Core

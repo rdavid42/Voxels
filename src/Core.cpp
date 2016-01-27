@@ -106,7 +106,7 @@ void
 Core::loadTextures(void)
 {
 	tex = new GLuint[1];
-	tex[0] = loadTexture("resources/grassblock.bmp");
+	tex[0] = loadTexture("resources/atlas.bmp");
 	// tex[0] = loadTexture("resources/grass_bottom.bmp");
 	// tex[1] = loadTexture("resources/grass_side.bmp");
 	// tex[2] = loadTexture("resources/grass_up.bmp");
@@ -208,17 +208,22 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	Block					*current;
 	Octree					*tmp, *up;
 	float const				bs = block_size[depth];
-	float const				t[2][3][4] =
+	float const				t[3][3][4] =
 	{
 		{ // DIRT
-			{ 0.0f,  0.25f, 0.0f, 1.0f }, // grass/dirt
-			{ 0.25f, 0.5f,  0.0f, 1.0f }, // dirt
-			{ 0.5f,  0.75f, 0.0f, 1.0f }  // grass
+			{ 0.0f,  0.2f, 0.0f, 1.0f }, // grass/dirt
+			{ 0.2f,	 0.4f, 0.0f, 1.0f }, // dirt
+			{ 0.4f,  0.6f, 0.0f, 1.0f }  // grass
 		},
 		{ // STONE
-			{ 0.75f, 1.0f, 0.0f, 1.0f },
-			{ 0.75f, 1.0f, 0.0f, 1.0f },
-			{ 0.75f, 1.0f, 0.0f, 1.0f }
+			{ 0.6f, 0.8f, 0.0f, 1.0f },
+			{ 0.6f, 0.8f, 0.0f, 1.0f },
+			{ 0.6f, 0.8f, 0.0f, 1.0f }
+		},
+		{ // COAL
+			{ 0.8f, 1.0f, 0.0f, 1.0f },
+			{ 0.8f, 1.0f, 0.0f, 1.0f },
+			{ 0.8f, 1.0f, 0.0f, 1.0f }
 		}
 	};
 	int						s; // side texture index
@@ -342,6 +347,7 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 {
 	float						n;
 	float						nstone;
+	float						ncoal;
 	float						nx, nz, ny;
 	int							i;
 	
@@ -351,16 +357,25 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 	
 	n = 0.0f;
 	nstone = noise->fractal(5, nx, ny, nz);
+	ncoal = nstone;
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, nx, ny, nz);
 	n /= (i + 1);
 	if (ny > 0)
 	{
 		n /= (ny / ycap);
-		if (n > 0.90 && n < 0.95 && nstone < 0.6)
-			c->insert(nx, ny, nz, depth, BLOCK, DIRT);
-		else if (n > 0.90)
-			c->insert(nx, ny, nz, depth, BLOCK, STONE);
+		if (n > 0.90)
+		{
+			if (n < 0.95 && nstone < 0.6)
+			c->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+			else
+			{
+				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
+					c->insert(nx, ny, nz, depth, BLOCK, COAL);
+				else
+					c->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
+			}
+		}
 	}
 }
 
