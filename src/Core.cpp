@@ -327,13 +327,13 @@ Core::initNoises(void) // multithread
 	// lacunarity range  : ?
 	// amplitude range   : > 0.0
 	// persistence range : 0.0 - 10
-	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 0.1); //bruit 3d test
-	noise->configs.emplace_back(6, 0.008, 1.0, 0.9, 1.0); //bruit 3d équilibré
-	noise->configs.emplace_back(2, 0.008, 10.0, 0.9, 1.0); //bruit 3d monde des reves
-	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop
-	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La valléee Danna
-	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.
-	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);
+	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 0.1); //bruit 3d test					//	0
+	noise->configs.emplace_back(6, 0.008, 1.0, 0.9, 1.0); //bruit 3d équilibré				//	1
+	noise->configs.emplace_back(2, 0.008, 10.0, 0.9, 1.0); //bruit 3d monde des reves		//	2
+	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop		//	3
+	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La valléee Danna				//	4
+	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.					//	5
+	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);											//	6
 	srandom(time(NULL));
 	std::cerr	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
