@@ -205,15 +205,24 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 {
 	float					x, y, z;
 	float					cx, cy, cz;
-	Octree					*current, *tmp, *up;
+	Block					*current;
+	Octree					*tmp, *up;
 	float const				bs = block_size[depth];
-	float const				t[3][4] =
+	float const				t[2][3][4] =
 	{
-		{ 0.0f,  0.25f, 0.0f, 1.0f }, // grass/dirt
-		{ 0.25f, 0.5f,  0.0f, 1.0f }, // dirt
-		{ 0.5f,  0.75f, 0.0f, 1.0f }  // grass
+		{ // DIRT
+			{ 0.0f,  0.25f, 0.0f, 1.0f }, // grass/dirt
+			{ 0.25f, 0.5f,  0.0f, 1.0f }, // dirt
+			{ 0.5f,  0.75f, 0.0f, 1.0f }  // grass
+		},
+		{ // STONE
+			{ 0.75f, 1.0f, 0.0f, 1.0f },
+			{ 0.75f, 1.0f, 0.0f, 1.0f },
+			{ 0.75f, 1.0f, 0.0f, 1.0f }
+		}
 	};
 	int						s; // side texture index
+	int						bt;
 
 	cx = chunk->getCube()->getX();
 	cy = chunk->getCube()->getY();
@@ -224,18 +233,19 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 		{
 			for (x = cx; x < cx + chunk_size; x += bs)
 			{
-				current = chunk->search(x, y, z, BLOCK, true);
+				current = static_cast<Block *>(chunk->search(x, y, z, BLOCK, true));
 				if (current)
 				{
+					bt = current->type - 1;
 					up = chunk->search(x, y + bs, z, BLOCK, true); // top
 					if (!up)
 					{
-						addVertexToMesh(chunk->mesh, x,		 y + bs, z + bs, t[2][1], t[2][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[2][1], t[2][3]);
-						addVertexToMesh(chunk->mesh, x,		 y + bs, z,		 t[2][0], t[2][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[2][1], t[2][3]);
-						addVertexToMesh(chunk->mesh, x,		 y + bs, z,		 t[2][0], t[2][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z,		 t[2][0], t[2][3]);
+						addVertexToMesh(chunk->mesh, x,		 y + bs, z + bs, t[bt][2][1], t[bt][2][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[bt][2][1], t[bt][2][3]);
+						addVertexToMesh(chunk->mesh, x,		 y + bs, z,		 t[bt][2][0], t[bt][2][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[bt][2][1], t[bt][2][3]);
+						addVertexToMesh(chunk->mesh, x,		 y + bs, z,		 t[bt][2][0], t[bt][2][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z,		 t[bt][2][0], t[bt][2][3]);
 					}
 					s = 0;
 					if (up)
@@ -243,59 +253,58 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 					tmp = chunk->search(x, y, z - bs, BLOCK, true); // back
 					if (!tmp)
 					{
-						addVertexToMesh(chunk->mesh, x,		 y + bs, z, t[s][0], t[s][3]);
-						addVertexToMesh(chunk->mesh, x + bs, y,		 z, t[s][1], t[s][2]);
-						addVertexToMesh(chunk->mesh, x,		 y,		 z, t[s][0], t[s][2]);
-						addVertexToMesh(chunk->mesh, x,		 y + bs, z, t[s][0], t[s][3]);
-						addVertexToMesh(chunk->mesh, x + bs, y,		 z, t[s][1], t[s][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z, t[s][1], t[s][3]);
+						addVertexToMesh(chunk->mesh, x,		 y + bs, z, t[bt][s][0], t[bt][s][3]);
+						addVertexToMesh(chunk->mesh, x + bs, y,		 z, t[bt][s][1], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x,		 y,		 z, t[bt][s][0], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x,		 y + bs, z, t[bt][s][0], t[bt][s][3]);
+						addVertexToMesh(chunk->mesh, x + bs, y,		 z, t[bt][s][1], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z, t[bt][s][1], t[bt][s][3]);
 					}
 					tmp = chunk->search(x - bs, y, z, BLOCK, true); // left
 					if (!tmp)
 					{
-						addVertexToMesh(chunk->mesh, x, y,		z,		t[s][0], t[s][2]);
-						addVertexToMesh(chunk->mesh, x, y,		z + bs, t[s][1], t[s][2]);
-						addVertexToMesh(chunk->mesh, x, y + bs, z + bs, t[s][1], t[s][3]);
-						addVertexToMesh(chunk->mesh, x, y,		z,		t[s][0], t[s][2]);
-						addVertexToMesh(chunk->mesh, x, y + bs, z,		t[s][0], t[s][3]);
-						addVertexToMesh(chunk->mesh, x, y + bs, z + bs, t[s][1], t[s][3]);
+						addVertexToMesh(chunk->mesh, x, y,		z,		t[bt][s][0], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x, y,		z + bs, t[bt][s][1], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x, y + bs, z + bs, t[bt][s][1], t[bt][s][3]);
+						addVertexToMesh(chunk->mesh, x, y,		z,		t[bt][s][0], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x, y + bs, z,		t[bt][s][0], t[bt][s][3]);
+						addVertexToMesh(chunk->mesh, x, y + bs, z + bs, t[bt][s][1], t[bt][s][3]);
 					}
 					tmp = chunk->search(x + bs, y, z, BLOCK, true); // right
 					if (!tmp)
 					{
-						addVertexToMesh(chunk->mesh, x + bs, y,		 z,		 t[s][0], t[s][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y,		 z + bs, t[s][1], t[s][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[s][1], t[s][3]);
-						addVertexToMesh(chunk->mesh, x + bs, y,		 z,		 t[s][0], t[s][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z,		 t[s][0], t[s][3]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[s][1], t[s][3]);
+						addVertexToMesh(chunk->mesh, x + bs, y,		 z,		 t[bt][s][0], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y,		 z + bs, t[bt][s][1], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3]);
+						addVertexToMesh(chunk->mesh, x + bs, y,		 z,		 t[bt][s][0], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z,		 t[bt][s][0], t[bt][s][3]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3]);
 					}
 					tmp = chunk->search(x, y - bs, z, BLOCK, true); // bottom
 					if (!tmp)
 					{
-						addVertexToMesh(chunk->mesh, x,		 y, z,		t[1][0], t[1][3]);
-						addVertexToMesh(chunk->mesh, x + bs, y, z,		t[1][1], t[1][3]);
-						addVertexToMesh(chunk->mesh, x + bs, y, z + bs, t[1][1], t[1][2]);
-						addVertexToMesh(chunk->mesh, x,		 y, z,		t[1][0], t[1][3]);
-						addVertexToMesh(chunk->mesh, x,		 y, z + bs, t[1][0], t[1][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y, z + bs, t[1][1], t[1][2]);
+						addVertexToMesh(chunk->mesh, x,		 y, z,		t[bt][1][0], t[bt][1][3]);
+						addVertexToMesh(chunk->mesh, x + bs, y, z,		t[bt][1][1], t[bt][1][3]);
+						addVertexToMesh(chunk->mesh, x + bs, y, z + bs, t[bt][1][1], t[bt][1][2]);
+						addVertexToMesh(chunk->mesh, x,		 y, z,		t[bt][1][0], t[bt][1][3]);
+						addVertexToMesh(chunk->mesh, x,		 y, z + bs, t[bt][1][0], t[bt][1][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y, z + bs, t[bt][1][1], t[bt][1][2]);
 					}
 					tmp = chunk->search(x, y, z + bs, BLOCK, true); // front
 					if (!tmp)
 					{
-						addVertexToMesh(chunk->mesh, x,		 y,		 z + bs, t[s][0], t[s][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y,		 z + bs, t[s][1], t[s][2]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[s][1], t[s][3]);
-						addVertexToMesh(chunk->mesh, x,		 y,		 z + bs, t[s][0], t[s][2]);
-						addVertexToMesh(chunk->mesh, x,		 y + bs, z + bs, t[s][0], t[s][3]);
-						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[s][1], t[s][3]);
+						addVertexToMesh(chunk->mesh, x,		 y,		 z + bs, t[bt][s][0], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y,		 z + bs, t[bt][s][1], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3]);
+						addVertexToMesh(chunk->mesh, x,		 y,		 z + bs, t[bt][s][0], t[bt][s][2]);
+						addVertexToMesh(chunk->mesh, x,		 y + bs, z + bs, t[bt][s][0], t[bt][s][3]);
+						addVertexToMesh(chunk->mesh, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3]);
 					}
 				}
 			}
 		}
 	}
 	chunk->meshSize = chunk->mesh.size() / 5;
-	// std::cerr << chunk->meshSize << std::endl;
 }
 
 void
