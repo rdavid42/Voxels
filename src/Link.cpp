@@ -57,6 +57,13 @@ Link::deleteChild(Octree *child)
 	}
 }
 
+void
+Link::remove(void)
+{
+	if (_parent != NULL)
+		_parent->deleteChild(this);
+}
+
 // -------------------------------------------------------------------
 // Search the octree with a point and returns a pointer
 // on the deepest child found.

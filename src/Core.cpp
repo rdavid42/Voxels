@@ -346,7 +346,7 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 {
 	float						n;
 	float						nstone;
-	float						ncoal;
+	// float						ncoal;
 	float						nx, nz, ny;
 	int							i;
 
@@ -357,7 +357,7 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 
 	n = 0.0f;
 	nstone = noise->fractal(5, nx, ny, nz);
-	ncoal = nstone;
+	// ncoal = nstone;
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, nx, ny, nz);
 	n /= (i + 1);
@@ -682,15 +682,18 @@ Core::insertChunks(void)
 						py = camera.pos.y + (cy - center) * chunk_size;
 						pz = camera.pos.z + (cz - center) * chunk_size;
 						new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE);
-						new_chunk->generated = false;
-						new_chunk->generating = false;
-						new_chunk->renderDone = false;
-						if (new_chunk != chunks[cz][cy][cx])
+						if (new_chunk != NULL)
 						{
-							new_chunk->pos.x = cx;
-							new_chunk->pos.y = cy;
-							new_chunk->pos.z = cz;
-							chunks[cz][cy][cx] = new_chunk;
+							new_chunk->generated = false;
+							new_chunk->generating = false;
+							new_chunk->renderDone = false;
+							if (new_chunk != chunks[cz][cy][cx])
+							{
+								new_chunk->pos.x = cx;
+								new_chunk->pos.y = cy;
+								new_chunk->pos.z = cz;
+								chunks[cz][cy][cx] = new_chunk;
+							}
 						}
 					}
 				}
@@ -780,14 +783,13 @@ Core::init(void)
 	if (!initShaders(vertexShader, fragmentShader, program))
 		return (0);
 	getLocations();
-#ifndef __APPLE__ // Mac osx doesnt support opengl 4.3+
+/*#ifndef __APPLE__ // Mac osx doesnt support opengl 4.3+
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, NULL, GL_FALSE);
 	glDebugMessageCallback((GLDEBUGPROC)glErrorCallback, NULL);
-#endif
+#endif*/
 	initNoises();
-	multiplier = 0.0f;
 	loadTextures();
 	createSelectionCube();
 	startThreads();
@@ -816,21 +818,23 @@ Core::updateLeftClick(void)
 void
 Core::updateChunks(void)
 {
-/*	Chunk						*central;
-	int							x, y, z;
-	Vec3<int>					dir;
-	Chunk						*newChunks[GEN_SIZE][GEN_SIZE][GEN_SIZE];
-	std::list<Chunk *>			delChunks;
+	Chunk								*central;
+	int									x, y, z;
+	Vec3<int>							dir;
+	Chunk								*newChunks[GEN_SIZE][GEN_SIZE][GEN_SIZE];
+	std::list<Chunk *>					delChunks;
+	std::list<Chunk *>::iterator		it;
 
 	for (z = 0; z < GEN_SIZE; ++z)
 		for (y = 0; y < GEN_SIZE; ++y)
 			for (x = 0; x < GEN_SIZE; ++x)
 				newChunks[z][y][x] = NULL;
-	central = reinterpret_cast<Chunk *>(octree->search(camera.pos.x, camera.pos.y, camera.pos.z, CHUNK, false));
+	central = static_cast<Chunk *>(octree->search(camera.pos.x, camera.pos.y, camera.pos.z, CHUNK, false));
 	// std::cerr << central << std::endl;
 	if (central != chunks[center][center][center])
 	{
 		dir.set(0, 0, 0);
+		// get the vector between the current central chunk and the new one
 		for (z = 0; z < GEN_SIZE; ++z)
 		{
 			for (y = 0; y < GEN_SIZE; ++y)
@@ -840,13 +844,15 @@ Core::updateChunks(void)
 					if (central == chunks[z][y][x])
 					{
 						dir.set(x - center, y - center, z - center);
-						break;
+						goto nested_break;
 					}
 				}
 			}
 		}
+		nested_break:
 		if (dir.x == 0 && dir.y == 0 && dir.z == 0)
 			return ; // outside of the generation area
+		// get the new chunk disposition, depending on the new central chunk
 		for (z = 0; z < GEN_SIZE; ++z)
 		{
 			for (y = 0; y < GEN_SIZE; ++y)
@@ -863,8 +869,24 @@ Core::updateChunks(void)
 			}
 		}
 		newChunks[center][center][center] = central;
+		// copy new chunk disposition
+		for (z = 0; z < GEN_SIZE; ++z)
+			for (y = 0; y < GEN_SIZE; ++y)
+				for (x = 0; x < GEN_SIZE; ++x)
+					chunks[z][y][x] = newChunks[z][y][x];
+		// delete the chunks out of the grid
+		for (it = delChunks.begin(); it != delChunks.end(); ++it)
+		{
+			if ((*it)->renderDone)
+			{
+				std::cerr << "deleting: " << *it << std::endl;
+				glDeleteBuffers(1, &(*it)->vbo);
+				glDeleteVertexArrays(1, &(*it)->vao);
+				delete *it;
+			}
+		}
+		insertChunks();
 	}
-	insertChunks();*/
 }
 
 void
@@ -877,14 +899,6 @@ Core::update(void)
 	generation();
 	camera.rotate();
 	camera.set();
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-		multiplier += 0.05f;
-	else
-	{
-		multiplier -= 0.1f;
-		if (multiplier < 0.0f)
-			multiplier = 0.0f;
-	}
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.moveForward();
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -917,7 +931,6 @@ Core::render(void)
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-		// octree->renderRidges(*this);
 		for (z = 0; z < GEN_SIZE; ++z)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)

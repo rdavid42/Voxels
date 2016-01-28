@@ -16,6 +16,12 @@ Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : L
 
 Chunk::~Chunk(void)
 {
+	for (int i = 0; i < CHD_MAX; ++i)
+	{
+		if (_children[i] != NULL)
+			delete _children[i];
+		_children[i] = NULL;
+	}
 	return ;
 }
 

@@ -24,6 +24,7 @@ public:
 	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state, bool const &allowOutside);
 	virtual void		render(Core &core) const;
 	virtual Chunk *		getChunk(void);
+	virtual void		remove(void);
 	virtual void		renderRidges(Core &core) const;
 	virtual void		deleteChild(Octree *child);
 

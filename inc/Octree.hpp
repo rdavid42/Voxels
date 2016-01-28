@@ -31,6 +31,7 @@ public:
 	virtual void		renderRidges(Core &core) const { (void)core; }
 	virtual void		deleteChild(Octree *child) { (void)child; }
 	virtual Chunk *		getChunk(void) { return (NULL); }
+	virtual void		remove(void) {}
 	void				setCube(float const &x, float const &y, float const &z, float const &s);
 	void				setState(int32_t const &state);
 	void				setParent(Octree *parent);
