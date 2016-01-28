@@ -417,15 +417,14 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 		{
 			if (n < 0.95 && nstone < 0.6)
 			{
-				if ((octree->search(nx, ny + bSize, nz) != NULL &&
-						octree->search(nx, ny + bSize, nz)->getState() == EMPTY))
+				if (ntree > 0.3 && c->search(nx, ny + dbSize, nz) != NULL
+				&&  c->search(nx, ny + dbSize, nz)->getState() == EMPTY)
+					createTree(c, depth, nx, ny + bSize, nz);
+				if ((octree->search(nx, ny + bSize, nz, EMPTY, 1) != NULL
+				&&	 octree->search(nx, ny + bSize, nz)->getState() == EMPTY))
 					c->insert(nx, ny, nz, depth, BLOCK, GRASS); // dirt
 				else
 					c->insert(nx, ny, nz, depth, BLOCK, DIRT);
-				if (ntree > 0.3 && c->search(nx, ny + dbSize, nz) != NULL && c->search(nx, ny + dbSize, nz)->getState() == EMPTY)
-				{
-					createTree(c, depth, nx, ny + bSize, nz);
-				}
 			}
 			else
 			{
