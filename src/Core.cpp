@@ -208,9 +208,9 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	Block					*current;
 	Octree					*tmp, *up;
 	float const				bs = block_size[depth];
-	float const				t[5][3][4] =
+	float const				t[6][3][4] =
 	{
-		{ // DIRT
+		{ // GRASS
 			{ 0.0f,  0.1f, 0.0f, 1.0f }, // grass/dirt
 			{ 0.1f,	 0.2f, 0.0f, 1.0f }, // dirt
 			{ 0.2f,  0.3f, 0.0f, 1.0f }  // grass
@@ -234,6 +234,11 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 			{ 0.6f, 0.7f, 0.0f, 1.0f },
 			{ 0.6f, 0.7f, 0.0f, 1.0f },
 			{ 0.6f, 0.7f, 0.0f, 1.0f }
+		},
+		{
+			{ 0.1f, 0.2f, 0.0f, 1.0f },
+			{ 0.1f, 0.2f, 0.0f, 1.0f },
+			{ 0.1f, 0.2f, 0.0f, 1.0f }
 		}
 	};
 	int						s; // side texture index
@@ -412,7 +417,12 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 		{
 			if (n < 0.95 && nstone < 0.6)
 			{
-				c->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+				if ((c->search(nx, ny + bSize, nz) != NULL &&
+						c->search(nx, ny + bSize, nz)->getState() == EMPTY) ||
+						c->search(nx, ny + bSize, nz) == NULL)
+					c->insert(nx, ny, nz, depth, BLOCK, GRASS); // dirt
+				else
+					c->insert(nx, ny, nz, depth, BLOCK, DIRT);
 				if (ntree > 0.3 && c->search(nx, ny + dbSize, nz) != NULL && c->search(nx, ny + dbSize, nz)->getState() == EMPTY)
 				{
 					createTree(c, depth, nx, ny + bSize, nz);
@@ -447,7 +457,7 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 		createTree(c, depth, nx, altitude, nz);
 	}
 	for (; altitude > -25.0f; altitude -= this->block_size[depth])
-		  c->insert(nx, altitude, nz, depth, BLOCK, DIRT);
+		  c->insert(nx, altitude, nz, depth, BLOCK, GRASS);
 }
 
 void

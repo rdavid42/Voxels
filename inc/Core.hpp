@@ -25,11 +25,12 @@ typedef struct
 typedef enum
 {
 	NONE,
-	DIRT,
+	GRASS,
 	STONE,
 	COAL,
 	LEAF,
-	WOOD
+	WOOD,
+	DIRT
 }					block_type;
 
 class Core
