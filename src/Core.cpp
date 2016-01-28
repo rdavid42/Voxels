@@ -417,9 +417,8 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 		{
 			if (n < 0.95 && nstone < 0.6)
 			{
-				if ((c->search(nx, ny + bSize, nz) != NULL &&
-						c->search(nx, ny + bSize, nz)->getState() == EMPTY) ||
-						c->search(nx, ny + bSize, nz) == NULL)
+				if ((octree->search(nx, ny + bSize, nz) != NULL &&
+						octree->search(nx, ny + bSize, nz)->getState() == EMPTY))
 					c->insert(nx, ny, nz, depth, BLOCK, GRASS); // dirt
 				else
 					c->insert(nx, ny, nz, depth, BLOCK, DIRT);
