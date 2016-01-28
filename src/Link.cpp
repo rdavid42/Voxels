@@ -111,7 +111,7 @@ Link::search(float const &x, float const &y, float const &z, int const &state, b
 		{
 			if (_parent != NULL)
 			{
-				// _parent->search(x, y, z, state, allowOutside);
+				//_parent->search(x, y, z, state, allowOutside);
 				return (NULL);
 			}
 		}
@@ -145,7 +145,7 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 	float			nx;
 	float			ny;
 	float			nz;
-
+	
 	if (depth == 0)
 	{
 		setState(state);

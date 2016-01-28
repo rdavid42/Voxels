@@ -5,6 +5,7 @@
 # include <thread>
 # include <vector>
 # include <list>
+# include <cmath>
 # include "Camera.hpp"
 # include "Shaders.hpp"
 # include "Bmp.hpp"
@@ -26,7 +27,9 @@ typedef enum
 	NONE,
 	DIRT,
 	STONE,
-	COAL
+	COAL,
+	LEAF,
+	WOOD
 }					block_type;
 
 class Core
@@ -105,6 +108,10 @@ public:
 	int						startThreads(void);
 	int						stopThreads(void);
 	void					addTask(Chunk *c, int const &id);
+
+
+	/* generation */
+	void					createTree(Chunk *c, int const &depth, float x, float y, float z);
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap);
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
 	void					generateChunkMesh(Chunk *chunk, int const &depth);

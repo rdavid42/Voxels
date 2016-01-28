@@ -208,22 +208,32 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	Block					*current;
 	Octree					*tmp, *up;
 	float const				bs = block_size[depth];
-	float const				t[3][3][4] =
+	float const				t[5][3][4] =
 	{
 		{ // DIRT
-			{ 0.0f,  0.2f, 0.0f, 1.0f }, // grass/dirt
-			{ 0.2f,	 0.4f, 0.0f, 1.0f }, // dirt
-			{ 0.4f,  0.6f, 0.0f, 1.0f }  // grass
+			{ 0.0f,  0.1f, 0.0f, 1.0f }, // grass/dirt
+			{ 0.1f,	 0.2f, 0.0f, 1.0f }, // dirt
+			{ 0.2f,  0.3f, 0.0f, 1.0f }  // grass
 		},
 		{ // STONE
-			{ 0.6f, 0.8f, 0.0f, 1.0f },
-			{ 0.6f, 0.8f, 0.0f, 1.0f },
-			{ 0.6f, 0.8f, 0.0f, 1.0f }
+			{ 0.3f, 0.4f, 0.0f, 1.0f },
+			{ 0.3f, 0.4f, 0.0f, 1.0f },
+			{ 0.3f, 0.4f, 0.0f, 1.0f }
 		},
 		{ // COAL
-			{ 0.8f, 1.0f, 0.0f, 1.0f },
-			{ 0.8f, 1.0f, 0.0f, 1.0f },
-			{ 0.8f, 1.0f, 0.0f, 1.0f }
+			{ 0.4f, 0.5f, 0.0f, 1.0f },
+			{ 0.4f, 0.5f, 0.0f, 1.0f },
+			{ 0.4f, 0.5f, 0.0f, 1.0f }
+		},
+		{ // LEAF
+			{ 0.5f, 0.6f, 0.0f, 1.0f },
+			{ 0.5f, 0.6f, 0.0f, 1.0f },
+			{ 0.5f, 0.6f, 0.0f, 1.0f }
+		},
+		{ // WOOD
+			{ 0.6f, 0.7f, 0.0f, 1.0f },
+			{ 0.6f, 0.7f, 0.0f, 1.0f },
+			{ 0.6f, 0.7f, 0.0f, 1.0f }
 		}
 	};
 	int						s; // side texture index
@@ -319,6 +329,35 @@ Core::simplifyChunkMesh(Chunk *chunk)
 }
 
 void
+Core::createTree(Chunk *c, int const &depth, float x, float y, float z)
+{
+	float			tx, ty, tz;
+	float			bSize;
+	float			ly;
+
+	bSize = this->block_size[(int)depth]; 
+
+	for (ly = y; ly <= y + 2; ly += bSize)
+	{
+		c->insert(x, ly, z, depth, BLOCK, WOOD);
+	}
+	for (tx = x + 1; tx > x - 1.5; tx -= bSize)
+	{
+		for (ty = ly + 1; ty > ly - 1.5; ty -= bSize)
+		{
+			for (tz = z + 1; tz > z - 1.5; tz -= bSize)
+			{
+				if (pow(tx - x, 2) + pow(ty - ly, 2) + pow(tz - z, 2) < 1) 
+				{
+					c->insert(tx, ty, tz, depth, BLOCK, LEAF);
+				}
+			}
+
+		}
+	}
+}
+
+void
 Core::initNoises(void) // multithread
 {
 	noise = new Noise(42, 256);
@@ -333,7 +372,7 @@ Core::initNoises(void) // multithread
 	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop		//	3
 	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La valléee Danna				//	4
 	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.					//	5
-	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);											//	6
+	noise->configs.emplace_back(5, 6, 0.2, 0.2, 1);		// Tree								//	6
 	srandom(time(NULL));
 	std::cerr	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
@@ -349,12 +388,17 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 	float						nstone;
 	float						ncoal;
 	float						nx, nz, ny;
+	float						ntree;
+	float						dbSize;
+	float						bSize;
 	int							i;
 	
 	nx = c->getCube()->getX() + x;
 	ny = c->getCube()->getY() + y;
 	nz = c->getCube()->getZ() + z;
-	
+	dbSize = this->block_size[depth] * 2;
+	bSize = this->block_size[depth];
+	ntree = noise->fractal(6, nx, 0, nz);
 	n = 0.0f;
 	nstone = noise->fractal(5, nx, ny, nz);
 	ncoal = nstone;
@@ -367,7 +411,13 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 		if (n > 0.90)
 		{
 			if (n < 0.95 && nstone < 0.6)
-			c->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+			{
+				c->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+				if (ntree > 0.3 && c->search(nx, ny + dbSize, nz) != NULL && c->search(nx, ny + dbSize, nz)->getState() == EMPTY)
+				{
+					createTree(c, depth, nx, ny + bSize, nz);
+				}
+			}
 			else
 			{
 				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
@@ -382,14 +432,20 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 void
 Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) // multithread
 {
-	float                        altitude;
-	float                        nx, nz;
-
+	float                       altitude;
+	float                       nx, nz;
+	float						ntree;
+	
 	nx = c->getCube()->getX() + x;
 	nz = c->getCube()->getZ() + z;
 	altitude = 0.0f;
+	ntree = noise->fractal(6, nx, y, nz);
 	for (int i = 0; i < 10.0f; i++)
 		altitude += noise->fractal(2, nx, y, nz);
+	if (ntree > 0.3)
+	{
+		createTree(c, depth, nx, altitude, nz);
+	}
 	for (; altitude > -25.0f; altitude -= this->block_size[depth])
 		  c->insert(nx, altitude, nz, depth, BLOCK, DIRT);
 }
@@ -412,10 +468,10 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 			{
 				// chunk->insert(chunk->getCube()->getX() + x, 0.0f, chunk->getCube()->getZ() + z, depth, BLOCK | GROUND);
 				// density = noise->fractal(0, nx, ny, nz) / 3;
-				for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
+				for (y = this->chunk_size; y >= 0.0f; y -= this->block_size[depth])
 				{
 					generateBlock3d(chunk, x, y, z, depth, 50);
-					//generateBlock(chunk, x, 1.5, z, depth);
+	//				generateBlock(chunk, x, 1.5, z, depth);
 				}
 			}
 		// }
