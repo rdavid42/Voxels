@@ -233,7 +233,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	int						s; // side texture index
 	int						bt;
 	std::vector<GLfloat>	top, back, front, left, right, bottom;
-
+	int						a, b;
 
 	//          y
 	//		    2----3
@@ -248,10 +248,11 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	cy = chunk->getCube()->getY();
 	cz = chunk->getCube()->getZ();
 	chunk->mesh.clear();
-	// std::cerr << "x: " << cx << ", y: " << cy << ", z: " << cz << ", bs: " << bs << ", cs: " << chunk_size << std::endl;
+	std::cerr << "x: " << cx << ", y: " << cy << ", z: " << cz << ", bs: " << bs << ", cs: " << chunk_size << std::endl;
 	std::cerr << "full chunk mesh size: " << (chunk_size / bs) * (chunk_size / bs) * 6 * 8 * 6 << std::endl;
 	for (z = cz; z < cz + chunk_size; z += bs)
 	{
+		a = 0;
 		for (y = cy; y < cy + chunk_size; y += bs)
 		{
 			for (x = cx; x < cx + chunk_size; x += bs)
@@ -259,6 +260,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 				current = static_cast<Block *>(chunk->search(x, y, z, BLOCK, true));
 				if (current)
 				{
+					b = 0;
 					bt = current->type - 1;
 					up = chunk->search(x, y + bs, z, BLOCK, true); // top
 					if (!up)
@@ -269,6 +271,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(top, x + bs, y + bs, z + bs, t[bt][2][1], t[bt][2][3], 0.0f, 1.0f, 0.0f); // 7
 						addVertexToMesh(top, x + bs, y + bs, z,		 t[bt][2][0], t[bt][2][3], 0.0f, 1.0f, 0.0f); // 3
 						addVertexToMesh(top, x,		 y + bs, z,		 t[bt][2][0], t[bt][2][2], 0.0f, 1.0f, 0.0f); // 2
+						b++;
 					}
 					s = 0;
 					if (up)
@@ -282,6 +285,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(back, x + bs, y + bs, z, t[bt][s][1], t[bt][s][3], 0.0f, 0.0f, -1.0f); // 3
 						addVertexToMesh(back, x + bs, y,		 z, t[bt][s][1], t[bt][s][2], 0.0f, 0.0f, -1.0f); // 1
 						addVertexToMesh(back, x,		 y,		 z, t[bt][s][0], t[bt][s][2], 0.0f, 0.0f, -1.0f); // 0
+						b++;
 					}
 					tmp = chunk->search(x, y, z + bs, BLOCK, true); // front
 					if (!tmp)
@@ -292,6 +296,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(front, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 7
 						addVertexToMesh(front, x,		 y + bs, z + bs, t[bt][s][0], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 6
 						addVertexToMesh(front, x,		 y,		 z + bs, t[bt][s][0], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 4
+						b++;
 					}
 					tmp = chunk->search(x - bs, y, z, BLOCK, true); // left
 					if (!tmp)
@@ -302,6 +307,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(left, x, y + bs, z + bs, t[bt][s][1], t[bt][s][3], -1.0f, 0.0f, 0.0f); // 6
 						addVertexToMesh(left, x, y + bs, z,		t[bt][s][0], t[bt][s][3], -1.0f, 0.0f, 0.0f); // 2
 						addVertexToMesh(left, x, y,		z,		t[bt][s][0], t[bt][s][2], -1.0f, 0.0f, 0.0f); // 0
+						b++;
 					}
 					tmp = chunk->search(x + bs, y, z, BLOCK, true); // right
 					if (!tmp)
@@ -312,6 +318,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(right, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 7
 						addVertexToMesh(right, x + bs, y,		 z + bs, t[bt][s][1], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 5
 						addVertexToMesh(right, x + bs, y,		 z,		 t[bt][s][0], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 1
+						b++;
 					}
 					tmp = chunk->search(x, y - bs, z, BLOCK, true); // bottom
 					if (!tmp)
@@ -322,11 +329,17 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(bottom, x + bs, y, z + bs, t[bt][1][1], t[bt][1][2], 0.0f, -1.0f, 0.0f); // 5
 						addVertexToMesh(bottom, x,		 y, z + bs, t[bt][1][0], t[bt][1][2], 0.0f, -1.0f, 0.0f); // 4
 						addVertexToMesh(bottom, x,		 y, z,		t[bt][1][0], t[bt][1][3], 0.0f, -1.0f, 0.0f); // 0
+						b++;
 					}
+					if (b > 0)
+						a++;
 				}
 			}
+			if (a == 0)
+				std::cerr << "z: " << z << ", y: " << y << ", x: " << x << std::endl;
 		}
 	}
+	std::cerr << a << std::endl;
 	chunk->mesh.reserve(top.size() + back.size() + front.size() + left.size() + right.size() + bottom.size());
 	chunk->mesh.insert(chunk->mesh.end(), top.begin(), top.end());
 	chunk->mesh.insert(chunk->mesh.end(), back.begin(), back.end());
@@ -379,7 +392,7 @@ Core::initNoises(void) // multithread
 	noise->configs.emplace_back(6, 0.008, 1.0, 0.9, 1.0); // bruit 3d équilibré				//	1
 	noise->configs.emplace_back(2, 0.008, 10.0, 0.9, 1.0); // bruit 3d monde des reves		//	2
 	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop		//	3
-	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La valléee Danna				//	4
+	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La vallée Danna					//	4
 	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.					//	5
 	noise->configs.emplace_back(5, 0.4, 1, 0.2, 1);											//	6
 	srandom(time(NULL));
@@ -486,11 +499,11 @@ Core::executeThread(int const &id) // multithread
 		pthread_mutex_lock(&this->task_mutex[id]);
 		this->is_task_locked[id] = true;
 
-		// make thread wait when pool is empty
+		// make the thread wait when the pool is empty
 		while (this->pool_state != STOPPED && this->task_queue[id].empty())
 			pthread_cond_wait(&this->task_cond[id], &this->task_mutex[id]);
 
-		// stop thread when pool is destroyed
+		// stop the thread when the pool is destroyed
 		if (this->pool_state == STOPPED)
 		{
 			// unlock to exit
