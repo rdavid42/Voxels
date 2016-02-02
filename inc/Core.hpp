@@ -53,6 +53,7 @@ public:
 	GLuint					objLoc;
 	GLuint					positionLoc;
 	GLuint					textureLoc;
+	GLuint					normalLoc;
 	GLuint					colorLoc;
 	GLuint					renderVoxelRidgesLoc;
 

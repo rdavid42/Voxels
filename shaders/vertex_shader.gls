@@ -6,11 +6,14 @@ uniform mat4					obj_matrix;
 
 in vec3							position;
 in vec2							texture;
+in vec3							normal;
 
 out vec2						frag_texture;
+out vec3						frag_normal;
 
 void		main()
 {
 	gl_Position = proj_matrix * view_matrix * obj_matrix * vec4(position, 1.0);
 	frag_texture = texture;
+	frag_normal = normal;
 }
