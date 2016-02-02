@@ -91,6 +91,7 @@ public:
 									[GEN_SIZE]
 									[GEN_SIZE]; // camera chunk in the center
 	Block					*closestBlock;
+	std::list<Chunk *>		chunksRemoval;
 
 	/* Thread pool */
 	int						pool_size;
@@ -124,6 +125,7 @@ public:
 	void					update(void);
 	void					render(void);
 	void					loop(void);
+	void					clearChunksRemoval(void);
 
 	/* Camera */
 

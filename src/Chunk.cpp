@@ -22,12 +22,12 @@ Chunk::~Chunk(void)
 			delete _children[i];
 		_children[i] = NULL;
 	}
-	return ;
 }
 
 void
 Chunk::deleteChild(Octree *child)
 {
+	std::cerr << "hip" << std::endl;
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (_children[i] == child)

@@ -37,9 +37,9 @@ Link::getChunk(void)
 void
 Link::deleteChild(Octree *child)
 {
-	int			childCount;
+	// int			childCount;
 
-	childCount = 0;
+	// childCount = 0;
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (_children[i] == child)
@@ -47,21 +47,24 @@ Link::deleteChild(Octree *child)
 			delete _children[i];
 			_children[i] = NULL;
 		}
-		if (_children[i] != NULL)
-			childCount++;
+/*		if (_children[i] != NULL)
+			childCount++;*/
 	}
-	if (childCount == 0)
+/*	if (childCount == 0)
 	{
 		if (_parent != NULL)
 			_parent->deleteChild(this);
-	}
+	}*/
 }
 
 void
 Link::remove(void)
 {
-	if (_parent != NULL)
+	if (_parent != NULL && this != NULL)
+	{
+		// std::cerr << "hop" << std::endl;
 		_parent->deleteChild(this);
+	}
 }
 
 // -------------------------------------------------------------------
@@ -139,7 +142,7 @@ Link::createChild(uint32_t const &i, float const &x, float const &y, float const
 		_children[i] = new Block(x, y, z, s);
 	else
 		_children[i] = new Link(x, y, z, s);
-	this->_children[i]->setParent(this);
+	_children[i]->setParent(this);
 }
 // -------------------------------------------------------------------
 

@@ -17,6 +17,8 @@ public:
 	bool					generating;
 	bool					generated;
 	bool					renderDone;
+	bool					stopGenerating;
+	bool					removable;
 
 	Vec3<uint8_t>			pos; // position relative to other chunks
 

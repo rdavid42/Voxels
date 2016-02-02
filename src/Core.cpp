@@ -22,6 +22,8 @@ key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	(void)core;
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		core->clearChunksRemoval();
 }
 
 static void
@@ -212,6 +214,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	Block					*current;
 	Octree					*tmp, *up;
 	float const				bs = block_size[depth];
+	std::vector<GLfloat>	mesh;
 	float const				t[3][3][4] =
 	{
 		{ // DIRT
@@ -233,7 +236,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	int						s; // side texture index
 	int						bt;
 	std::vector<GLfloat>	top, back, front, left, right, bottom;
-	int						a, b;
 
 	//          y
 	//		    2----3
@@ -248,11 +250,10 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	cy = chunk->getCube()->getY();
 	cz = chunk->getCube()->getZ();
 	chunk->mesh.clear();
-	std::cerr << "x: " << cx << ", y: " << cy << ", z: " << cz << ", bs: " << bs << ", cs: " << chunk_size << std::endl;
-	std::cerr << "full chunk mesh size: " << (chunk_size / bs) * (chunk_size / bs) * 6 * 8 * 6 << std::endl;
+/*	std::cerr << "x: " << cx << ", y: " << cy << ", z: " << cz << ", bs: " << bs << ", cs: " << chunk_size << std::endl;
+	std::cerr << "full chunk mesh size: " << (chunk_size / bs) * (chunk_size / bs) * 6 * 8 * 6 << std::endl;*/
 	for (z = cz; z < cz + chunk_size; z += bs)
 	{
-		a = 0;
 		for (y = cy; y < cy + chunk_size; y += bs)
 		{
 			for (x = cx; x < cx + chunk_size; x += bs)
@@ -260,7 +261,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 				current = static_cast<Block *>(chunk->search(x, y, z, BLOCK, true));
 				if (current)
 				{
-					b = 0;
 					bt = current->type - 1;
 					up = chunk->search(x, y + bs, z, BLOCK, true); // top
 					if (!up)
@@ -271,7 +271,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(top, x + bs, y + bs, z + bs, t[bt][2][1], t[bt][2][3], 0.0f, 1.0f, 0.0f); // 7
 						addVertexToMesh(top, x + bs, y + bs, z,		 t[bt][2][0], t[bt][2][3], 0.0f, 1.0f, 0.0f); // 3
 						addVertexToMesh(top, x,		 y + bs, z,		 t[bt][2][0], t[bt][2][2], 0.0f, 1.0f, 0.0f); // 2
-						b++;
 					}
 					s = 0;
 					if (up)
@@ -285,7 +284,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(back, x + bs, y + bs, z, t[bt][s][1], t[bt][s][3], 0.0f, 0.0f, -1.0f); // 3
 						addVertexToMesh(back, x + bs, y,		 z, t[bt][s][1], t[bt][s][2], 0.0f, 0.0f, -1.0f); // 1
 						addVertexToMesh(back, x,		 y,		 z, t[bt][s][0], t[bt][s][2], 0.0f, 0.0f, -1.0f); // 0
-						b++;
 					}
 					tmp = chunk->search(x, y, z + bs, BLOCK, true); // front
 					if (!tmp)
@@ -296,7 +294,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(front, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 7
 						addVertexToMesh(front, x,		 y + bs, z + bs, t[bt][s][0], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 6
 						addVertexToMesh(front, x,		 y,		 z + bs, t[bt][s][0], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 4
-						b++;
 					}
 					tmp = chunk->search(x - bs, y, z, BLOCK, true); // left
 					if (!tmp)
@@ -307,7 +304,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(left, x, y + bs, z + bs, t[bt][s][1], t[bt][s][3], -1.0f, 0.0f, 0.0f); // 6
 						addVertexToMesh(left, x, y + bs, z,		t[bt][s][0], t[bt][s][3], -1.0f, 0.0f, 0.0f); // 2
 						addVertexToMesh(left, x, y,		z,		t[bt][s][0], t[bt][s][2], -1.0f, 0.0f, 0.0f); // 0
-						b++;
 					}
 					tmp = chunk->search(x + bs, y, z, BLOCK, true); // right
 					if (!tmp)
@@ -318,7 +314,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(right, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 7
 						addVertexToMesh(right, x + bs, y,		 z + bs, t[bt][s][1], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 5
 						addVertexToMesh(right, x + bs, y,		 z,		 t[bt][s][0], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 1
-						b++;
 					}
 					tmp = chunk->search(x, y - bs, z, BLOCK, true); // bottom
 					if (!tmp)
@@ -329,17 +324,11 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 						addVertexToMesh(bottom, x + bs, y, z + bs, t[bt][1][1], t[bt][1][2], 0.0f, -1.0f, 0.0f); // 5
 						addVertexToMesh(bottom, x,		 y, z + bs, t[bt][1][0], t[bt][1][2], 0.0f, -1.0f, 0.0f); // 4
 						addVertexToMesh(bottom, x,		 y, z,		t[bt][1][0], t[bt][1][3], 0.0f, -1.0f, 0.0f); // 0
-						b++;
 					}
-					if (b > 0)
-						a++;
 				}
 			}
-			if (a == 0)
-				std::cerr << "z: " << z << ", y: " << y << ", x: " << x << std::endl;
 		}
 	}
-	std::cerr << a << std::endl;
 	chunk->mesh.reserve(top.size() + back.size() + front.size() + left.size() + right.size() + bottom.size());
 	chunk->mesh.insert(chunk->mesh.end(), top.begin(), top.end());
 	chunk->mesh.insert(chunk->mesh.end(), back.begin(), back.end());
@@ -347,14 +336,14 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	chunk->mesh.insert(chunk->mesh.end(), left.begin(), left.end());
 	chunk->mesh.insert(chunk->mesh.end(), right.begin(), right.end());
 	chunk->mesh.insert(chunk->mesh.end(), bottom.begin(), bottom.end());
-	std::cerr << "top size: " << top.size() << std::endl;
+/*	std::cerr << "top size: " << top.size() << std::endl;
 	std::cerr << "back size: " << back.size() << std::endl;
 	std::cerr << "front size: " << front.size() << std::endl;
 	std::cerr << "left size: " << left.size() << std::endl;
 	std::cerr << "right size: " << right.size() << std::endl;
-	std::cerr << "bottom size: " << bottom.size() << std::endl;
+	std::cerr << "bottom size: " << bottom.size() << std::endl;*/
 	chunk->meshSize = chunk->mesh.size() / 8;
-	std::cerr << "mesh size: " << chunk->mesh.size() << std::endl;
+	// std::cerr << "mesh size: " << chunk->mesh.size() << std::endl;
 /*	for (size_t i = 0; i < chunk->mesh.size(); i += (8 * 6))
 	{
 		for (size_t j = 0; j < 6; j++)
@@ -415,8 +404,6 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 	nx = c->getCube()->getX() + x;
 	ny = c->getCube()->getY() + y;
 	nz = c->getCube()->getZ() + z;
-
-
 	n = 0.0f;
 	nstone = noise->fractal(5, nx, ny, nz);
 	// ncoal = nstone;
@@ -466,6 +453,11 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 		return ;
 	chunk->generated = false;
 	depth = BLOCK_DEPTH;
+	if (chunk->stopGenerating)
+	{
+		chunk->removable = true;
+		return ;
+	}
 	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
 	{
 		// for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
@@ -476,6 +468,11 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 				// density = noise->fractal(0, nx, ny, nz) / 3;
 				for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
 				{
+					if (chunk->stopGenerating)
+					{
+						chunk->removable = true;
+						return ;
+					}
 					generateBlock3d(chunk, x, y, z, depth, 50);
 					//generateBlock(chunk, x, 1.5, z, depth);
 				}
@@ -484,6 +481,7 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 	}
 	generateChunkMesh(chunk, depth);
 	chunk->generated = true;
+	chunk->removable = true;
 }
 
 // THREAD POOL
@@ -496,8 +494,8 @@ Core::executeThread(int const &id) // multithread
 	while (true)
 	{
 		// lock task queue and try to pick a task
-		pthread_mutex_lock(&this->task_mutex[id]);
-		this->is_task_locked[id] = true;
+		pthread_mutex_lock(&task_mutex[id]);
+		is_task_locked[id] = true;
 
 		// make the thread wait when the pool is empty
 		while (this->pool_state != STOPPED && this->task_queue[id].empty())
@@ -507,20 +505,20 @@ Core::executeThread(int const &id) // multithread
 		if (this->pool_state == STOPPED)
 		{
 			// unlock to exit
-			this->is_task_locked[id] = false;
-			pthread_mutex_unlock(&this->task_mutex[id]);
+			is_task_locked[id] = false;
+			pthread_mutex_unlock(&task_mutex[id]);
 			pthread_exit(0);
 		}
 
 		// pick task to process
-		chunk = this->task_queue[id].front();
+		chunk = task_queue[id].front();
 		if (chunk != 0)
 		{
-			this->task_queue[id].pop_front();
+			task_queue[id].pop_front();
 
 			// unlock task queue
-			this->is_task_locked[id] = false;
-			pthread_mutex_unlock(&this->task_mutex[id]);
+			is_task_locked[id] = false;
+			pthread_mutex_unlock(&task_mutex[id]);
 
 			// process task
 			processChunkGeneration(chunk);
@@ -640,7 +638,7 @@ Core::startThreads(void)
 			return (0);
 		}
 		else
-			std::cerr << "[" << i << "] Thread created: " << threads[i] << std::endl;
+			std::cerr << "[" << i << "] Thread created: " << std::hex << threads[i] << std::dec << std::endl;
 	}
 	return (1);
 }
@@ -649,21 +647,21 @@ void
 Core::addTask(Chunk *c, int const &id)
 {
 	// lock task queue
-	pthread_mutex_lock(&this->task_mutex[id]);
-	this->is_task_locked[id] = true;
+	pthread_mutex_lock(&task_mutex[id]);
+	is_task_locked[id] = true;
 
 	// push task in queue
-	this->task_queue[id].push_front(c);
+	task_queue[id].push_front(c);
 
 	// clear thread task queues if they exceed TASK_QUEUE_OVERFLOW
-	while (this->task_queue[id].size() > TASK_QUEUE_OVERFLOW)
-		this->task_queue[id].pop_back();
+	while (task_queue[id].size() > TASK_QUEUE_OVERFLOW)
+		task_queue[id].pop_back();
 	// wake up a thread to process task
-	pthread_cond_signal(&this->task_cond[id]);
+	pthread_cond_signal(&task_cond[id]);
 
 	// unlock task queue
-	this->is_task_locked[id] = false;
-	pthread_mutex_unlock(&this->task_mutex[id]);
+	is_task_locked[id] = false;
+	pthread_mutex_unlock(&task_mutex[id]);
 }
 
 void
@@ -690,10 +688,11 @@ Core::generation(void)
 {
 	int							cx, cy, cz;
 	int							id;
+	unsigned int				min;
+	int							i;
 	Chunk						*chunk;
 
 	// get new chunks inside rendering area and add them to generation queues
-	id = 0;
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
 		for (cy = 0; cy < GEN_SIZE; ++cy)
@@ -705,6 +704,16 @@ Core::generation(void)
 					chunk = chunks[cz][cy][cx];
 					if (!chunk->generated && !chunk->generating)
 					{
+						id = 0;
+						min = TASK_QUEUE_OVERFLOW;
+						for (i = 0; i < pool_size; ++i)
+						{
+							if (task_queue[i].size() < min)
+							{
+								id = i;
+								min = task_queue[i].size();
+							}
+						}
 						chunk->generating = true;
 						addTask(chunk, id);
 					}
@@ -715,11 +724,120 @@ Core::generation(void)
 						if (chunk->meshSize > 0)
 							generateChunkGLMesh(chunk);
 						chunk->renderDone = true;
+						chunk->generating = false;
+						chunk->stopGenerating = false;
+						chunk->removable = true;
 					}
-					id++;
-					id %= pool_size;
 				}
 			}
+		}
+	}
+}
+
+void
+Core::updateChunks(void)
+{
+	Chunk								*central;
+	int									x, y, z;
+	Vec3<int>							dir;
+	Chunk								*newChunks[GEN_SIZE][GEN_SIZE][GEN_SIZE];
+	// std::list<Chunk *>					delChunks;
+	std::list<Chunk *>::const_iterator	it;
+
+	for (z = 0; z < GEN_SIZE; ++z)
+		for (y = 0; y < GEN_SIZE; ++y)
+			for (x = 0; x < GEN_SIZE; ++x)
+				newChunks[z][y][x] = NULL;
+	central = static_cast<Chunk *>(octree->search(camera.pos.x, camera.pos.y, camera.pos.z, CHUNK, false));
+	// std::cerr << central << std::endl;
+	if (central != chunks[center][center][center])
+	{
+		dir.set(0, 0, 0);
+		// get the vector between the current central chunk and the new one
+		for (z = 0; z < GEN_SIZE; ++z)
+		{
+			for (y = 0; y < GEN_SIZE; ++y)
+			{
+				for (x = 0; x < GEN_SIZE; ++x)
+				{
+					if (central == chunks[z][y][x])
+					{
+						dir.set(x - center, y - center, z - center);
+						goto nested_break;
+					}
+				}
+			}
+		}
+		nested_break:
+		if (dir.x == 0 && dir.y == 0 && dir.z == 0)
+			return ; // outside of the generation area
+		// get the new chunk disposition, depending on the new central chunk
+		for (z = 0; z < GEN_SIZE; ++z)
+		{
+			for (y = 0; y < GEN_SIZE; ++y)
+			{
+				for (x = 0; x < GEN_SIZE; ++x)
+				{
+					if (x - dir.x < 0 || x - dir.x >= GEN_SIZE
+					||	y - dir.y < 0 || y - dir.y >= GEN_SIZE
+					||	z - dir.z < 0 || z - dir.z >= GEN_SIZE)
+					{
+						if (chunks[z][y][x] != NULL)
+						{
+							if (chunks[z][y][x]->generating && !chunks[z][y][x]->generated)
+								chunks[z][y][x]->stopGenerating = true;
+							chunksRemoval.push_front(chunks[z][y][x]);
+						}
+					}
+					else
+						newChunks[z - dir.z][y - dir.y][x - dir.x] = chunks[z][y][x];
+				}
+			}
+		}
+		newChunks[center][center][center] = central;
+		// copy new chunk disposition
+		for (z = 0; z < GEN_SIZE; ++z)
+			for (y = 0; y < GEN_SIZE; ++y)
+				for (x = 0; x < GEN_SIZE; ++x)
+					chunks[z][y][x] = newChunks[z][y][x];
+		insertChunks();
+	}
+	std::cerr << "to remove: " << chunksRemoval.size() << ", tasks: ";
+	for (int id = 0; id < pool_size; ++id)
+	{
+		std::cerr << task_queue[id].size();
+		if (id == pool_size - 1)
+			std::cerr << std::endl;
+		else
+			std::cerr << ", ";
+	}
+}
+
+void
+Core::clearChunksRemoval(void)
+{
+	std::list<Chunk *>::iterator		it;
+	Chunk								*chunk;
+
+	if (chunksRemoval.size() > 0)
+	{
+		std::cerr << "recycling..." << std::endl;
+		for (it = chunksRemoval.begin(); it != chunksRemoval.end();)
+		{
+			chunk = *it;
+			if (chunk->removable)
+			{
+				std::cerr << chunk << "-> " << *chunk->getCube() << ", state: " << (int)chunk->generating << (int)chunk->generated << (int)chunk->renderDone << (int)chunk->stopGenerating << (int)chunk->removable << ", mesh: " << chunk->meshSize << "/" << chunk->mesh.size() << ", gl: " << chunk->vao << ", " << chunk->vbo << std::endl;
+				if (glIsBuffer(chunk->vbo))
+					glDeleteBuffers(1, &chunk->vbo);
+				if (glIsVertexArray(chunk->vao))
+					glDeleteVertexArrays(1, &chunk->vao);
+				std::cerr << *chunk->getParent()->getCube() << std::endl;
+				chunk->remove();
+				it = chunksRemoval.erase(it);
+			}
+			else
+				it++;
 		}
 	}
 }
@@ -729,7 +847,7 @@ Core::insertChunks(void)
 {
 	int					cx, cy, cz;
 	float				px, py, pz;
-	Chunk *				new_chunk;
+	Chunk *				newChunk;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -745,18 +863,22 @@ Core::insertChunks(void)
 						px = camera.pos.x + (cx - center) * chunk_size;
 						py = camera.pos.y + (cy - center) * chunk_size;
 						pz = camera.pos.z + (cz - center) * chunk_size;
-						new_chunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE);
-						if (new_chunk != NULL)
+						newChunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE);
+						if (newChunk != NULL)
 						{
-							new_chunk->generated = false;
-							new_chunk->generating = false;
-							new_chunk->renderDone = false;
-							if (new_chunk != chunks[cz][cy][cx])
+							newChunk->generated = false;
+							newChunk->generating = false;
+							newChunk->renderDone = false;
+							newChunk->stopGenerating = false;
+							newChunk->removable = false;
+							newChunk->vao = 0;
+							newChunk->vbo = 0;
+							if (newChunk != chunks[cz][cy][cx])
 							{
-								new_chunk->pos.x = cx;
-								new_chunk->pos.y = cy;
-								new_chunk->pos.z = cz;
-								chunks[cz][cy][cx] = new_chunk;
+								newChunk->pos.x = cx;
+								newChunk->pos.y = cy;
+								newChunk->pos.z = cz;
+								chunks[cz][cy][cx] = newChunk;
 							}
 						}
 					}
@@ -778,7 +900,7 @@ Core::getClosestBlock(void)
 	pos = camera.pos;
 	for (i = 0; i < dist; ++i)
 	{
-		block = reinterpret_cast<Block *>(octree->search(pos.x, pos.y, pos.z, BLOCK, false));
+		block = static_cast<Block *>(octree->search(pos.x, pos.y, pos.z, BLOCK, false));
 		if (block)
 			return (block);
 		pos += camera.forward * (block_size[BLOCK_DEPTH] / precision);
@@ -806,6 +928,10 @@ Core::initChunks(void)
 	chunks[center][center][center]->generated = false;
 	chunks[center][center][center]->generating = false;
 	chunks[center][center][center]->renderDone = false;
+	chunks[center][center][center]->stopGenerating = false;
+	chunks[center][center][center]->removable = false;
+	chunks[center][center][center]->vao = 0;
+	chunks[center][center][center]->vbo = 0;
 	insertChunks();
 }
 
@@ -881,80 +1007,6 @@ Core::updateLeftClick(void)
 }
 
 void
-Core::updateChunks(void)
-{
-	Chunk								*central;
-	int									x, y, z;
-	Vec3<int>							dir;
-	Chunk								*newChunks[GEN_SIZE][GEN_SIZE][GEN_SIZE];
-	std::list<Chunk *>					delChunks;
-	std::list<Chunk *>::iterator		it;
-
-	for (z = 0; z < GEN_SIZE; ++z)
-		for (y = 0; y < GEN_SIZE; ++y)
-			for (x = 0; x < GEN_SIZE; ++x)
-				newChunks[z][y][x] = NULL;
-	central = static_cast<Chunk *>(octree->search(camera.pos.x, camera.pos.y, camera.pos.z, CHUNK, false));
-	// std::cerr << central << std::endl;
-	if (central != chunks[center][center][center])
-	{
-		dir.set(0, 0, 0);
-		// get the vector between the current central chunk and the new one
-		for (z = 0; z < GEN_SIZE; ++z)
-		{
-			for (y = 0; y < GEN_SIZE; ++y)
-			{
-				for (x = 0; x < GEN_SIZE; ++x)
-				{
-					if (central == chunks[z][y][x])
-					{
-						dir.set(x - center, y - center, z - center);
-						goto nested_break;
-					}
-				}
-			}
-		}
-		nested_break:
-		if (dir.x == 0 && dir.y == 0 && dir.z == 0)
-			return ; // outside of the generation area
-		// get the new chunk disposition, depending on the new central chunk
-		for (z = 0; z < GEN_SIZE; ++z)
-		{
-			for (y = 0; y < GEN_SIZE; ++y)
-			{
-				for (x = 0; x < GEN_SIZE; ++x)
-				{
-					if (x - dir.x < 0 || x - dir.x >= GEN_SIZE
-					||	y - dir.y < 0 || y - dir.y >= GEN_SIZE
-					||	z - dir.z < 0 || z - dir.z >= GEN_SIZE)
-						delChunks.push_front(chunks[z][y][x]);
-					else
-						newChunks[z - dir.z][y - dir.y][x - dir.x] = chunks[z][y][x];
-				}
-			}
-		}
-		newChunks[center][center][center] = central;
-		// copy new chunk disposition
-		for (z = 0; z < GEN_SIZE; ++z)
-			for (y = 0; y < GEN_SIZE; ++y)
-				for (x = 0; x < GEN_SIZE; ++x)
-					chunks[z][y][x] = newChunks[z][y][x];
-		// delete the chunks out of the grid
-		for (it = delChunks.begin(); it != delChunks.end(); ++it)
-		{
-			if (*it && (*it)->renderDone)
-			{
-				std::cerr << "deleting: " << *it << std::endl;
-				glDeleteBuffers(1, &(*it)->vbo);
-				glDeleteVertexArrays(1, &(*it)->vao);
-				delete *it;
-			}
-		}
-		insertChunks();
-	}
-}
-
-void
 Core::update(void)
 {
 /*	for (int z = 0; z < GEN_SIZE; ++z)
@@ -973,7 +1025,7 @@ Core::update(void)
 		camera.strafeRight();
 	closestBlock = getClosestBlock();
 	generation();
-	// updateChunks();
+	updateChunks();
 }
 
 void
@@ -992,7 +1044,7 @@ Core::render(void)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)
 				{
-					if (chunks[z][y][x])
+					if (chunks[z][y][x] != NULL)
 						chunks[z][y][x]->render(*this);
 				}
 		// render chunks ridges
@@ -1003,7 +1055,7 @@ Core::render(void)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)
 				{
-					if (chunks[z][y][x])
+					if (chunks[z][y][x] != NULL)
 						chunks[z][y][x]->renderRidges(*this);
 				}*/
 		if (closestBlock != NULL)

@@ -99,13 +99,13 @@ std::ostream
 &operator<<(std::ostream &o, Cube const &i)
 {
 	o	// << &i
-		<< "x = "
+		<< "x:"
 		<< i.getX()
-		<< ", y = "
+		<< ", y:"
 		<< i.getY()
-		<< ", z = "
+		<< ", z:"
 		<< i.getZ()
-		<< ", s = "
+		<< ", s:"
 		<< i.getS();
 	return (o);
 }
