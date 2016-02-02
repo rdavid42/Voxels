@@ -246,6 +246,8 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	cy = chunk->getCube()->getY();
 	cz = chunk->getCube()->getZ();
 	chunk->mesh.clear();
+	std::cerr << "x: " << cx << ", y: " << cy << ", z: " << cz << ", bs: " << bs << ", cs: " << chunk_size << std::endl;
+	std::cerr << "estimated mesh size: " << (chunk_size / bs) * (chunk_size / bs) * 6 * 8 * 6 << std::endl;
 	for (z = cz; z < cz + chunk_size; z += bs)
 	{
 		for (y = cy; y < cy + chunk_size; y += bs)
@@ -324,6 +326,9 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 		}
 	}
 	chunk->meshSize = chunk->mesh.size() / 8;
+	std::cerr << "mesh size: " << chunk->mesh.size() << std::endl;
+	// std::cerr << "vertices: " << chunk->meshSize << std::endl;
+	// std::cerr << "triangles: " << chunk->meshSize / 3 << std::endl;
 }
 
 void
@@ -593,7 +598,7 @@ Core::startThreads(void)
 			return (0);
 		}
 		else
-			std::cerr << "[" << i << "] Thread created: " << std::hex << threads[i] << std::endl;
+			std::cerr << "[" << i << "] Thread created: " << threads[i] << std::endl;
 	}
 	return (1);
 }
@@ -952,13 +957,13 @@ Core::render(void)
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-		for (z = 0; z < GEN_SIZE; ++z)
+/*		for (z = 0; z < GEN_SIZE; ++z)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)
 				{
 					if (chunks[z][y][x])
 						chunks[z][y][x]->renderRidges(*this);
-				}
+				}*/
 		if (closestBlock != NULL)
 			closestBlock->renderRidges(*this);
 	ms.pop();
