@@ -27,6 +27,7 @@ public:
 	virtual ~Chunk(void);
 
 	virtual	void		render(Core &core) const;
+	virtual	void		renderLines(Core &core) const;
 	virtual	void		renderRidges(Core &core) const;
 	virtual void		deleteChild(Octree *child);
 	virtual Chunk *		getChunk(void);

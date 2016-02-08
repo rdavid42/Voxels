@@ -40,15 +40,18 @@ Link::deleteChild(Octree *child)
 	// int			childCount;
 
 	// childCount = 0;
-	for (int i = 0; i < CHD_MAX; ++i)
+	if (child != NULL)
 	{
-		if (_children[i] == child)
+		for (int i = 0; i < CHD_MAX; ++i)
 		{
-			delete _children[i];
-			_children[i] = NULL;
+			if (_children[i] != NULL && _children[i] == child)
+			{
+				delete _children[i];
+				_children[i] = NULL;
+			}
+	/*		if (_children[i] != NULL)
+				childCount++;*/
 		}
-/*		if (_children[i] != NULL)
-			childCount++;*/
 	}
 /*	if (childCount == 0)
 	{
@@ -205,6 +208,19 @@ Link::render(Core &core) const
 	{
 		if (_children[i] != 0)
 			_children[i]->render(core);
+	}
+}
+
+void
+Link::renderLines(Core &core) const
+{
+	int				i;
+
+	(void)core;
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (_children[i] != 0)
+			_children[i]->renderLines(core);
 	}
 }
 

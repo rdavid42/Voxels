@@ -8,8 +8,11 @@ Core::Core(void)
 Core::~Core(void)
 {
 	stopThreads();
+	delete octree;
 	glfwDestroyWindow(window);
 	glfwTerminate();
+	std::cerr << "done" << std::endl;
+	while (true);
 }
 
 static void
@@ -329,6 +332,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 			}
 		}
 	}
+
 	chunk->mesh.reserve(top.size() + back.size() + front.size() + left.size() + right.size() + bottom.size());
 	chunk->mesh.insert(chunk->mesh.end(), top.begin(), top.end());
 	chunk->mesh.insert(chunk->mesh.end(), back.begin(), back.end());
@@ -360,12 +364,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	}*/
 	// std::cerr << "vertices: " << chunk->meshSize << std::endl;
 	// std::cerr << "triangles: " << chunk->meshSize / 3 << std::endl;
-}
-
-void
-Core::simplifyChunkMesh(Chunk *chunk)
-{
-	(void)chunk;
 }
 
 void
@@ -741,7 +739,6 @@ Core::updateChunks(void)
 	int									x, y, z;
 	Vec3<int>							dir;
 	Chunk								*newChunks[GEN_SIZE][GEN_SIZE][GEN_SIZE];
-	// std::list<Chunk *>					delChunks;
 	std::list<Chunk *>::const_iterator	it;
 
 	for (z = 0; z < GEN_SIZE; ++z)
@@ -818,23 +815,40 @@ Core::clearChunksRemoval(void)
 {
 	std::list<Chunk *>::iterator		it;
 	Chunk								*chunk;
+	bool								inView;
 
+	inView = false;
 	if (chunksRemoval.size() > 0)
 	{
 		std::cerr << "recycling..." << std::endl;
 		for (it = chunksRemoval.begin(); it != chunksRemoval.end();)
 		{
 			chunk = *it;
-			if (chunk->removable)
+			if (chunk && chunk->removable)
 			{
-				std::cerr << chunk << "-> " << *chunk->getCube() << ", state: " << (int)chunk->generating << (int)chunk->generated << (int)chunk->renderDone << (int)chunk->stopGenerating << (int)chunk->removable << ", mesh: " << chunk->meshSize << "/" << chunk->mesh.size() << ", gl: " << chunk->vao << ", " << chunk->vbo << std::endl;
-				if (glIsBuffer(chunk->vbo))
-					glDeleteBuffers(1, &chunk->vbo);
-				if (glIsVertexArray(chunk->vao))
-					glDeleteVertexArrays(1, &chunk->vao);
-				std::cerr << *chunk->getParent()->getCube() << std::endl;
-				chunk->remove();
-				it = chunksRemoval.erase(it);
+				for (int z = 0; z < GEN_SIZE; ++z)
+				{
+					for (int y = 0; y < GEN_SIZE; ++y)
+					{
+						for (int x = 0; x < GEN_SIZE; ++x)
+						{
+							if (chunks[z][y][x] == chunk)
+							{
+								inView = true;
+								break;
+							}
+						}
+					}
+				}
+				if (!inView)
+				{
+					std::cerr << chunk << "-> " << *chunk->getCube() << ", state: " << (int)chunk->generating << (int)chunk->generated << (int)chunk->renderDone << (int)chunk->stopGenerating << (int)chunk->removable << ", mesh: " << chunk->meshSize << "/" << chunk->mesh.size() << ", gl: " << chunk->vao << ", " << chunk->vbo << std::endl;
+					std::cerr << *chunk->getParent()->getCube() << std::endl;
+					chunk->remove();
+					it = chunksRemoval.erase(it);
+				}
+				else
+					it++;
 			}
 			else
 				it++;
@@ -1041,16 +1055,31 @@ Core::render(void)
 		glUniform1f(renderVoxelRidgesLoc, 0.0f);
 		glBindTexture(GL_TEXTURE_2D, tex[0]);
 		for (z = 0; z < GEN_SIZE; ++z)
+		{
 			for (y = 0; y < GEN_SIZE; ++y)
+			{
 				for (x = 0; x < GEN_SIZE; ++x)
 				{
 					if (chunks[z][y][x] != NULL)
 						chunks[z][y][x]->render(*this);
 				}
+			}
+		}
 		// render chunks ridges
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
+/*		for (z = 0; z < GEN_SIZE; ++z)
+		{
+			for (y = 0; y < GEN_SIZE; ++y)
+			{
+				for (x = 0; x < GEN_SIZE; ++x)
+				{
+					if (chunks[z][y][x] != NULL)
+						chunks[z][y][x]->renderLines(*this);
+				}
+			}
+		}*/
 /*		for (z = 0; z < GEN_SIZE; ++z)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)

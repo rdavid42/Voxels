@@ -114,7 +114,6 @@ public:
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap);
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
 	void					generateChunkMesh(Chunk *chunk, int const &depth);
-	void					simplifyChunkMesh(Chunk *chunk);
 	void					generateChunkGLMesh(Chunk *chunk);
 	Block					*getClosestBlock(void);
 

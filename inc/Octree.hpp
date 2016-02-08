@@ -28,6 +28,7 @@ public:
 	virtual Octree *	search(float const &, float const &, float const &) { return (NULL); }
 	virtual Octree *	search(float const &, float const &, float const &, int const &, bool const &) { return (NULL); }
 	virtual void		render(Core &core) const { (void)core; }
+	virtual void		renderLines(Core &core) const { (void)core; }
 	virtual void		renderRidges(Core &core) const { (void)core; }
 	virtual void		deleteChild(Octree *child) { (void)child; }
 	virtual Chunk *		getChunk(void) { return (NULL); }
