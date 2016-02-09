@@ -195,17 +195,13 @@ Core::createSelectionCube(void)
 inline void
 addVertexToMesh(std::vector<GLfloat> &mesh,
 				float const &x, float const &y, float const &z,
-				float const &tx, float const &ty,
-				float const &nx, float const &ny, float const &nz)  // multithread
+				float const &tx, float const &ty)  // multithread
 {
 	mesh.push_back(x);
 	mesh.push_back(y);
 	mesh.push_back(z);
 	mesh.push_back(tx);
 	mesh.push_back(ty);
-	mesh.push_back(nx);
-	mesh.push_back(ny);
-	mesh.push_back(nz);
 }
 
 void
@@ -267,12 +263,12 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 					up = chunk->search(x, y + bs, z, BLOCK, true); // top
 					if (!up)
 					{
-						addVertexToMesh(top, x,		 y + bs, z,		 t[bt][2][0], t[bt][2][2], 0.0f, 1.0f, 0.0f); // 2
-						addVertexToMesh(top, x,		 y + bs, z + bs, t[bt][2][1], t[bt][2][2], 0.0f, 1.0f, 0.0f); // 6
-						addVertexToMesh(top, x + bs, y + bs, z + bs, t[bt][2][1], t[bt][2][3], 0.0f, 1.0f, 0.0f); // 7
-						addVertexToMesh(top, x + bs, y + bs, z + bs, t[bt][2][1], t[bt][2][3], 0.0f, 1.0f, 0.0f); // 7
-						addVertexToMesh(top, x + bs, y + bs, z,		 t[bt][2][0], t[bt][2][3], 0.0f, 1.0f, 0.0f); // 3
-						addVertexToMesh(top, x,		 y + bs, z,		 t[bt][2][0], t[bt][2][2], 0.0f, 1.0f, 0.0f); // 2
+						addVertexToMesh(top, x,		 y + bs, z,		 t[bt][2][0], t[bt][2][2]); // 2
+						addVertexToMesh(top, x,		 y + bs, z + bs, t[bt][2][1], t[bt][2][2]); // 6
+						addVertexToMesh(top, x + bs, y + bs, z + bs, t[bt][2][1], t[bt][2][3]); // 7
+						addVertexToMesh(top, x + bs, y + bs, z + bs, t[bt][2][1], t[bt][2][3]); // 7
+						addVertexToMesh(top, x + bs, y + bs, z,		 t[bt][2][0], t[bt][2][3]); // 3
+						addVertexToMesh(top, x,		 y + bs, z,		 t[bt][2][0], t[bt][2][2]); // 2
 					}
 					s = 0;
 					if (up)
@@ -280,72 +276,77 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 					tmp = chunk->search(x, y, z - bs, BLOCK, true); // back
 					if (!tmp)
 					{
-						addVertexToMesh(back, x,		 y,		 z, t[bt][s][0], t[bt][s][2], 0.0f, 0.0f, -1.0f); // 0
-						addVertexToMesh(back, x,		 y + bs, z, t[bt][s][0], t[bt][s][3], 0.0f, 0.0f, -1.0f); // 2
-						addVertexToMesh(back, x + bs, y + bs, z, t[bt][s][1], t[bt][s][3], 0.0f, 0.0f, -1.0f); // 3
-						addVertexToMesh(back, x + bs, y + bs, z, t[bt][s][1], t[bt][s][3], 0.0f, 0.0f, -1.0f); // 3
-						addVertexToMesh(back, x + bs, y,		 z, t[bt][s][1], t[bt][s][2], 0.0f, 0.0f, -1.0f); // 1
-						addVertexToMesh(back, x,		 y,		 z, t[bt][s][0], t[bt][s][2], 0.0f, 0.0f, -1.0f); // 0
+						addVertexToMesh(back, x,		 y,		 z, t[bt][s][0], t[bt][s][2]); // 0
+						addVertexToMesh(back, x,		 y + bs, z, t[bt][s][0], t[bt][s][3]); // 2
+						addVertexToMesh(back, x + bs, y + bs, z, t[bt][s][1], t[bt][s][3]); // 3
+						addVertexToMesh(back, x + bs, y + bs, z, t[bt][s][1], t[bt][s][3]); // 3
+						addVertexToMesh(back, x + bs, y,		 z, t[bt][s][1], t[bt][s][2]); // 1
+						addVertexToMesh(back, x,		 y,		 z, t[bt][s][0], t[bt][s][2]); // 0
 					}
 					tmp = chunk->search(x, y, z + bs, BLOCK, true); // front
 					if (!tmp)
 					{
-						addVertexToMesh(front, x,		 y,		 z + bs, t[bt][s][0], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 4
-						addVertexToMesh(front, x + bs, y,		 z + bs, t[bt][s][1], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 5
-						addVertexToMesh(front, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 7
-						addVertexToMesh(front, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 7
-						addVertexToMesh(front, x,		 y + bs, z + bs, t[bt][s][0], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 6
-						addVertexToMesh(front, x,		 y,		 z + bs, t[bt][s][0], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 4
+						addVertexToMesh(front, x,		 y,		 z + bs, t[bt][s][0], t[bt][s][2]); // 4
+						addVertexToMesh(front, x + bs, y,		 z + bs, t[bt][s][1], t[bt][s][2]); // 5
+						addVertexToMesh(front, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3]); // 7
+						addVertexToMesh(front, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3]); // 7
+						addVertexToMesh(front, x,		 y + bs, z + bs, t[bt][s][0], t[bt][s][3]); // 6
+						addVertexToMesh(front, x,		 y,		 z + bs, t[bt][s][0], t[bt][s][2]); // 4
 					}
 					tmp = chunk->search(x - bs, y, z, BLOCK, true); // left
 					if (!tmp)
 					{
-						addVertexToMesh(left, x, y,		z,		t[bt][s][0], t[bt][s][2], -1.0f, 0.0f, 0.0f); // 0
-						addVertexToMesh(left, x, y,		z + bs, t[bt][s][1], t[bt][s][2], -1.0f, 0.0f, 0.0f); // 4
-						addVertexToMesh(left, x, y + bs, z + bs, t[bt][s][1], t[bt][s][3], -1.0f, 0.0f, 0.0f); // 6
-						addVertexToMesh(left, x, y + bs, z + bs, t[bt][s][1], t[bt][s][3], -1.0f, 0.0f, 0.0f); // 6
-						addVertexToMesh(left, x, y + bs, z,		t[bt][s][0], t[bt][s][3], -1.0f, 0.0f, 0.0f); // 2
-						addVertexToMesh(left, x, y,		z,		t[bt][s][0], t[bt][s][2], -1.0f, 0.0f, 0.0f); // 0
+						addVertexToMesh(left, x, y,		z,		t[bt][s][0], t[bt][s][2]); // 0
+						addVertexToMesh(left, x, y,		z + bs, t[bt][s][1], t[bt][s][2]); // 4
+						addVertexToMesh(left, x, y + bs, z + bs, t[bt][s][1], t[bt][s][3]); // 6
+						addVertexToMesh(left, x, y + bs, z + bs, t[bt][s][1], t[bt][s][3]); // 6
+						addVertexToMesh(left, x, y + bs, z,		t[bt][s][0], t[bt][s][3]); // 2
+						addVertexToMesh(left, x, y,		z,		t[bt][s][0], t[bt][s][2]); // 0
 					}
 					tmp = chunk->search(x + bs, y, z, BLOCK, true); // right
 					if (!tmp)
 					{
-						addVertexToMesh(right, x + bs, y,		 z,		 t[bt][s][0], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 1
-						addVertexToMesh(right, x + bs, y + bs, z,		 t[bt][s][0], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 3
-						addVertexToMesh(right, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 7
-						addVertexToMesh(right, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3], 1.0f, 0.0f, 0.0f); // 7
-						addVertexToMesh(right, x + bs, y,		 z + bs, t[bt][s][1], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 5
-						addVertexToMesh(right, x + bs, y,		 z,		 t[bt][s][0], t[bt][s][2], 1.0f, 0.0f, 0.0f); // 1
+						addVertexToMesh(right, x + bs, y,		 z,		 t[bt][s][0], t[bt][s][2]); // 1
+						addVertexToMesh(right, x + bs, y + bs, z,		 t[bt][s][0], t[bt][s][3]); // 3
+						addVertexToMesh(right, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3]); // 7
+						addVertexToMesh(right, x + bs, y + bs, z + bs, t[bt][s][1], t[bt][s][3]); // 7
+						addVertexToMesh(right, x + bs, y,		 z + bs, t[bt][s][1], t[bt][s][2]); // 5
+						addVertexToMesh(right, x + bs, y,		 z,		 t[bt][s][0], t[bt][s][2]); // 1
 					}
 					tmp = chunk->search(x, y - bs, z, BLOCK, true); // bottom
 					if (!tmp)
 					{
-						addVertexToMesh(bottom, x,		 y, z,		t[bt][1][0], t[bt][1][3], 0.0f, -1.0f, 0.0f); // 0
-						addVertexToMesh(bottom, x + bs, y, z,		t[bt][1][1], t[bt][1][3], 0.0f, -1.0f, 0.0f); // 1
-						addVertexToMesh(bottom, x + bs, y, z + bs, t[bt][1][1], t[bt][1][2], 0.0f, -1.0f, 0.0f); // 5
-						addVertexToMesh(bottom, x + bs, y, z + bs, t[bt][1][1], t[bt][1][2], 0.0f, -1.0f, 0.0f); // 5
-						addVertexToMesh(bottom, x,		 y, z + bs, t[bt][1][0], t[bt][1][2], 0.0f, -1.0f, 0.0f); // 4
-						addVertexToMesh(bottom, x,		 y, z,		t[bt][1][0], t[bt][1][3], 0.0f, -1.0f, 0.0f); // 0
+						addVertexToMesh(bottom, x,		 y, z,		t[bt][1][0], t[bt][1][3]); // 0
+						addVertexToMesh(bottom, x + bs, y, z,		t[bt][1][1], t[bt][1][3]); // 1
+						addVertexToMesh(bottom, x + bs, y, z + bs, t[bt][1][1], t[bt][1][2]); // 5
+						addVertexToMesh(bottom, x + bs, y, z + bs, t[bt][1][1], t[bt][1][2]); // 5
+						addVertexToMesh(bottom, x,		 y, z + bs, t[bt][1][0], t[bt][1][2]); // 4
+						addVertexToMesh(bottom, x,		 y, z,		t[bt][1][0], t[bt][1][3]); // 0
 					}
 				}
 			}
 		}
 	}
-
 	chunk->mesh.reserve(top.size() + back.size() + front.size() + left.size() + right.size() + bottom.size());
-	chunk->mesh.insert(chunk->mesh.end(), top.begin(), top.end());
-	chunk->mesh.insert(chunk->mesh.end(), back.begin(), back.end());
-	chunk->mesh.insert(chunk->mesh.end(), front.begin(), front.end());
-	chunk->mesh.insert(chunk->mesh.end(), left.begin(), left.end());
-	chunk->mesh.insert(chunk->mesh.end(), right.begin(), right.end());
-	chunk->mesh.insert(chunk->mesh.end(), bottom.begin(), bottom.end());
+	if (top.size() > 0)
+		chunk->mesh.insert(chunk->mesh.end(), top.begin(), top.end());
+	if (back.size() > 0)
+		chunk->mesh.insert(chunk->mesh.end(), back.begin(), back.end());
+	if (front.size() > 0)
+		chunk->mesh.insert(chunk->mesh.end(), front.begin(), front.end());
+	if (left.size() > 0)
+		chunk->mesh.insert(chunk->mesh.end(), left.begin(), left.end());
+	if (right.size() > 0)
+		chunk->mesh.insert(chunk->mesh.end(), right.begin(), right.end());
+	if (bottom.size() > 0)
+		chunk->mesh.insert(chunk->mesh.end(), bottom.begin(), bottom.end());
 /*	std::cerr << "top size: " << top.size() << std::endl;
 	std::cerr << "back size: " << back.size() << std::endl;
 	std::cerr << "front size: " << front.size() << std::endl;
 	std::cerr << "left size: " << left.size() << std::endl;
 	std::cerr << "right size: " << right.size() << std::endl;
 	std::cerr << "bottom size: " << bottom.size() << std::endl;*/
-	chunk->meshSize = chunk->mesh.size() / 8;
+	chunk->setMeshSize(chunk->mesh.size() / 5);
 	// std::cerr << "mesh size: " << chunk->mesh.size() << std::endl;
 /*	for (size_t i = 0; i < chunk->mesh.size(); i += (8 * 6))
 	{
@@ -446,13 +447,13 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 	float						x, z, y;
 	int							depth;
 
-	if (chunk->generated)
+	if (chunk->getGenerated())
 		return ;
-	chunk->generated = false;
+	chunk->setGenerated(false);
 	depth = BLOCK_DEPTH;
-	if (chunk->stopGenerating)
+	if (chunk->getStopGenerating())
 	{
-		chunk->removable = true;
+		chunk->setRemovable(true);
 		return ;
 	}
 	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
@@ -465,9 +466,9 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 				// density = noise->fractal(0, nx, ny, nz) / 3;
 				for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
 				{
-					if (chunk->stopGenerating)
+					if (chunk->getStopGenerating())
 					{
-						chunk->removable = true;
+						chunk->setRemovable(true);
 						return ;
 					}
 					generateBlock3d(chunk, x, y, z, depth, 50);
@@ -477,8 +478,8 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 		// }
 	}
 	generateChunkMesh(chunk, depth);
-	chunk->generated = true;
-	chunk->removable = true;
+	chunk->setGenerated(true);
+	chunk->setRemovable(true);
 }
 
 // THREAD POOL
@@ -670,11 +671,11 @@ Core::generateChunkGLMesh(Chunk *chunk)
 	glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * chunk->mesh.size(), &chunk->mesh[0], GL_STATIC_DRAW);
 	glEnableVertexAttribArray(positionLoc);
-	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 8, (void *)0);
+	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
 	glEnableVertexAttribArray(textureLoc);
-	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 8, (void *)(sizeof(GLfloat) * 3));
-	glEnableVertexAttribArray(normalLoc);
-	glVertexAttribPointer(normalLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 8, (void *)(sizeof(GLfloat) * 5));
+	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
+	// glEnableVertexAttribArray(normalLoc);
+	// glVertexAttribPointer(normalLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 8, (void *)(sizeof(GLfloat) * 5));
 	chunk->mesh.clear();
 	// destroy mesh vector
 	std::vector<GLfloat>().swap(chunk->mesh);
@@ -699,7 +700,7 @@ Core::generation(void)
 				if (chunks[cz][cy][cx] != NULL)
 				{
 					chunk = chunks[cz][cy][cx];
-					if (!chunk->generated && !chunk->generating)
+					if (!chunk->getGenerated() && !chunk->getGenerating())
 					{
 						id = 0;
 						min = TASK_QUEUE_OVERFLOW;
@@ -711,19 +712,19 @@ Core::generation(void)
 								min = task_queue[i].size();
 							}
 						}
-						chunk->generating = true;
+						chunk->setGenerating(true);
 						addTask(chunk, id);
 					}
-					if (chunk->generated && !chunk->renderDone)
+					if (chunk->getGenerated() && !chunk->getRenderDone())
 					{
 						// wait for the chunk generation and allocate the opengl mesh
 						// opengl functions cannot be called from a thread so we do it on the main thread (current OpenGL context)
-						if (chunk->meshSize > 0)
+						if (chunk->getMeshSize() > 0)
 							generateChunkGLMesh(chunk);
-						chunk->renderDone = true;
-						chunk->generating = false;
-						chunk->stopGenerating = false;
-						chunk->removable = true;
+						chunk->setRenderDone(true);
+						chunk->setGenerating(false);
+						chunk->setStopGenerating(false);
+						chunk->setRemovable(true);
 					}
 				}
 			}
@@ -781,8 +782,8 @@ Core::updateChunks(void)
 					{
 						if (chunks[z][y][x] != NULL)
 						{
-							if (chunks[z][y][x]->generating && !chunks[z][y][x]->generated)
-								chunks[z][y][x]->stopGenerating = true;
+							if (chunks[z][y][x]->getGenerating() && !chunks[z][y][x]->getGenerated())
+								chunks[z][y][x]->setStopGenerating(true);
 							inside = false;
 							for (it = chunksRemoval.begin(); it != chunksRemoval.end(); ++it)
 							{
@@ -834,7 +835,7 @@ Core::clearChunksRemoval(void)
 		for (it = chunksRemoval.begin(); it != chunksRemoval.end();)
 		{
 			chunk = *it;
-			if (chunk && chunk->removable)
+			if (chunk && chunk->getRemovable())
 			{
 				for (int z = 0; z < GEN_SIZE; ++z)
 				{
@@ -852,7 +853,7 @@ Core::clearChunksRemoval(void)
 				}
 				if (!inView)
 				{
-					std::cerr << chunk << "-> " << *chunk->getCube() << ", state: " << (int)chunk->generating << (int)chunk->generated << (int)chunk->renderDone << (int)chunk->stopGenerating << (int)chunk->removable << ", mesh: " << chunk->meshSize << "/" << chunk->mesh.size() << ", gl: " << chunk->vao << ", " << chunk->vbo << std::endl;
+					std::cerr << chunk << "-> " << *chunk->getCube() << ", state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << ", mesh: " << chunk->getMeshSize() << "/" << chunk->mesh.size() << ", gl: " << chunk->vao << ", " << chunk->vbo << std::endl;
 					std::cerr << *chunk->getParent()->getCube() << std::endl;
 					chunk->remove();
 					it = chunksRemoval.erase(it);
@@ -890,11 +891,11 @@ Core::insertChunks(void)
 						newChunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE);
 						if (newChunk != NULL)
 						{
-							newChunk->generated = false;
-							newChunk->generating = false;
-							newChunk->renderDone = false;
-							newChunk->stopGenerating = false;
-							newChunk->removable = false;
+							newChunk->setGenerated(false);
+							newChunk->setGenerating(false);
+							newChunk->setRenderDone(false);
+							newChunk->setStopGenerating(false);
+							newChunk->setRemovable(false);
 							newChunk->vao = 0;
 							newChunk->vbo = 0;
 							if (newChunk != chunks[cz][cy][cx])
@@ -949,11 +950,11 @@ Core::initChunks(void)
 	// Create initial chunk
 	chunks[center][center][center] = static_cast<Chunk *>(octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
 																		CHUNK_DEPTH, CHUNK, NONE));
-	chunks[center][center][center]->generated = false;
-	chunks[center][center][center]->generating = false;
-	chunks[center][center][center]->renderDone = false;
-	chunks[center][center][center]->stopGenerating = false;
-	chunks[center][center][center]->removable = false;
+	chunks[center][center][center]->setGenerated(false);
+	chunks[center][center][center]->setGenerating(false);
+	chunks[center][center][center]->setRenderDone(false);
+	chunks[center][center][center]->setStopGenerating(false);
+	chunks[center][center][center]->setRemovable(false);
 	chunks[center][center][center]->vao = 0;
 	chunks[center][center][center]->vbo = 0;
 	insertChunks();

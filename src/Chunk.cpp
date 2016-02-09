@@ -2,13 +2,15 @@
 #include "Core.hpp"
 #include "Chunk.hpp"
 
-Chunk::Chunk(void) : Link(), generated(false)
+Chunk::Chunk(void) : Link(),
+			_meshSize(0), _generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
 {
 	_state = CHUNK;
 	return ;
 }
 
-Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s), generated(false)
+Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s),
+			_meshSize(0), _generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
 {
 	_state = CHUNK;
 	return ;
@@ -27,12 +29,12 @@ Chunk::~Chunk(void)
 	}
 	vao = 0;
 	vbo = 0;
-	meshSize = -1;
-	generating = false;
-	generated = false;
-	renderDone = false;
-	stopGenerating = false;
-	removable = false;
+	_meshSize = -1;
+	_generating = false;
+	_generated = false;
+	_renderDone = false;
+	_stopGenerating = false;
+	_removable = false;
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (_children[i] != NULL)
@@ -44,7 +46,6 @@ Chunk::~Chunk(void)
 void
 Chunk::deleteChild(Octree *child)
 {
-	std::cerr << "hip" << std::endl;
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (_children[i] == child)
@@ -65,14 +66,14 @@ void
 Chunk::render(Core &core) const
 {
 	(void)core;
-	if (renderDone)
+	if (_renderDone)
 	{
-		if (meshSize > 0)
+		if (_meshSize > 0)
 		{
 			glBindVertexArray(vao);
 			core.ms.push();
 				glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
-				glDrawArrays(GL_TRIANGLES, 0, meshSize);
+				glDrawArrays(GL_TRIANGLES, 0, _meshSize);
 			core.ms.pop();
 		}
 	}
@@ -81,14 +82,14 @@ Chunk::render(Core &core) const
 void
 Chunk::renderLines(Core &core) const
 {
-	if (renderDone)
+	if (_renderDone)
 	{
-		if (meshSize > 0)
+		if (_meshSize > 0)
 		{
 			glBindVertexArray(vao);
 			core.ms.push();
 				glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
-				glDrawArrays(GL_LINES, 0, meshSize);
+				glDrawArrays(GL_LINES, 0, _meshSize);
 			core.ms.pop();
 		}
 	}
@@ -104,6 +105,78 @@ Chunk::renderRidges(Core &core) const
 		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 		glDrawElements(GL_LINES, core.selectionIndicesSize, GL_UNSIGNED_SHORT, (void *)0);
 	core.ms.pop();
+}
+
+int const &
+Chunk::getMeshSize(void)
+{
+	return (_meshSize);
+}
+
+bool const &
+Chunk::getGenerating(void)
+{
+	return (_generating);
+}
+
+bool const &
+Chunk::getGenerated(void)
+{
+	return (_generated);
+}
+
+bool const &
+Chunk::getRenderDone(void)
+{
+	return (_renderDone);
+}
+
+bool const &
+Chunk::getStopGenerating(void)
+{
+	return (_stopGenerating);
+}
+
+bool const &
+Chunk::getRemovable(void)
+{
+	return (_removable);
+}
+
+void
+Chunk::setMeshSize(int const &val)
+{
+	_meshSize = val;
+}
+
+void
+Chunk::setGenerating(bool const &val)
+{
+	_generating = val;
+}
+
+void
+Chunk::setGenerated(bool const &val)
+{
+	_generated = val;
+}
+
+void
+Chunk::setRenderDone(bool const &val)
+{
+	_renderDone = val;
+}
+
+void
+Chunk::setStopGenerating(bool const &val)
+{
+	_stopGenerating = val;
+}
+
+void
+Chunk::setRemovable(bool const &val)
+{
+	_removable = val;
 }
 
 Chunk
