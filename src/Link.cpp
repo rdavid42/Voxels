@@ -63,9 +63,8 @@ Link::deleteChild(Octree *child)
 void
 Link::remove(void)
 {
-	if (_parent != NULL && this != NULL)
+	if (_parent != NULL)
 	{
-		// std::cerr << "hop" << std::endl;
 		_parent->deleteChild(this);
 	}
 }

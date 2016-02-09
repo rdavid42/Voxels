@@ -20,6 +20,19 @@ Chunk::~Chunk(void)
 		glDeleteBuffers(1, &vbo);
 	if (glIsVertexArray(vao))
 		glDeleteVertexArrays(1, &vao);
+	if (mesh.size() > 0)
+	{
+		mesh.clear();
+		std::vector<GLfloat>().swap(mesh);
+	}
+	vao = 0;
+	vbo = 0;
+	meshSize = -1;
+	generating = false;
+	generated = false;
+	renderDone = false;
+	stopGenerating = false;
+	removable = false;
 	for (int i = 0; i < CHD_MAX; ++i)
 	{
 		if (_children[i] != NULL)

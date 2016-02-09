@@ -12,7 +12,6 @@ Core::~Core(void)
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	std::cerr << "done" << std::endl;
-	while (true);
 }
 
 static void
@@ -740,6 +739,7 @@ Core::updateChunks(void)
 	Vec3<int>							dir;
 	Chunk								*newChunks[GEN_SIZE][GEN_SIZE][GEN_SIZE];
 	std::list<Chunk *>::const_iterator	it;
+	bool								inside;
 
 	for (z = 0; z < GEN_SIZE; ++z)
 		for (y = 0; y < GEN_SIZE; ++y)
@@ -783,7 +783,17 @@ Core::updateChunks(void)
 						{
 							if (chunks[z][y][x]->generating && !chunks[z][y][x]->generated)
 								chunks[z][y][x]->stopGenerating = true;
-							chunksRemoval.push_front(chunks[z][y][x]);
+							inside = false;
+							for (it = chunksRemoval.begin(); it != chunksRemoval.end(); ++it)
+							{
+								if (*it == chunks[z][y][x])
+								{
+									inside = true;
+									break;
+								}
+							}
+							if (!inside)
+								chunksRemoval.push_front(chunks[z][y][x]);
 						}
 					}
 					else
@@ -799,7 +809,7 @@ Core::updateChunks(void)
 					chunks[z][y][x] = newChunks[z][y][x];
 		insertChunks();
 	}
-	std::cerr << "to remove: " << chunksRemoval.size() << ", tasks: ";
+/*	std::cerr << "to remove: " << chunksRemoval.size() << ", tasks: ";
 	for (int id = 0; id < pool_size; ++id)
 	{
 		std::cerr << task_queue[id].size();
@@ -807,7 +817,7 @@ Core::updateChunks(void)
 			std::cerr << std::endl;
 		else
 			std::cerr << ", ";
-	}
+	}*/
 }
 
 void
