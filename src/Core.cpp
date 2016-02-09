@@ -391,7 +391,7 @@ Core::initNoises(void) // multithread
 }
 
 void
-Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) // multithread
+Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const &z, int const &depth, int const &ycap) // multithread
 {
 	float						n;
 	float						nstone;
@@ -399,9 +399,9 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 	float						nx, nz, ny;
 	int							i;
 
-	nx = c->getCube()->getX() + x;
-	ny = c->getCube()->getY() + y;
-	nz = c->getCube()->getZ() + z;
+	nx = chunk->getCube()->getX() + x;
+	ny = chunk->getCube()->getY() + y;
+	nz = chunk->getCube()->getZ() + z;
 	n = 0.0f;
 	nstone = noise->fractal(5, nx, ny, nz);
 	// ncoal = nstone;
@@ -414,31 +414,31 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 		if (n > 0.90)
 		{
 			if (n < 0.95 && nstone < 0.6)
-				c->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+				chunk->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
 			else
 			{
 				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
-					c->insert(nx, ny, nz, depth, BLOCK, COAL);
+					chunk->insert(nx, ny, nz, depth, BLOCK, COAL);
 				else
-					c->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
+					chunk->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
 			}
 		}
 	}
 }
 
 void
-Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) // multithread
+Core::generateBlock(Chunk *chunk, float const &x, float const &y, float const &z, int const &depth) // multithread
 {
 	float                        altitude;
 	float                        nx, nz;
 
-	nx = c->getCube()->getX() + x;
-	nz = c->getCube()->getZ() + z;
+	nx = chunk->getCube()->getX() + x;
+	nz = chunk->getCube()->getZ() + z;
 	altitude = 0.0f;
 	for (int i = 0; i < 10.0f; i++)
 		altitude += noise->fractal(2, nx, y, nz);
 	for (; altitude > -25.0f; altitude -= this->block_size[depth])
-		c->insert(nx, altitude, nz, depth, BLOCK, DIRT);
+		chunk->insert(nx, altitude, nz, depth, BLOCK, DIRT);
 }
 
 void
