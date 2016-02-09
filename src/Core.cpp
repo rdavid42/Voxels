@@ -414,7 +414,7 @@ Core::generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, 
 		if (n > 0.90)
 		{
 			if (n < 0.95 && nstone < 0.6)
-			c->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+				c->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
 			else
 			{
 				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
