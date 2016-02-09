@@ -331,11 +331,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 
 	chunk->mesh.reserve(top.size() + back.size() + front.size() + left.size() + right.size() + bottom.size());
 	// chunk->mesh.insert(chunk->mesh.begin(), top.begin(), top.end());
-	if (top.size() > 0)
-	{
-		for (it = top.begin(); it != top.end(); ++it)
-			chunk->mesh.push_back(*it);
-	}
 	if (back.size() > 0)
 	{
 		for (it = back.begin(); it != back.end(); ++it)
@@ -359,6 +354,11 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	if (bottom.size() > 0)
 	{
 		for (it = bottom.begin(); it != bottom.end(); ++it)
+			chunk->mesh.push_back(*it);
+	}
+	if (top.size() > 0)
+	{
+		for (it = top.begin(); it != top.end(); ++it)
 			chunk->mesh.push_back(*it);
 	}
 /*	std::cerr << "top size: " << top.size() << std::endl;
@@ -417,6 +417,7 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	float						n;
 	float						nstone;
 	// float						ncoal;
+	Block						*block;
 	float						nx, nz, ny;
 	int							i;
 
@@ -434,22 +435,32 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, nx, ny, nz);
 	n /= (i + 1);
-	if (ny > 0)
+	block = static_cast<Block *>(octree->search(nx, ny, nz, EMPTY, false));
+	if (block && block->getCube()->vertexInside(nx, ny, nz))
 	{
-		n /= (ny / ycap);
-		if (n > 0.90)
+		if (ny > 0)
 		{
-			if (n < 0.95 && nstone < 0.6)
-				chunk->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
-			else
+			n /= (ny / ycap);
+			if (n > 0.90)
 			{
-				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
-					chunk->insert(nx, ny, nz, depth, BLOCK, COAL);
+				if (n < 0.95 && nstone < 0.6)
+					chunk->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
 				else
-					chunk->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
+				{
+					if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
+						chunk->insert(nx, ny, nz, depth, BLOCK, COAL);
+					else
+					{
+						if (chunk->getState() == 2)
+							std::cerr << "On a un problème. Salauw" << std::endl;
+						chunk->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
+					}
+				}
 			}
 		}
 	}
+	else
+		std::cerr << "BLBLBLBLBLBLBLBLBLBLBLBLBLBLBLBLB" << std::endl;
 }
 
 void
@@ -502,7 +513,8 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 						chunk->setRemovable(true);
 						return ;
 					}
-					generateBlock3d(chunk, x, y, z, depth, 50);
+					if (chunk)
+						generateBlock3d(chunk, x, y, z, depth, 50);
 					//generateBlock(chunk, x, 1.5, z, depth);
 				}
 			}
@@ -541,7 +553,7 @@ Core::executeThread(int const &id) // multithread
 
 		// pick task to process
 		chunk = task_queue[id].front();
-		if (chunk != 0)
+		if (chunk != 0 && chunk->getState() == CHUNK)
 		{
 			task_queue[id].pop_front();
 
@@ -551,6 +563,13 @@ Core::executeThread(int const &id) // multithread
 
 			// process task
 			processChunkGeneration(chunk);
+		}
+		else
+		{
+			std::cerr << "AWD AOIWJD OAIWJD OAIWJDO AIWJD OAIWJDO AIWJDO AJIWD " << std::endl;
+			is_task_locked[id] = false;
+			pthread_mutex_unlock(&task_mutex[id]);
+			task_queue[id].pop_front();
 		}
 	}
 	return (0);

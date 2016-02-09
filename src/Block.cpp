@@ -51,10 +51,15 @@ Block::search(float const &x, float const &y, float const &z, int const &state, 
 }
 
 Octree *
-Block::insert(float const &, float const &, float const &, uint32_t const &, int32_t const &state, int const &type)
+Block::insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, int const &type)
 {
-	this->type = type;
-	setState(state);
+	if (_cube.vertexInside(x, y, z))
+	{
+		this->type = type;
+		setState(state);
+	}
+	else
+		std::cerr <<  depth << std::endl;
 	return (this);
 }
 

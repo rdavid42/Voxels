@@ -27,9 +27,9 @@ Cube::~Cube(void)
 bool
 Cube::vertexInside(float const &x, float const &y, float const &z)
 {
-	if (x >= this->_x && x < this->_x + this->_s
-		&& y >= this->_y && y < this->_y + this->_s
-		&& z >= this->_z && z < this->_z + this->_s)
+	if (x >= _x && x < _x + _s
+		&& y >= _y && y < _y + _s
+		&& z >= _z && z < _z + _s)
 		return (true);
 	return (false);
 }
