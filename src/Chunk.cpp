@@ -3,14 +3,14 @@
 #include "Chunk.hpp"
 
 Chunk::Chunk(void) : Link(),
-			_meshSize(0), _generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
+			_meshSize(0), _generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0), mesh(0)
 {
 	_state = CHUNK;
 	return ;
 }
 
 Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s),
-			_meshSize(0), _generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
+			_meshSize(0), _generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0), mesh(0)
 {
 	_state = CHUNK;
 	return ;
