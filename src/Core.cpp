@@ -24,8 +24,8 @@ key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	(void)core;
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-		core->clearChunksRemoval();
+	// if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		// core->clearChunksRemoval();
 }
 
 static void
@@ -231,9 +231,9 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 			{ 0.8f, 1.0f, 0.0f, 1.0f }
 		}
 	};
-	int						s; // side texture index
-	int						bt;
-	std::vector<GLfloat>	top, back, front, left, right, bottom;
+	int								s; // side texture index
+	int								bt;
+	std::vector<GLfloat>			top, back, front, left, right, bottom;
 
 	//          y
 	//		    2----3
@@ -327,19 +327,40 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 			}
 		}
 	}
+	std::vector<GLfloat>::iterator	it;
+
 	chunk->mesh.reserve(top.size() + back.size() + front.size() + left.size() + right.size() + bottom.size());
+	// chunk->mesh.insert(chunk->mesh.begin(), top.begin(), top.end());
 	if (top.size() > 0)
-		chunk->mesh.insert(chunk->mesh.end(), top.begin(), top.end());
+	{
+		for (it = top.begin(); it != top.end(); ++it)
+			chunk->mesh.push_back(*it);
+	}
 	if (back.size() > 0)
-		chunk->mesh.insert(chunk->mesh.end(), back.begin(), back.end());
+	{
+		for (it = back.begin(); it != back.end(); ++it)
+			chunk->mesh.push_back(*it);
+	}
 	if (front.size() > 0)
-		chunk->mesh.insert(chunk->mesh.end(), front.begin(), front.end());
+	{
+		for (it = front.begin(); it != front.end(); ++it)
+			chunk->mesh.push_back(*it);
+	}
 	if (left.size() > 0)
-		chunk->mesh.insert(chunk->mesh.end(), left.begin(), left.end());
+	{
+		for (it = left.begin(); it != left.end(); ++it)
+			chunk->mesh.push_back(*it);
+	}
 	if (right.size() > 0)
-		chunk->mesh.insert(chunk->mesh.end(), right.begin(), right.end());
+	{
+		for (it = right.begin(); it != right.end(); ++it)
+			chunk->mesh.push_back(*it);
+	}
 	if (bottom.size() > 0)
-		chunk->mesh.insert(chunk->mesh.end(), bottom.begin(), bottom.end());
+	{
+		for (it = bottom.begin(); it != bottom.end(); ++it)
+			chunk->mesh.push_back(*it);
+	}
 /*	std::cerr << "top size: " << top.size() << std::endl;
 	std::cerr << "back size: " << back.size() << std::endl;
 	std::cerr << "front size: " << front.size() << std::endl;
@@ -399,6 +420,11 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	float						nx, nz, ny;
 	int							i;
 
+	if (!chunk)
+	{
+		std::cerr << "Null chunk!" << std::endl;
+		return ;
+	}
 	nx = chunk->getCube()->getX() + x;
 	ny = chunk->getCube()->getY() + y;
 	nz = chunk->getCube()->getZ() + z;
@@ -432,6 +458,11 @@ Core::generateBlock(Chunk *chunk, float const &x, float const &y, float const &z
 	float                        altitude;
 	float                        nx, nz;
 
+	if (!chunk)
+	{
+		std::cerr << "Null chunk!" << std::endl;
+		return ;
+	}
 	nx = chunk->getCube()->getX() + x;
 	nz = chunk->getCube()->getZ() + z;
 	altitude = 0.0f;
@@ -810,6 +841,8 @@ Core::updateChunks(void)
 					chunks[z][y][x] = newChunks[z][y][x];
 		insertChunks();
 	}
+	if (chunksRemoval.size() > 0)
+		clearChunksRemoval();
 /*	std::cerr << "to remove: " << chunksRemoval.size() << ", tasks: ";
 	for (int id = 0; id < pool_size; ++id)
 	{
@@ -831,7 +864,7 @@ Core::clearChunksRemoval(void)
 	inView = false;
 	if (chunksRemoval.size() > 0)
 	{
-		std::cerr << "recycling..." << std::endl;
+		// std::cerr << "recycling..." << std::endl;
 		for (it = chunksRemoval.begin(); it != chunksRemoval.end();)
 		{
 			chunk = *it;
@@ -853,8 +886,8 @@ Core::clearChunksRemoval(void)
 				}
 				if (!inView)
 				{
-					std::cerr << chunk << "-> " << *chunk->getCube() << ", state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << ", mesh: " << chunk->getMeshSize() << "/" << chunk->mesh.size() << ", gl: " << chunk->vao << ", " << chunk->vbo << std::endl;
-					std::cerr << *chunk->getParent()->getCube() << std::endl;
+					// std::cerr << chunk << "-> " << *chunk->getCube() << ", state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << ", mesh: " << chunk->getMeshSize() << "/" << chunk->mesh.size() << ", gl: " << chunk->vao << ", " << chunk->vbo << std::endl;
+					// std::cerr << *chunk->getParent()->getCube() << std::endl;
 					chunk->remove();
 					it = chunksRemoval.erase(it);
 				}
