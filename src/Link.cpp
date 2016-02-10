@@ -37,9 +37,6 @@ Link::getChunk(void)
 void
 Link::deleteChild(Octree *child)
 {
-	// int			childCount;
-
-	// childCount = 0;
 	if (child != NULL)
 	{
 		for (int i = 0; i < CHD_MAX; ++i)
@@ -49,15 +46,8 @@ Link::deleteChild(Octree *child)
 				delete _children[i];
 				_children[i] = NULL;
 			}
-	/*		if (_children[i] != NULL)
-				childCount++;*/
 		}
 	}
-/*	if (childCount == 0)
-	{
-		if (_parent != NULL)
-			_parent->deleteChild(this);
-	}*/
 }
 
 void
