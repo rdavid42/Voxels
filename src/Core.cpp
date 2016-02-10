@@ -417,15 +417,10 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	float						n;
 	float						nstone;
 	// float						ncoal;
-	Block						*block;
+	// Block						*block;
 	float						nx, nz, ny;
 	int							i;
 
-	if (!chunk)
-	{
-		std::cerr << "Null chunk!" << std::endl;
-		return ;
-	}
 	nx = chunk->getCube()->getX() + x;
 	ny = chunk->getCube()->getY() + y;
 	nz = chunk->getCube()->getZ() + z;
@@ -435,32 +430,32 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, nx, ny, nz);
 	n /= (i + 1);
-	block = static_cast<Block *>(octree->search(nx, ny, nz, EMPTY, false));
-	if (block && block->getCube()->vertexInside(nx, ny, nz))
+	// block = static_cast<Block *>(octree->search(nx, ny, nz, BLOCK, false));
+	// if (block && block->getCube()->vertexInside(nx, ny, nz))
+	// {
+	if (ny > 0)
 	{
-		if (ny > 0)
+		n /= (ny / ycap);
+		if (n > 0.90)
 		{
-			n /= (ny / ycap);
-			if (n > 0.90)
+			if (n < 0.95 && nstone < 0.6)
+				chunk->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+			else
 			{
-				if (n < 0.95 && nstone < 0.6)
-					chunk->insert(nx, ny, nz, depth, BLOCK, DIRT); // dirt
+				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
+					chunk->insert(nx, ny, nz, depth, BLOCK, COAL);
 				else
 				{
-					if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
-						chunk->insert(nx, ny, nz, depth, BLOCK, COAL);
-					else
-					{
-						if (chunk->getState() == 2)
-							std::cerr << "On a un problème. Salauw" << std::endl;
-						chunk->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
-					}
+					if (chunk->getState() != CHUNK)
+						std::cerr << "On a un problème. Salauw" << std::endl;
+					chunk->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
 				}
 			}
 		}
 	}
-	else
-		std::cerr << "BLBLBLBLBLBLBLBLBLBLBLBLBLBLBLBLB" << std::endl;
+	// }
+	// else
+		// std::cerr << "BLBLBLBLBLBLBLBLBLBLBLBLBLBLBLBLB" << std::endl;
 }
 
 void
@@ -566,7 +561,7 @@ Core::executeThread(int const &id) // multithread
 		}
 		else
 		{
-			std::cerr << "AWD AOIWJD OAIWJD OAIWJDO AIWJD OAIWJDO AIWJDO AJIWD " << std::endl;
+			std::cerr << "Bad chunk!" << std::endl;
 			is_task_locked[id] = false;
 			pthread_mutex_unlock(&task_mutex[id]);
 			task_queue[id].pop_front();
@@ -692,14 +687,14 @@ Core::startThreads(void)
 }
 
 void
-Core::addTask(Chunk *c, int const &id)
+Core::addTask(Chunk *chunk, int const &id)
 {
 	// lock task queue
 	pthread_mutex_lock(&task_mutex[id]);
 	is_task_locked[id] = true;
 
 	// push task in queue
-	task_queue[id].push_front(c);
+	task_queue[id].push_front(chunk);
 
 	// clear thread task queues if they exceed TASK_QUEUE_OVERFLOW
 	while (task_queue[id].size() > TASK_QUEUE_OVERFLOW)
@@ -763,6 +758,8 @@ Core::generation(void)
 							}
 						}
 						chunk->setGenerating(true);
+						if (chunk->getState() != CHUNK)
+							std::cerr << "generation -> bad chunk!" << std::endl;
 						addTask(chunk, id);
 					}
 					if (chunk->getGenerated() && !chunk->getRenderDone())
@@ -940,7 +937,7 @@ Core::insertChunks(void)
 						px = camera.pos.x + (cx - center) * chunk_size;
 						py = camera.pos.y + (cy - center) * chunk_size;
 						pz = camera.pos.z + (cz - center) * chunk_size;
-						newChunk = (Chunk *)octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE);
+						newChunk = static_cast<Chunk *>(octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE));
 						if (newChunk != NULL)
 						{
 							newChunk->setGenerated(false);
@@ -1143,13 +1140,13 @@ Core::render(void)
 				}
 			}
 		}*/
-/*		for (z = 0; z < GEN_SIZE; ++z)
+		for (z = 0; z < GEN_SIZE; ++z)
 			for (y = 0; y < GEN_SIZE; ++y)
 				for (x = 0; x < GEN_SIZE; ++x)
 				{
 					if (chunks[z][y][x] != NULL)
 						chunks[z][y][x]->renderRidges(*this);
-				}*/
+				}
 		if (closestBlock != NULL)
 			closestBlock->renderRidges(*this);
 	ms.pop();

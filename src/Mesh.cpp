@@ -63,12 +63,18 @@ Mesh::clear(void)
 void
 Mesh::push_back(Vertex const &vertex)
 {
+	int			it;
+
+	it = _size;
 	(void)vertex;
 	_size += _stride;
 	if (_size > _capacity)
-	{
-		reserve(2 * _capacity);
-	}
+		reserve(2 * _size);
+	_data[it + 0] = vertex.x;
+	_data[it + 1] = vertex.y;
+	_data[it + 2] = vertex.z;
+	_data[it + 3] = vertex.tx;
+	_data[it + 4] = vertex.ty;
 }
 
 float const *
