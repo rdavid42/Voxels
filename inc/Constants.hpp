@@ -50,6 +50,7 @@
 # define CHD_MAX					8
 
 // Octree states
+# define ERROR						-1
 # define EMPTY						0
 # define GROUND						1
 # define BLOCK						2

@@ -121,7 +121,7 @@ public:
 	}
 
 	Vec3<TYPE>
-	operator*(TYPE const &rhs)
+	operator*(TYPE const &rhs) const
 	{
 		return (Vec3<TYPE>(this->x * rhs, this->y * rhs, this->z * rhs));
 	}

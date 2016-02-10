@@ -24,6 +24,8 @@ Octree::Octree(float const &x, float const &y, float const &z, float const &s)
 
 Octree::~Octree(void)
 {
+	_state = ERROR;
+	_parent = 0;
 	return ;
 }
 

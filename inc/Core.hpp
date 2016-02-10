@@ -5,7 +5,7 @@
 # include <thread>
 # include <vector>
 # include <list>
-# include <chrono>
+# include <typeinfo>
 # include "Camera.hpp"
 # include "Shaders.hpp"
 # include "Bmp.hpp"
@@ -15,8 +15,6 @@
 
 # define STARTED	0
 # define STOPPED	1
-
-typedef std::chrono::high_resolution_clock Clock;
 
 typedef struct
 {
@@ -66,15 +64,10 @@ public:
 	/* Camera */
 	Camera					camera;
 
-	/* mouse movement */
-	double					lastMx;
-	double					lastMy;
-
 	/* Textures */
 	int						texMax;
 	GLuint					*tex;
 
-	float					multiplier;
 	std::ostringstream		oss_ticks;
 
 	/* selection */
@@ -118,7 +111,7 @@ public:
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
 	void					generateChunkMesh(Chunk *chunk, int const &depth) const;
 	void					generateChunkGLMesh(Chunk *chunk);
-	Block					*getClosestBlock(void);
+	Block					*getClosestBlock(void) const;
 
 	/* core */
 	int						init(void);
@@ -128,6 +121,7 @@ public:
 	void					render(void);
 	void					loop(void);
 	void					clearChunksRemoval(void);
+	bool					chunkInTaskPool(Chunk const *chunk) const;
 
 	/* Camera */
 
@@ -136,8 +130,6 @@ public:
 	GLuint					loadTexture(char const *filename);
 
 	/* matrices */ 
-	void					setViewMatrix(Mat4<float> &view, Vec3<float> const &dir,
-										Vec3<float> const &right, Vec3<float> const &up);
 	void					buildProjectionMatrix(Mat4<float> &proj, float const &fov,
 												float const &near, float const &far);
 

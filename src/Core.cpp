@@ -31,16 +31,14 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
-	core->camera.vangle -= ((ypos - core->lastMy) * 0.05);
+	core->camera.vangle -= ((ypos - core->windowHeight / 2) * 0.05);
 	if (core->camera.vangle > 89)
 		core->camera.vangle = 89;
 	if (core->camera.vangle < -89)
 		core->camera.vangle = -89;
-	core->camera.hangle -= ((xpos - core->lastMx) * 0.05);
+	core->camera.hangle -= ((xpos - core->windowWidth / 2) * 0.05);
 	core->camera.hangle = fmod(core->camera.hangle, 360);
 	glfwSetCursorPos(core->window, core->windowWidth / 2, core->windowHeight / 2);
-	core->lastMx = core->windowWidth / 2;
-	core->lastMy = core->windowHeight / 2;
 }
 
 void
@@ -110,9 +108,6 @@ Core::loadTextures(void)
 {
 	tex = new GLuint[1];
 	tex[0] = loadTexture("resources/atlas.bmp");
-	// tex[0] = loadTexture("resources/grass_bottom.bmp");
-	// tex[1] = loadTexture("resources/grass_side.bmp");
-	// tex[2] = loadTexture("resources/grass_up.bmp");
 }
 
 void
@@ -371,7 +366,9 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 				else
 				{
 					if (chunk->getState() != CHUNK)
-						std::cerr << "On a un problème. Salauw" << std::endl;
+					{
+						std::cerr << "Error -> generateBlock3d(): " << typeid(chunk).name() << " of state " << chunk->getState() << std::endl;
+					}
 					chunk->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
 				}
 			}
@@ -411,6 +408,9 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 	depth = BLOCK_DEPTH;
 	if (chunk->getStopGenerating())
 	{
+		chunk->setRenderDone(true);
+		chunk->setGenerated(true);
+		chunk->setRemovable(true);
 		chunk->setRemovable(true);
 		return ;
 	}
@@ -482,7 +482,10 @@ Core::executeThread(int const &id) // multithread
 		}
 		else
 		{
-			std::cerr << "Bad chunk!" << std::endl;
+			if (chunk)
+				std::cerr << "Error -> executeThread(): " << typeid(chunk).name() << " of state " << chunk->getState() << std::endl;
+			else
+				std::cerr << "Null chunk!" << std::endl;
 			is_task_locked[id] = false;
 			pthread_mutex_unlock(&task_mutex[id]);
 			task_queue[id].pop_front();
@@ -635,17 +638,12 @@ Core::generateChunkGLMesh(Chunk *chunk)
 	glBindVertexArray(chunk->vao);
 	glGenBuffers(1, &chunk->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
-	// glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * chunk->mesh.size(), &chunk->mesh[0], GL_STATIC_DRAW);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * chunk->mesh.size(), &chunk->mesh.data[0], GL_STATIC_DRAW);
 	glEnableVertexAttribArray(positionLoc);
 	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
 	glEnableVertexAttribArray(textureLoc);
 	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
-	// glEnableVertexAttribArray(normalLoc);
-	// glVertexAttribPointer(normalLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 8, (void *)(sizeof(GLfloat) * 5));
 	chunk->mesh.clear();
-	// destroy mesh vector
-	// std::vector<GLfloat>().swap(chunk->mesh);
 }
 
 void
@@ -680,8 +678,6 @@ Core::generation(void)
 							}
 						}
 						chunk->setGenerating(true);
-						if (chunk->getState() != CHUNK)
-							std::cerr << "generation -> bad chunk!" << std::endl;
 						addTask(chunk, id);
 					}
 					if (chunk->getGenerated() && !chunk->getRenderDone())
@@ -699,6 +695,29 @@ Core::generation(void)
 			}
 		}
 	}
+}
+
+bool
+Core::chunkInTaskPool(Chunk const *chunk) const
+{
+	int										i;
+	std::deque<Chunk *>::const_iterator		it, ite;
+
+	for (i = 0; i < pool_size; ++i)
+	{
+		if (task_queue[i].size() > 0)
+		{
+			it = task_queue[i].begin();
+			ite = task_queue[i].end();
+			while (it != ite)
+			{
+				if (*it == chunk)
+					return (true);
+				++it;
+			}
+		}
+	}
+	return (false);
 }
 
 void
@@ -784,6 +803,64 @@ Core::updateChunks(void)
 }
 
 void
+Core::insertChunks(void)
+{
+	int									cx, cy, cz;
+	float								px, py, pz;
+	Chunk *								newChunk;
+	std::list<Chunk *>::iterator		it, ite;
+
+	for (cz = 0; cz < GEN_SIZE; ++cz)
+	{
+		for (cy = 0; cy < GEN_SIZE; ++cy)
+		{
+			for (cx = 0; cx < GEN_SIZE; ++cx)
+			{
+				if (chunks[cz][cy][cx] == NULL)
+				{
+					// place new chunks in the camera perimeter, ignoring the central chunk
+					if (cz != center || cy != center || cx != center)
+					{
+						px = camera.pos.x + (cx - center) * chunk_size;
+						py = camera.pos.y + (cy - center) * chunk_size;
+						pz = camera.pos.z + (cz - center) * chunk_size;
+						newChunk = static_cast<Chunk *>(octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE));
+						it = chunksRemoval.begin();
+						ite = chunksRemoval.end();
+						while (it != ite)
+						{
+							if (*it == newChunk)
+							{
+								it = chunksRemoval.erase(it);
+								break;
+							}
+							++it;
+						}
+						if (newChunk != NULL && !chunkInTaskPool(newChunk))
+						{
+							newChunk->setGenerated(false);
+							newChunk->setGenerating(false);
+							newChunk->setRenderDone(false);
+							newChunk->setStopGenerating(false);
+							newChunk->setRemovable(false);
+							newChunk->vao = 0;
+							newChunk->vbo = 0;
+							if (newChunk != chunks[cz][cy][cx])
+							{
+								newChunk->pos.x = cx;
+								newChunk->pos.y = cy;
+								newChunk->pos.z = cz;
+								chunks[cz][cy][cx] = newChunk;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void
 Core::clearChunksRemoval(void)
 {
 	std::list<Chunk *>::iterator		it;
@@ -808,21 +885,19 @@ Core::clearChunksRemoval(void)
 							if (chunks[z][y][x] == chunk)
 							{
 								inView = true;
-								break;
+								goto nested_break;
 							}
 						}
 					}
 				}
+				nested_break:
 				if (!inView)
 				{
-					// std::cerr << *chunk->getParent()->getCube() << std::endl;
 					chunk->remove();
 					it = chunksRemoval.erase(it);
 				}
 				else
-				{
-					it = chunksRemoval.erase(it);
-				}
+					it++;
 			}
 			else
 				it++;
@@ -830,68 +905,8 @@ Core::clearChunksRemoval(void)
 	}
 }
 
-void
-Core::insertChunks(void)
-{
-	int									cx, cy, cz;
-	float								px, py, pz;
-	Chunk *								newChunk;
-	std::list<Chunk *>::iterator		it, ite;
-
-	for (cz = 0; cz < GEN_SIZE; ++cz)
-	{
-		for (cy = 0; cy < GEN_SIZE; ++cy)
-		{
-			for (cx = 0; cx < GEN_SIZE; ++cx)
-			{
-				if (chunks[cz][cy][cx] == NULL)
-				{
-					// place new chunks in the camera perimeter, ignoring the central chunk
-					if (cz != center || cy != center || cx != center)
-					{
-						px = camera.pos.x + (cx - center) * chunk_size;
-						py = camera.pos.y + (cy - center) * chunk_size;
-						pz = camera.pos.z + (cz - center) * chunk_size;
-						newChunk = static_cast<Chunk *>(octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE));
-						if (newChunk->getState() != CHUNK)
-							std::cerr << "inserted chunk state: " << newChunk->getState() << std::endl;
-						it = chunksRemoval.begin();
-						ite = chunksRemoval.end();
-						while (it != ite)
-						{
-							if (*it == newChunk)
-							{
-								// it = chunksRemoval.erase(it);
-								break;
-							}
-							++it;
-						}
-						if (newChunk != NULL)
-						{
-							newChunk->setGenerated(false);
-							newChunk->setGenerating(false);
-							newChunk->setRenderDone(false);
-							newChunk->setStopGenerating(false);
-							newChunk->setRemovable(false);
-							newChunk->vao = 0;
-							newChunk->vbo = 0;
-							if (newChunk != chunks[cz][cy][cx])
-							{
-								newChunk->pos.x = cx;
-								newChunk->pos.y = cy;
-								newChunk->pos.z = cz;
-								chunks[cz][cy][cx] = newChunk;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
 Block *
-Core::getClosestBlock(void)
+Core::getClosestBlock(void) const
 {
 	Vec3<float>			pos;
 	int					i;
@@ -958,8 +973,6 @@ Core::init(void)
 		glfwTerminate();
 		return (0);
 	}
-	lastMx = 0.0;
-	lastMy = 0.0;
 	glfwSetWindowUserPointer(window, this);
 	glfwMakeContextCurrent(window); // make the opengl context of the window current on the main thread
 	glfwSwapInterval(1); // VSYNC 60 fps max
@@ -1098,7 +1111,7 @@ Core::loop(void)
 		if (currentTime - lastTime >= 1.0)
 		{
 			std::string timers = std::to_string(updateTime) + " / " + std::to_string(renderTime);
-			glfwSetWindowTitle(window, (std::to_string((int)frames) + " fps [" + timers).c_str());
+			glfwSetWindowTitle(window, (std::to_string((int)frames) + " fps [" + timers + "]").c_str());
 			frames = 0.0;
 			lastTime += 1.0;
 		}
