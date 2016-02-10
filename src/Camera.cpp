@@ -59,11 +59,9 @@ void
 Camera::init(void)
 {
 	speed = 0.3;
-	pos.set(0.0f, 5.0f, 15.0f);
+	pos.set(0.0f, 30.0f, 15.0f);
 	lookAt.set(0.0f, 0.0f, 0.0f);
 	forward.set(lookAt - pos);
-	forward.normalize();
-	std::cerr << forward << std::endl;
 	forward.normalize();
 	set();
 }
@@ -106,7 +104,7 @@ Camera::rotate(void)
 	vr = vangle * M_PI / 180;
 	forward.set(cos(vr) * sin(hr),
 				sin(vr),
-				cos(vr) * cos (hr));
+				cos(vr) * cos(hr));
 	forward.normalize();
 	set();
 }

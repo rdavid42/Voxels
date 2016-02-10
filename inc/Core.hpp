@@ -5,6 +5,7 @@
 # include <thread>
 # include <vector>
 # include <list>
+# include <chrono>
 # include "Camera.hpp"
 # include "Shaders.hpp"
 # include "Bmp.hpp"
@@ -14,6 +15,8 @@
 
 # define STARTED	0
 # define STOPPED	1
+
+typedef std::chrono::high_resolution_clock Clock;
 
 typedef struct
 {
@@ -113,7 +116,7 @@ public:
 	void					addTask(Chunk *c, int const &id);
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap);
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
-	void					generateChunkMesh(Chunk *chunk, int const &depth);
+	void					generateChunkMesh(Chunk *chunk, int const &depth) const;
 	void					generateChunkGLMesh(Chunk *chunk);
 	Block					*getClosestBlock(void);
 

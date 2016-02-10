@@ -24,8 +24,6 @@ key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	(void)core;
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	// if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
-		// core->clearChunksRemoval();
 }
 
 static void
@@ -191,21 +189,9 @@ Core::createSelectionCube(void)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, selectionVbo[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * selectionIndicesSize, indices, GL_STATIC_DRAW);
 }
-/*
-inline void
-addVertexToMesh(std::vector<GLfloat> &mesh,
-				float const &x, float const &y, float const &z,
-				float const &tx, float const &ty)  // multithread
-{
-	mesh.push_back(x);
-	mesh.push_back(y);
-	mesh.push_back(z);
-	mesh.push_back(tx);
-	mesh.push_back(ty);
-}
-*/
+
 void
-Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
+Core::generateChunkMesh(Chunk *chunk, int const &depth) const // multithread
 {
 	float					x, y, z;
 	float					cx, cy, cz;
@@ -233,7 +219,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 	};
 	int								s; // side texture index
 	int								bt;
-	// std::vector<GLfloat>			top, back, front, left, right, bottom;
 
 	//          y
 	//		    2----3
@@ -327,46 +312,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 			}
 		}
 	}
-	// std::vector<GLfloat>::iterator	it;
-
-	// chunk->mesh.reserve(top.size() + back.size() + front.size() + left.size() + right.size() + bottom.size());
-	// chunk->mesh.insert(chunk->mesh.begin(), top.begin(), top.end());
-/*	if (back.size() > 0)
-	{
-		for (it = back.begin(); it != back.end(); ++it)
-			chunk->mesh.push_back(*it);
-	}
-	if (front.size() > 0)
-	{
-		for (it = front.begin(); it != front.end(); ++it)
-			chunk->mesh.push_back(*it);
-	}
-	if (left.size() > 0)
-	{
-		for (it = left.begin(); it != left.end(); ++it)
-			chunk->mesh.push_back(*it);
-	}
-	if (right.size() > 0)
-	{
-		for (it = right.begin(); it != right.end(); ++it)
-			chunk->mesh.push_back(*it);
-	}
-	if (bottom.size() > 0)
-	{
-		for (it = bottom.begin(); it != bottom.end(); ++it)
-			chunk->mesh.push_back(*it);
-	}
-	if (top.size() > 0)
-	{
-		for (it = top.begin(); it != top.end(); ++it)
-			chunk->mesh.push_back(*it);
-	}*/
-/*	std::cerr << "top size: " << top.size() << std::endl;
-	std::cerr << "back size: " << back.size() << std::endl;
-	std::cerr << "front size: " << front.size() << std::endl;
-	std::cerr << "left size: " << left.size() << std::endl;
-	std::cerr << "right size: " << right.size() << std::endl;
-	std::cerr << "bottom size: " << bottom.size() << std::endl;*/
 	chunk->setMeshSize(chunk->mesh.size() / 5);
 }
 
@@ -836,15 +781,6 @@ Core::updateChunks(void)
 	}
 	if (chunksRemoval.size() > 0)
 		clearChunksRemoval();
-/*	std::cerr << "to remove: " << chunksRemoval.size() << ", tasks: ";
-	for (int id = 0; id < pool_size; ++id)
-	{
-		std::cerr << task_queue[id].size();
-		if (id == pool_size - 1)
-			std::cerr << std::endl;
-		else
-			std::cerr << ", ";
-	}*/
 }
 
 void
@@ -857,10 +793,10 @@ Core::clearChunksRemoval(void)
 	inView = false;
 	if (chunksRemoval.size() > 0)
 	{
-		// std::cerr << "recycling..." << std::endl;
 		for (it = chunksRemoval.begin(); it != chunksRemoval.end();)
 		{
 			chunk = *it;
+			// std::cerr << chunk << "-> " << "state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << std::endl;
 			if (chunk && chunk->getRemovable())
 			{
 				for (int z = 0; z < GEN_SIZE; ++z)
@@ -879,13 +815,14 @@ Core::clearChunksRemoval(void)
 				}
 				if (!inView)
 				{
-					// std::cerr << chunk << "-> " << *chunk->getCube() << ", state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << ", mesh: " << chunk->getMeshSize() << "/" << chunk->mesh.size() << ", gl: " << chunk->vao << ", " << chunk->vbo << std::endl;
 					// std::cerr << *chunk->getParent()->getCube() << std::endl;
 					chunk->remove();
 					it = chunksRemoval.erase(it);
 				}
 				else
-					it++;
+				{
+					it = chunksRemoval.erase(it);
+				}
 			}
 			else
 				it++;
@@ -896,9 +833,10 @@ Core::clearChunksRemoval(void)
 void
 Core::insertChunks(void)
 {
-	int					cx, cy, cz;
-	float				px, py, pz;
-	Chunk *				newChunk;
+	int									cx, cy, cz;
+	float								px, py, pz;
+	Chunk *								newChunk;
+	std::list<Chunk *>::iterator		it, ite;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
 	{
@@ -915,6 +853,19 @@ Core::insertChunks(void)
 						py = camera.pos.y + (cy - center) * chunk_size;
 						pz = camera.pos.z + (cz - center) * chunk_size;
 						newChunk = static_cast<Chunk *>(octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE));
+						if (newChunk->getState() != CHUNK)
+							std::cerr << "inserted chunk state: " << newChunk->getState() << std::endl;
+						it = chunksRemoval.begin();
+						ite = chunksRemoval.end();
+						while (it != ite)
+						{
+							if (*it == newChunk)
+							{
+								// it = chunksRemoval.erase(it);
+								break;
+							}
+							++it;
+						}
 						if (newChunk != NULL)
 						{
 							newChunk->setGenerated(false);
@@ -1049,7 +1000,7 @@ Core::updateLeftClick(void)
 	if (closestBlock != NULL)
 	{
 		chunk = closestBlock->getChunk();
-		closestBlock->destroy();
+		closestBlock->remove();
 		glBindVertexArray(chunk->vao);
 		glDeleteBuffers(1, &chunk->vbo);
 		generateChunkMesh(chunk, BLOCK_DEPTH);
@@ -1060,8 +1011,9 @@ Core::updateLeftClick(void)
 void
 Core::update(void)
 {
+	std::cerr << "remove list: " << chunksRemoval.size() << std::endl;
+	glfwSetCursorPos(window, windowWidth / 2.0f, windowHeight / 2.0f);
 	camera.rotate();
-	camera.set();
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.moveForward();
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -1112,6 +1064,7 @@ Core::render(void)
 		if (closestBlock != NULL)
 			closestBlock->renderRidges(*this);
 	ms.pop();
+	glfwSwapBuffers(window);
 }
 
 void
@@ -1119,6 +1072,9 @@ Core::loop(void)
 {
 	double		lastTime, currentTime;
 	double		frames;
+	double		tmpTime;
+	double		updateTime;
+	double		renderTime;
 
 	frames = 0.0;
 	lastTime = glfwGetTime();
@@ -1129,13 +1085,20 @@ Core::loop(void)
 		currentTime = glfwGetTime();
 		frames += 1.0;
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		tmpTime = glfwGetTime();
 		update();
+		updateTime = glfwGetTime() - tmpTime;
+
+		tmpTime = glfwGetTime();
 		render();
-		glfwSwapBuffers(window);
+		renderTime = glfwGetTime() - tmpTime;
+
 		glfwPollEvents();
 		if (currentTime - lastTime >= 1.0)
 		{
-			glfwSetWindowTitle(window, (std::to_string((int)frames) + " fps").c_str());
+			std::string timers = std::to_string(updateTime) + " / " + std::to_string(renderTime);
+			glfwSetWindowTitle(window, (std::to_string((int)frames) + " fps [" + timers).c_str());
 			frames = 0.0;
 			lastTime += 1.0;
 		}

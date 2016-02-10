@@ -26,7 +26,7 @@ Block::getChunk(void)
 }
 
 void
-Block::destroy(void)
+Block::remove(void)
 {
 	if (_parent != NULL)
 		_parent->deleteChild(this);

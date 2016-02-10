@@ -23,7 +23,7 @@ public:
 	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, int const &type);
 	virtual void		render(Core &core) const;
 	virtual void		renderRidges(Core &core) const;
-	void				destroy(void);
+	void				remove(void);
 	Chunk *				getChunk(void);
 
 	Block				&operator=(Block const &rhs);

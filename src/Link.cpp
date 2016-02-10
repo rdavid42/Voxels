@@ -108,7 +108,7 @@ Link::search(float const &x, float const &y, float const &z, int const &state, b
 		}
 		return (child == NULL ? NULL : child);
 	}
-	else
+/*	else
 	{
 		if (allowOutside)
 		{
@@ -118,7 +118,7 @@ Link::search(float const &x, float const &y, float const &z, int const &state, b
 				return (NULL);
 			}
 		}
-	}
+	}*/
 	return (NULL);
 }
 
