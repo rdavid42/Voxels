@@ -5,19 +5,13 @@
 #include "Link.hpp"
 
 Octree::Octree(void)
-	: _state(EMPTY), _cube(), _parent(NULL)
+	: _state(EMPTY), _parent(NULL)
 {
 	return ;
 }
 
 Octree::Octree(Octree const &src)
-	: _state(src.getState()), _cube(src.getCube()), _parent(NULL)
-{
-	return ;
-}
-
-Octree::Octree(float const &x, float const &y, float const &z, float const &s)
-	: _state(EMPTY), _cube(x, y, z, s), _parent(NULL)
+	: _state(src.getState()), _parent(NULL)
 {
 	return ;
 }
@@ -35,15 +29,9 @@ Octree::operator=(Octree const &rhs)
 	if (this != &rhs)
 	{
 		this->_state = rhs.getState();
-		this->_cube = rhs.getCube();
+		this->_parent = rhs.getParent();
 	}
 	return (*this);
-}
-
-void
-Octree::setCube(float const &x, float const &y, float const &z, float const &s)
-{
-	this->_cube = Cube(x, y, z, s);
 }
 
 void
@@ -58,12 +46,6 @@ Octree::setParent(Octree *parent)
 	this->_parent = parent;
 }
 
-Cube const &
-Octree::getCube(void) const
-{
-	return (this->_cube);
-}
-
 int32_t const &
 Octree::getState(void) const
 {
@@ -71,7 +53,7 @@ Octree::getState(void) const
 }
 
 Octree *
-Octree::getParent(void)
+Octree::getParent(void) const
 {
 	return (this->_parent);
 }
@@ -97,10 +79,7 @@ operator<<(std::ostream &o, Octree &t)
 
 	if (t.getParent() == &t)
 		o << "Octree: ";
-	o   << "state = "
-		<< t.getState()
-		<< ", "
-		<< t.getCube();
+	o << "state = " << t.getState();
 	for (uint32_t it = 0; it < CHD_MAX; ++it)
 	{
 		if (t.getChild(it) != NULL)

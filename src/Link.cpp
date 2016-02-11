@@ -10,7 +10,7 @@ Link::Link(void) : Octree()
 		_children[i] = NULL;
 }
 
-Link::Link(float const &x, float const &y, float const &z, float const &s) : Octree(x, y, z, s)
+Link::Link(float const &x, float const &y, float const &z, float const &s) : Octree(), _cube(x, y, z, s)
 {
 	for (int i = 0; i < CHD_MAX; ++i)
 		_children[i] = NULL;
@@ -151,7 +151,7 @@ Link::createChild(uint32_t const &i, float const &x, float const &y, float const
 	if (state & CHUNK)
 		_children[i] = new Chunk(x, y, z, s);
 	else if (state & BLOCK)
-		_children[i] = new Block(x, y, z, s);
+		_children[i] = new Block();
 	else
 		_children[i] = new Link(x, y, z, s);
 	_children[i]->setParent(this);
@@ -258,6 +258,19 @@ void
 Link::setChild(uint32_t const &i, Octree *const child)
 {
 	_children[i] = child;
+}
+
+void
+Link::setCube(float const &x, float const &y, float const &z, float const &s)
+{
+	this->_cube = Cube(x, y, z, s);
+}
+
+
+Cube
+Link::getCube(void) const
+{
+	return (_cube);
 }
 
 Link &

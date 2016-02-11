@@ -23,17 +23,6 @@ typedef struct
 	Core			*core;
 }					ThreadArgs;
 
-typedef enum
-{
-	NONE,
-	GRASS,
-	STONE,
-	COAL,
-	LEAF,
-	WOOD,
-	DIRT
-}					block_type;
-
 class Core
 {
 public:

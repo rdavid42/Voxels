@@ -81,4 +81,15 @@
 # define NOISE_NOT_GENERATED		300000.0f
 # define TASK_QUEUE_OVERFLOW		100000
 
+typedef enum
+{
+	NONE,
+	GRASS,
+	STONE,
+	COAL,
+	LEAF,
+	WOOD,
+	DIRT
+}					block_type;
+
 #endif

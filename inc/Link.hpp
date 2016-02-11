@@ -11,7 +11,8 @@ class Core;
 class Link : public Octree
 {
 protected:
-	Octree				*_children[CHD_MAX];
+	Cube				_cube;
+	Octree *			_children[CHD_MAX];
 
 public:
 	Link(void);
@@ -30,6 +31,8 @@ public:
 	void				backwardSimplification(void);
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state);
 
+	void				setCube(float const &x, float const &y, float const &z, float const &s);
+	Cube				getCube(void) const;
 	Octree *			getChild(uint32_t const &i);
 	void				setChild(uint32_t const &i, Octree *const child);
 
