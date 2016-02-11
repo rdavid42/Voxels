@@ -2,6 +2,7 @@
 #include "Link.hpp"
 #include "Chunk.hpp"
 #include "Block.hpp"
+#include "Core.hpp"
 
 Link::Link(void) : Octree()
 {
@@ -36,23 +37,25 @@ Link::getChunk(void)
 void
 Link::deleteChild(Octree *child)
 {
-	int			childCount;
-
-	childCount = 0;
-	for (int i = 0; i < CHD_MAX; ++i)
+	if (child != NULL)
 	{
-		if (_children[i] == child)
+		for (int i = 0; i < CHD_MAX; ++i)
 		{
-			delete _children[i];
-			_children[i] = NULL;
+			if (_children[i] != NULL && _children[i] == child)
+			{
+				delete _children[i];
+				_children[i] = NULL;
+			}
 		}
-		if (_children[i] != NULL)
-			childCount++;
 	}
-	if (childCount == 0)
+}
+
+void
+Link::remove(void)
+{
+	if (_parent != NULL)
 	{
-		if (_parent != NULL)
-			_parent->deleteChild(this);
+		_parent->deleteChild(this);
 	}
 }
 
@@ -105,7 +108,7 @@ Link::search(float const &x, float const &y, float const &z, int const &state, b
 		}
 		return (child == NULL ? NULL : child);
 	}
-	else
+/*	else
 	{
 		if (allowOutside)
 		{
@@ -115,7 +118,7 @@ Link::search(float const &x, float const &y, float const &z, int const &state, b
 				return (NULL);
 			}
 		}
-	}
+	}*/
 	return (NULL);
 }
 
@@ -131,7 +134,7 @@ Link::createChild(uint32_t const &i, float const &x, float const &y, float const
 		_children[i] = new Block(x, y, z, s);
 	else
 		_children[i] = new Link(x, y, z, s);
-	this->_children[i]->setParent(this);
+	_children[i]->setParent(this);
 }
 // -------------------------------------------------------------------
 
@@ -172,13 +175,14 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 					if ((depth - 1) == 0)
 						createChild(i, nx, ny, nz, s, state);
 					else
-						createChild(i, nx, ny, nz, s, EMPTY);
-					_state = 0;
+						createChild(i, nx, ny, nz, s, LINK);
 					return (_children[i]->insert(x, y, z, depth - 1, state, type));
 				}
 			}
-			else if (_children[i]->getCube()->vertexInside(x, y, z))
+			else if (_children[i]->getCube().vertexInside(x, y, z))
+			{
 				return (_children[i]->insert(x, y, z, depth - 1, state, type));
+			}
 		}
 	}
 	return (NULL);
@@ -195,6 +199,19 @@ Link::render(Core &core) const
 	{
 		if (_children[i] != 0)
 			_children[i]->render(core);
+	}
+}
+
+void
+Link::renderLines(Core &core) const
+{
+	int				i;
+
+	(void)core;
+	for (i = 0; i < CHD_MAX; ++i)
+	{
+		if (_children[i] != 0)
+			_children[i]->renderLines(core);
 	}
 }
 

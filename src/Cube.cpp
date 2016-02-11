@@ -25,13 +25,25 @@ Cube::~Cube(void)
 }
 
 bool
-Cube::vertexInside(float const &x, float const &y, float const &z)
+Cube::vertexInside(float const &x, float const &y, float const &z) const
 {
-	if (x >= this->_x && x < this->_x + this->_s
-		&& y >= this->_y && y < this->_y + this->_s
-		&& z >= this->_z && z < this->_z + this->_s)
-		return (true);
-	return (false);
+	return (x >= _x && x < _x + _s
+		&&	y >= _y && y < _y + _s
+		&&	z >= _z && z < _z + _s);
+}
+
+Vec3<float>
+Cube::getVertexPosition(Vec3<float> const &normal) const
+{
+	Vec3<float>			position(_x, _y, _z);
+
+	if (normal.x > 0.0f)
+		position.x += _s;
+	if (normal.y > 0.0f)
+		position.y += _s;
+	if (normal.z > 0.0f)
+		position.z += _s;
+	return (position);
 }
 
 float const
@@ -99,13 +111,13 @@ std::ostream
 &operator<<(std::ostream &o, Cube const &i)
 {
 	o	// << &i
-		<< "x = "
+		<< "x:"
 		<< i.getX()
-		<< ", y = "
+		<< ", y:"
 		<< i.getY()
-		<< ", z = "
+		<< ", z:"
 		<< i.getZ()
-		<< ", s = "
+		<< ", s:"
 		<< i.getS();
 	return (o);
 }

@@ -28,14 +28,16 @@ public:
 	virtual Octree *	search(float const &, float const &, float const &) { return (NULL); }
 	virtual Octree *	search(float const &, float const &, float const &, int const &, bool const &) { return (NULL); }
 	virtual void		render(Core &core) const { (void)core; }
+	virtual void		renderLines(Core &core) const { (void)core; }
 	virtual void		renderRidges(Core &core) const { (void)core; }
 	virtual void		deleteChild(Octree *child) { (void)child; }
 	virtual Chunk *		getChunk(void) { return (NULL); }
+	virtual void		remove(void) {}
 	void				setCube(float const &x, float const &y, float const &z, float const &s);
 	void				setState(int32_t const &state);
 	void				setParent(Octree *parent);
 	Cube const &		getCube(void) const;
-	Cube *				getCube(void);
+	// Cube *				getCube(void);
 	int32_t const &		getState(void) const;
 	Octree *			getParent(void);
 	uint32_t			getDepth(void);

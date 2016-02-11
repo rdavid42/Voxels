@@ -6,6 +6,7 @@
 # include <vector>
 # include <list>
 # include <cmath>
+# include <typeinfo>
 # include "Camera.hpp"
 # include "Shaders.hpp"
 # include "Bmp.hpp"
@@ -57,6 +58,7 @@ public:
 	GLuint					objLoc;
 	GLuint					positionLoc;
 	GLuint					textureLoc;
+	GLuint					normalLoc;
 	GLuint					colorLoc;
 	GLuint					renderVoxelRidgesLoc;
 
@@ -66,15 +68,10 @@ public:
 	/* Camera */
 	Camera					camera;
 
-	/* mouse movement */
-	double					lastMx;
-	double					lastMy;
-
 	/* Textures */
 	int						texMax;
 	GLuint					*tex;
 
-	float					multiplier;
 	std::ostringstream		oss_ticks;
 
 	/* selection */
@@ -94,7 +91,9 @@ public:
 								  [GEN_SIZE]
 								  [GEN_SIZE]; // camera chunk in the center
 	Block					*closestBlock;
+	std::list<Chunk *>		chunksRemoval;
 
+	/* Thread pool */
 	int						pool_size;
 	bool					pool_state;
 	pthread_cond_t *		task_cond;
@@ -102,6 +101,9 @@ public:
 	pthread_mutex_t *		task_mutex;
 	pthread_t *				threads;
 	std::deque<Chunk *> *	task_queue; // one different pool per thread
+
+	Core(void);
+	~Core(void);
 
 	uint32_t				getConcurrentThreads();
 	void					processChunkGeneration(Chunk *c);
@@ -115,20 +117,19 @@ public:
 	void					createTree(Chunk *c, int const &depth, float x, float y, float z);
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap);
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
-	void					generateChunkMesh(Chunk *chunk, int const &depth);
-	void					simplifyChunkMesh(Chunk *chunk);
+	void					generateChunkMesh(Chunk *chunk, int const &depth) const;
 	void					generateChunkGLMesh(Chunk *chunk);
-	Block					*getClosestBlock(void);
-
-	Core(void);
-	~Core(void);
+	Block					*getClosestBlock(void) const;
 
 	/* core */
 	int						init(void);
 	void					updateLeftClick(void);
+	void					updateChunks(void);
 	void					update(void);
 	void					render(void);
 	void					loop(void);
+	void					clearChunksRemoval(void);
+	bool					chunkInTaskPool(Chunk const *chunk) const;
 
 	/* Camera */
 
@@ -137,8 +138,6 @@ public:
 	GLuint					loadTexture(char const *filename);
 
 	/* matrices */ 
-	void					setViewMatrix(Mat4<float> &view, Vec3<float> const &dir,
-										Vec3<float> const &right, Vec3<float> const &up);
 	void					buildProjectionMatrix(Mat4<float> &proj, float const &fov,
 												float const &near, float const &far);
 
