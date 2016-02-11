@@ -91,8 +91,8 @@ public:
 	float					block_size[MAX_BLOCK_DEPTH]; // size of a block inside a chunk
 	int						center; // central chunk's index, `chunks[center][center][center]`
 	Chunk *					chunks[GEN_SIZE]
-									[GEN_SIZE]
-									[GEN_SIZE]; // camera chunk in the center
+								  [GEN_SIZE]
+								  [GEN_SIZE]; // camera chunk in the center
 	Block					*closestBlock;
 
 	int						pool_size;

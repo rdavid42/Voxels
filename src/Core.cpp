@@ -161,6 +161,7 @@ Core::createSelectionCube(void)
 		0.0f, 1.0f, 1.0f, // 6
 		1.0f, 1.0f, 1.0f  // 7
 	};
+
 	static GLushort const		indices[24] =
 	{
 		0, 1,
@@ -235,7 +236,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) // multithread
 			{ 0.6f, 0.7f, 0.0f, 1.0f },
 			{ 0.6f, 0.7f, 0.0f, 1.0f }
 		},
-		{
+		{ // DIRT
 			{ 0.1f, 0.2f, 0.0f, 1.0f },
 			{ 0.1f, 0.2f, 0.0f, 1.0f },
 			{ 0.1f, 0.2f, 0.0f, 1.0f }
@@ -451,9 +452,7 @@ Core::generateBlock(Chunk *c, float const &x, float const &y, float const &z, in
 	for (int i = 0; i < 10.0f; i++)
 		altitude += noise->fractal(2, nx, y, nz);
 	if (ntree > 0.3)
-	{
 		createTree(c, depth, nx, altitude, nz);
-	}
 	for (; altitude > -25.0f; altitude -= this->block_size[depth])
 		  c->insert(nx, altitude, nz, depth, BLOCK, GRASS);
 }
