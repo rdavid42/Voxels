@@ -40,10 +40,6 @@ Octree::operator=(Octree const &rhs)
 	return (*this);
 }
 
-// -------------------------------------------------------------------
-// Remove current octree from his parent, and set it to NULL
-// -------------------------------------------------------------------
-
 void
 Octree::setCube(float const &x, float const &y, float const &z, float const &s)
 {
@@ -67,13 +63,7 @@ Octree::getCube(void) const
 {
 	return (this->_cube);
 }
-/*
-Cube *
-Octree::getCube(void)
-{
-	return (&this->_cube);
-}
-*/
+
 int32_t const &
 Octree::getState(void) const
 {

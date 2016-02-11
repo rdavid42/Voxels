@@ -105,21 +105,21 @@ public:
 	Core(void);
 	~Core(void);
 
-	uint32_t				getConcurrentThreads();
-	void					processChunkGeneration(Chunk *c);
+	/* Thread pool */
+	uint32_t				getConcurrentThreads(void) const;
 	void *					executeThread(int const &id);
 	int						startThreads(void);
 	int						stopThreads(void);
 	void					addTask(Chunk *c, int const &id);
 
-
 	/* generation */
-	void					createTree(Chunk *c, int const &depth, float x, float y, float z);
-	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap);
-	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth);
-	void					generateChunkMesh(Chunk *chunk, int const &depth) const;
-	void					generateChunkGLMesh(Chunk *chunk);
-	Block					*getClosestBlock(void) const;
+	void					createTree(Chunk *c, int const &depth, float x, float y, float z) const; // multithread
+	void					processChunkGeneration(Chunk *c) const; // multithread
+	void					processChunkSimplification(Chunk *c) const; // multithread
+	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) const; // multithread
+	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) const; // multithread
+	void					generateChunkMesh(Chunk *chunk, int const &depth) const; // multithread
+	void					generateChunkGLMesh(Chunk *chunk) const; // main thread only
 
 	/* core */
 	int						init(void);
@@ -130,6 +130,7 @@ public:
 	void					loop(void);
 	void					clearChunksRemoval(void);
 	bool					chunkInTaskPool(Chunk const *chunk) const;
+	Block					*getClosestBlock(void) const;
 
 	/* Camera */
 

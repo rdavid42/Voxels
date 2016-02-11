@@ -18,7 +18,6 @@ public:
 	Link(float const &x, float const &y, float const &z, float const &s);
 	virtual ~Link(void);
 
-	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state);
 	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, int const &type);
 	virtual Octree *	search(float const &x, float const &y, float const &z);
 	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state, bool const &allowOutside);
@@ -28,6 +27,8 @@ public:
 	virtual Chunk *		getChunk(void);
 	virtual void		remove(void);
 	virtual void		deleteChild(Octree *child);
+	void				backwardSimplification(void);
+	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state);
 
 	Octree *			getChild(uint32_t const &i);
 	void				setChild(uint32_t const &i, Octree *const child);

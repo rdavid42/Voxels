@@ -59,9 +59,29 @@ Link::remove(void)
 	}
 }
 
+void
+Link::backwardSimplification(void)
+{
+	int					i;
+	int					blockType;
+
+	if (_parent && !(_parent->getState() & CHUNK))
+	{
+		for (i = 0; i < CHD_MAX; ++i)
+		{
+			if (!_children[i] || !(_children[i]->getState() & BLOCK))
+				return ;
+		}
+		blockType = (static_cast<Block *>(_children[0]))->type;
+		for (i = 1; i < CHD_MAX; ++i)
+			if (blockType != (static_cast<Block *>(_children[0]))->type)
+				return ;
+	}
+}
+
 // -------------------------------------------------------------------
 // Search the octree with a point and returns a pointer
-// on the deepest child found.
+// on the child found.
 // -------------------------------------------------------------------
 Octree *
 Link::search(float const &x, float const &y, float const &z)
