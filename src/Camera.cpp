@@ -9,6 +9,40 @@ Camera::~Camera(void)
 {
 }
 
+// init -> set -> setView -> initFrustrum -> updateFrustrum
+
+void
+Camera::init(float const &fov, float const &aspect, float const &near, float const &far)
+{
+	_fov = fov;
+	_aspect = aspect;
+	_near = near;
+	_far = far;
+	speed = 0.3;
+	pos.set(0.0f, 30.0f, 15.0f);
+	lookAt.set(0.0f, 0.0f, 0.0f);
+	forward.set(lookAt - pos);
+	forward.normalize();
+	set();
+	initFrustrum();
+}
+
+void
+Camera::set(void)
+{
+	Mat4<float>		translation;
+
+	up.set(0.0f, 1.0f, 0.0f);
+	right.crossProduct(forward, up);
+	right.normalize();
+	up.crossProduct(right, forward);
+	up.normalize();
+	setView();
+	translation.setTranslation(-pos.x, -pos.y, -pos.z);
+	view.multiply(translation);
+	updateFrustrum();
+}
+
 void
 Camera::setView(void)
 {
@@ -41,29 +75,64 @@ Camera::setView(void)
 }
 
 void
-Camera::set(void)
+Camera::initFrustrum(void)
 {
-	Mat4<float>		translation;
-
-	up.set(0.0f, 1.0f, 0.0f);
-	right.crossProduct(forward, up);
-	right.normalize();
-	up.crossProduct(right, forward);
-	up.normalize();
-	setView();
-	translation.setTranslation(-pos.x, -pos.y, -pos.z);
-	view.multiply(translation);
+	_tang = static_cast<float>(tan(_fov * (M_PI / 180.0f) * 0.5f));
+	_nearHeight = _near * _tang;
+	_nearWidth = _nearHeight * _aspect;
+	_farHeight = _far * _tang;
+	_farWidth = _farHeight * _aspect;
+	updateFrustrum();
 }
 
 void
-Camera::init(void)
+Camera::updateFrustrum(void)
 {
-	speed = 0.3;
-	pos.set(0.0f, 30.0f, 15.0f);
-	lookAt.set(0.0f, 0.0f, 0.0f);
-	forward.set(lookAt - pos);
-	forward.normalize();
-	set();
+	Vec3<float>			nearCenter, nearTopLeft, nearTopRight, nearBottomLeft, nearBottomRight;
+	Vec3<float>			farCenter, farTopLeft, farTopRight, farBottomLeft, farBottomRight;
+	Vec3<float>			ax, ay, az;
+
+	// compute camera x/y/z axis
+	az.set(-forward.x, -forward.y, -forward.z);
+	az.normalize();
+	ax.crossProduct(up, az);
+	ax.normalize();
+	ay.crossProduct(az, ax);
+	ay.normalize();
+
+	nearCenter = pos - az * _near;
+	farCenter = pos - az * _far;
+
+	// compute near plane corners
+	nearTopLeft		= nearCenter + ay * _nearHeight - ax * _nearWidth;
+	nearTopRight	= nearCenter + ay * _nearHeight + ax * _nearWidth;
+	nearBottomLeft	= nearCenter - ay * _nearHeight - ax * _nearWidth;
+	nearBottomRight = nearCenter - ay * _nearHeight + ax * _nearWidth;
+
+	// compute far plane corners
+	farTopLeft		= farCenter  + ay * _farHeight  - ax * _farWidth;
+	farTopRight		= farCenter  + ay * _farHeight  + ax * _farWidth;
+	farBottomLeft	= farCenter  - ay * _farHeight  - ax * _farWidth;
+	farBottomRight	= farCenter  - ay * _farHeight  + ax * _farWidth;
+
+	// compute frustrum planes
+	_planes[TOP_PLANE].set(nearTopRight, nearTopLeft, farTopLeft);
+	_planes[BOTTOM_PLANE].set(nearBottomLeft, nearBottomRight, farBottomRight);
+	_planes[LEFT_PLANE].set(nearTopLeft, nearBottomLeft, farBottomLeft);
+	_planes[RIGHT_PLANE].set(nearBottomRight, nearTopRight, farBottomRight);
+	_planes[NEAR_PLANE].set(nearTopLeft, nearTopRight, nearBottomRight);
+	_planes[FAR_PLANE].set(farTopRight, farTopLeft, farBottomLeft);
+}
+
+bool
+Camera::cubeInFrustrum(Cube const &cube)
+{
+	bool		result = true;
+
+	for (int i = 0; i < FRUSTRUM_PLANES; ++i)
+	{
+		if (_planes[i].)
+	}
 }
 
 void

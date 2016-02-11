@@ -3,14 +3,14 @@
 #include "Chunk.hpp"
 
 Chunk::Chunk(void) : Link(),
-			_meshSize(0), _generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
+			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
 {
 	_state = CHUNK;
 	return ;
 }
 
 Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s),
-			_meshSize(0), _generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
+			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
 {
 	_state = CHUNK;
 	return ;
@@ -26,7 +26,6 @@ Chunk::~Chunk(void)
 		mesh.clear();
 	vao = 0;
 	vbo = 0;
-	_meshSize = -1;
 	_generating = false;
 	_generated = false;
 	_renderDone = false;
@@ -65,12 +64,12 @@ Chunk::render(Core &core) const
 	(void)core;
 	if (_renderDone)
 	{
-		if (_meshSize > 0)
+		if (mesh.vertices() > 0)
 		{
 			glBindVertexArray(vao);
 			core.ms.push();
 				glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
-				glDrawArrays(GL_TRIANGLES, 0, _meshSize);
+				glDrawArrays(GL_TRIANGLES, 0, mesh.vertices());
 			core.ms.pop();
 		}
 	}
@@ -81,12 +80,12 @@ Chunk::renderLines(Core &core) const
 {
 	if (_renderDone)
 	{
-		if (_meshSize > 0)
+		if (mesh.vertices() > 0)
 		{
 			glBindVertexArray(vao);
 			core.ms.push();
 				glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
-				glDrawArrays(GL_LINES, 0, _meshSize);
+				glDrawArrays(GL_LINES, 0, mesh.vertices());
 			core.ms.pop();
 		}
 	}
@@ -102,12 +101,6 @@ Chunk::renderRidges(Core &core) const
 		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 		glDrawElements(GL_LINES, core.selectionIndicesSize, GL_UNSIGNED_SHORT, (void *)0);
 	core.ms.pop();
-}
-
-int const &
-Chunk::getMeshSize(void)
-{
-	return (_meshSize);
 }
 
 bool const &
@@ -138,12 +131,6 @@ bool const &
 Chunk::getRemovable(void)
 {
 	return (_removable);
-}
-
-void
-Chunk::setMeshSize(int const &val)
-{
-	_meshSize = val;
 }
 
 void

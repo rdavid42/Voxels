@@ -11,7 +11,6 @@
 class Chunk : public Link
 {
 private:
-	int								_meshSize;
 	bool							_generating;
 	bool							_generated;
 	bool							_renderDone;
@@ -35,14 +34,12 @@ public:
 	virtual void					deleteChild(Octree *child);
 	virtual Chunk *					getChunk(void);
 
-	int const &						getMeshSize(void);
 	bool const &					getGenerating(void);
 	bool const &					getGenerated(void);
 	bool const &					getRenderDone(void);
 	bool const &					getStopGenerating(void);
 	bool const &					getRemovable(void);
 
-	void							setMeshSize(int const &val);
 	void							setGenerating(bool const &val);
 	void							setGenerated(bool const &val);
 	void							setRenderDone(bool const &val);

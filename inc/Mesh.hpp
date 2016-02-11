@@ -27,10 +27,12 @@ public:
 	void							clear(void);
 	void							pushVertex(Vertex const &vertex);
 
-	int								size(void);
-	int const &						stride(void);
+	int								size(void) const;
+	int const &						vertices(void) const;
+	int const &						stride(void) const;
 
 private:
+	int								_vertices;
 	static int						_stride;
 };
 

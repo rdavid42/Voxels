@@ -307,7 +307,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) const // multithread
 			}
 		}
 	}
-	chunk->setMeshSize(chunk->mesh.size() / 5);
 }
 
 void
@@ -684,7 +683,7 @@ Core::generation(void)
 					{
 						// wait for the chunk generation and allocate the opengl mesh
 						// opengl functions cannot be called from a thread so we do it on the main thread (current OpenGL context)
-						if (chunk->getMeshSize() > 0)
+						if (chunk->mesh.vertices() > 0)
 							generateChunkGLMesh(chunk);
 						chunk->setRenderDone(true);
 						chunk->setGenerating(false);
@@ -984,8 +983,12 @@ Core::init(void)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
-	buildProjectionMatrix(projMatrix, 53.13f, 0.1f, 1000.0f);
-	camera.init();
+	float const fov = 53.13f;
+	float const aspect = windowWidth * 1.0f / windowHeight;
+	float const near = 0.1f;
+	float const far = 1000.0f;
+	buildProjectionMatrix(projMatrix, fov, near, far);
+	camera.init(fov, aspect, near, far);
 	if (!initShaders(vertexShader, fragmentShader, program))
 		return (0);
 	getLocations();
