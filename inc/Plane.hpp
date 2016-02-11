@@ -14,7 +14,7 @@ public:
 	~Plane(void);
 
 	void			set(Vec3<float> &p1, Vec3<float> &p2, Vec3<float> &p3);
-	float			distance(Vec3<float> &point);
+	float			distance(Vec3<float> const &point) const;
 
 private:
 };

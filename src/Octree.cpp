@@ -67,13 +67,13 @@ Octree::getCube(void) const
 {
 	return (this->_cube);
 }
-
+/*
 Cube *
 Octree::getCube(void)
 {
 	return (&this->_cube);
 }
-
+*/
 int32_t const &
 Octree::getState(void) const
 {

@@ -27,7 +27,7 @@ Plane::set(Vec3<float> &p1, Vec3<float> &p2, Vec3<float> &p3)
 }
 
 float
-Plane::distance(Vec3<float> &point)
+Plane::distance(Vec3<float> const &point) const
 {
 	return (d + normal.dotProduct(point));
 }

@@ -179,7 +179,7 @@ Link::insert(float const &x, float const &y, float const &z, uint32_t const &dep
 					return (_children[i]->insert(x, y, z, depth - 1, state, type));
 				}
 			}
-			else if (_children[i]->getCube()->vertexInside(x, y, z))
+			else if (_children[i]->getCube().vertexInside(x, y, z))
 			{
 				return (_children[i]->insert(x, y, z, depth - 1, state, type));
 			}

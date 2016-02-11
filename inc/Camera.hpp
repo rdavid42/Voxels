@@ -13,6 +13,12 @@
 # define NEAR_PLANE			4
 # define FAR_PLANE			5
 
+enum frustrum_collision
+{
+	INSIDE,
+	OUTSIDE
+};
+
 # define FRUSTRUM_PLANES	6
 
 class Camera
@@ -36,6 +42,7 @@ public:
 	void					setView(void);
 	void					initFrustrum(void);
 	void					updateFrustrum(void);
+	frustrum_collision		cubeInFrustrum(Cube const &cube);
 	void					moveForward(void);
 	void					moveBackward(void);
 	void					strafeRight(void);

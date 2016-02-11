@@ -124,15 +124,17 @@ Camera::updateFrustrum(void)
 	_planes[FAR_PLANE].set(farTopRight, farTopLeft, farBottomLeft);
 }
 
-bool
+frustrum_collision
 Camera::cubeInFrustrum(Cube const &cube)
 {
-	bool		result = true;
+	frustrum_collision			result = INSIDE;
 
 	for (int i = 0; i < FRUSTRUM_PLANES; ++i)
 	{
-		if (_planes[i].)
+		if (_planes[i].distance(cube.getVertexPosition(_planes[i].normal)) < 0.0f)
+			return (OUTSIDE);
 	}
+	return (result);
 }
 
 void

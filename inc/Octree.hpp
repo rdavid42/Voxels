@@ -37,7 +37,7 @@ public:
 	void				setState(int32_t const &state);
 	void				setParent(Octree *parent);
 	Cube const &		getCube(void) const;
-	Cube *				getCube(void);
+	// Cube *				getCube(void);
 	int32_t const &		getState(void) const;
 	Octree *			getParent(void);
 	uint32_t			getDepth(void);

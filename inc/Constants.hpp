@@ -64,7 +64,7 @@
 # define BLOCK_DEPTH				5 // insert from chunk depth [1..6]
 # define MAX_BLOCK_DEPTH			6
 // [1, 3, 5, 7, 9, ...]
-# define GEN_SIZE					9 // (n * n * n) must be odd in order to place camera in the center all the time
+# define GEN_SIZE					20 // (n * n * n) must be odd in order to place camera in the center all the time
 # define HEIGHTMAP_SIZE				3
 
 # define TARGET_DIST				1

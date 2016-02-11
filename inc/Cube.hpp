@@ -4,14 +4,15 @@
 
 # include <iostream>
 # include <stdint.h>
+# include "Vec3.hpp"
 
 class Cube
 {
 private:
-	float	_x;
-	float	_y;
-	float	_z;
-	float	_s;
+	float					_x;
+	float					_y;
+	float					_z;
+	float					_s;
 
 public:
 	Cube(void);
@@ -19,16 +20,17 @@ public:
 	Cube(Cube const &src);
 	virtual ~Cube(void);
 
-	bool				vertexInside(float const &x, float const &y, float const &z);
+	float const &			getX(void) const;
+	float const &			getY(void) const;
+	float const &			getZ(void) const;
+	float const &			getS(void) const;
+	void					setX(float const &x);
+	void					setY(float const &y);
+	void					setZ(float const &z);
+	void					setS(float const &s);
 
-	float const			&getX(void) const;
-	float const			&getY(void) const;
-	float const			&getZ(void) const;
-	float const			&getS(void) const;
-	void				setX(float const &x);
-	void				setY(float const &y);
-	void				setZ(float const &z);
-	void				setS(float const &s);
+	bool					vertexInside(float const &x, float const &y, float const &z) const;
+	Vec3<float>				getVertexPosition(Vec3<float> const &normal) const;
 
 	Cube				&operator=(Cube const &rhs);
 };

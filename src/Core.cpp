@@ -224,9 +224,9 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) const // multithread
 	//		 4____5
 	//		z
 
-	cx = chunk->getCube()->getX();
-	cy = chunk->getCube()->getY();
-	cz = chunk->getCube()->getZ();
+	cx = chunk->getCube().getX();
+	cy = chunk->getCube().getY();
+	cz = chunk->getCube().getZ();
 	chunk->mesh.clear();
 /*	std::cerr << "x: " << cx << ", y: " << cy << ", z: " << cz << ", bs: " << bs << ", cs: " << chunk_size << std::endl;
 	std::cerr << "full chunk mesh size: " << (chunk_size / bs) * (chunk_size / bs) * 6 * 8 * 6 << std::endl;*/
@@ -342,9 +342,9 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	float						nx, nz, ny;
 	int							i;
 
-	nx = chunk->getCube()->getX() + x;
-	ny = chunk->getCube()->getY() + y;
-	nz = chunk->getCube()->getZ() + z;
+	nx = chunk->getCube().getX() + x;
+	ny = chunk->getCube().getY() + y;
+	nz = chunk->getCube().getZ() + z;
 	n = 0.0f;
 	nstone = noise->fractal(5, nx, ny, nz);
 	// ncoal = nstone;
@@ -386,8 +386,8 @@ Core::generateBlock(Chunk *chunk, float const &x, float const &y, float const &z
 		std::cerr << "Null chunk!" << std::endl;
 		return ;
 	}
-	nx = chunk->getCube()->getX() + x;
-	nz = chunk->getCube()->getZ() + z;
+	nx = chunk->getCube().getX() + x;
+	nz = chunk->getCube().getZ() + z;
 	altitude = 0.0f;
 	for (int i = 0; i < 10.0f; i++)
 		altitude += noise->fractal(2, nx, y, nz);
@@ -1062,7 +1062,10 @@ Core::render(void)
 				for (x = 0; x < GEN_SIZE; ++x)
 				{
 					if (chunks[z][y][x] != NULL)
-						chunks[z][y][x]->render(*this);
+					{
+						if (camera.cubeInFrustrum(chunks[z][y][x]->getCube()) == INSIDE)
+							chunks[z][y][x]->render(*this);
+					}
 				}
 			}
 		}
@@ -1070,13 +1073,17 @@ Core::render(void)
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-		for (z = 0; z < GEN_SIZE; ++z)
+/*		for (z = 0; z < GEN_SIZE; ++z)
+		{
 			for (y = 0; y < GEN_SIZE; ++y)
+			{
 				for (x = 0; x < GEN_SIZE; ++x)
 				{
 					if (chunks[z][y][x] != NULL)
 						chunks[z][y][x]->renderRidges(*this);
 				}
+			}
+		}*/
 		if (closestBlock != NULL)
 			closestBlock->renderRidges(*this);
 	ms.pop();
