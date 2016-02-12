@@ -97,8 +97,8 @@ Core::loadTexture(char const *filename)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	checkGlError(__FILE__, __LINE__);
@@ -312,9 +312,6 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 		y = currentCube.getY();
 		z = currentCube.getZ();
 		s = currentCube.getS();
-		// tmp = chunk->search(x, y + bds, z, BLOCK, true); // top
-		// if (!tmp)
-		// {
 		if (!checkBlockObstructedUp(chunk, currentCube, deepestBlockSize))
 		{
 			chunk->mesh.pushVertex({x,			y + s,		z,			t[bt][2][0],	t[bt][2][2]}); // 2
@@ -324,7 +321,6 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 			chunk->mesh.pushVertex({x + s,		y + s,		z,			t[bt][2][0],	t[bt][2][3]}); // 3
 			chunk->mesh.pushVertex({x,			y + s,		z,			t[bt][2][0],	t[bt][2][2]}); // 2
 		}
-		// }
 		if (!checkBlockObstructedBottom(chunk, currentCube, deepestBlockSize))
 		{
 			chunk->mesh.pushVertex({x,			y,			z,			t[bt][1][0],	t[bt][1][3]}); // 0
@@ -554,28 +550,22 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 	}
 	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
 	{
-		// for (y = 0.0f; y < this->chunk_size; y += this->block_size[depth])
-		// {
-			for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
+		for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
+		{
+			for (y = this->chunk_size; y >= 0.0f; y -= this->block_size[depth])
 			{
-				// chunk->insert(chunk->getCube()->getX() + x, 0.0f, chunk->getCube()->getZ() + z, depth, BLOCK | GROUND);
-				// density = noise->fractal(0, nx, ny, nz) / 3;
-				for (y = this->chunk_size; y >= 0.0f; y -= this->block_size[depth])
+				if (chunk->getStopGenerating())
 				{
-					if (chunk->getStopGenerating())
-					{
-						chunk->setRemovable(true);
-						return ;
-					}
-					if (chunk)
-						generateBlock3d(chunk, x, y, z, depth, 50);
-					//generateBlock(chunk, x, 1.5, z, depth);
+					chunk->setRemovable(true);
+					return ;
 				}
+				if (chunk)
+					generateBlock3d(chunk, x, y, z, depth, 50);
+				//generateBlock(chunk, x, 1.5, z, depth);
 			}
-		// }
+		}
 	}
 	processChunkSimplification(chunk);
-	// generateChunkMesh(chunk, depth);
 	generateChunkMesh(chunk, chunk);
 	chunk->setGenerated(true);
 	chunk->setRemovable(true);
