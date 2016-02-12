@@ -5,19 +5,19 @@
 #include "Link.hpp"
 
 Octree::Octree(void)
-	: _state(EMPTY), _parent(NULL)
+	: _parent(NULL), _state(EMPTY)
 {
 	return ;
 }
 
-Octree::Octree(Octree *parent, int const &state) 
-	: _state(state), _parent(parent)
+Octree::Octree(Octree *parent, int16_t const &state) 
+	: _parent(parent), _state(state)
 {
 
 }
 
 Octree::Octree(Octree const &src)
-	: _state(src.getState()), _parent(NULL)
+	: _parent(NULL), _state(src.getState())
 {
 	return ;
 }
@@ -41,7 +41,7 @@ Octree::operator=(Octree const &rhs)
 }
 
 void
-Octree::setState(int32_t const &state)
+Octree::setState(int16_t const &state)
 {
 	this->_state = state;
 }
@@ -52,7 +52,7 @@ Octree::setParent(Octree *parent)
 	this->_parent = parent;
 }
 
-int32_t const &
+int16_t const &
 Octree::getState(void) const
 {
 	return (this->_state);

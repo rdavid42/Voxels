@@ -18,22 +18,22 @@ public:
 	Block(float const &x, float const &y, float const &z, float const &s);
 	virtual ~Block(void);
 
-	virtual Octree *		search(float const &x, float const &y, float const &z);
-	virtual Octree *		search(float const &x, float const &y, float const &z, int const &state, bool const &allowOutside);
-	virtual Octree *		insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, int const &type);
-	virtual void			render(Core &core) const;
-	virtual void			renderRidges(Core &core) const;
-	virtual Cube			getCube(void) const;
-	virtual int				getType(void) const;
-	void					remove(void);
-	Chunk *					getChunk(void);
+	virtual Octree *	search(float const &x, float const &y, float const &z);
+	virtual Octree *	search(float const &x, float const &y, float const &z, int const &state, bool const &allowOutside);
+	virtual Octree *	insert(float const &x, float const &y, float const &z, uint32_t const &depth, int32_t const &state, int const &type);
+	virtual void		render(Core &core) const;
+	virtual void		renderRidges(Core &core) const;
+	virtual Cube		getCube(void) const;
+	virtual int16_t		getType(void) const;
+	void				remove(void);
+	Chunk *				getChunk(void);
 
 	Block				&operator=(Block const &rhs);
 
 private:
 	Block(Block const &src);
 
-	int						_type;
+	int16_t				_type;
 };
 
 std::ostream			&operator<<(std::ostream &o, Block const &i);

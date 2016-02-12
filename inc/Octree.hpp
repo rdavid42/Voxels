@@ -12,12 +12,12 @@ class Core;
 class Octree
 {
 protected:
-	int32_t				_state;
 	Octree *			_parent;
+	int16_t				_state;
 
 public:
 	Octree(void);
-	Octree(Octree *parent, int const &state);
+	Octree(Octree *parent, int16_t const &state);
 	Octree(Octree const &src);
 	virtual ~Octree(void);
 
@@ -34,10 +34,10 @@ public:
 	virtual void				setCube(float const &, float const &, float const &, float const &) {};
 	virtual Cube				getCube(void) const = 0;
 	virtual void				backwardSimplification(void) {};
-	virtual int					getType(void) const { return (NONE); };
-	void						setState(int32_t const &state);
+	virtual int16_t				getType(void) const { return (NONE); };
+	void						setState(int16_t const &state);
 	void						setParent(Octree *parent);
-	int32_t const &				getState(void) const;
+	int16_t const &				getState(void) const;
 	Octree *					getParent(void) const;
 	uint32_t					getDepth(void);
 	virtual Octree *			getChild(uint32_t const &) { return (NULL); }

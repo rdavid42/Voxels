@@ -11,8 +11,8 @@ class Core;
 class Link : public Octree
 {
 protected:
-	Cube				_cube;
 	Octree *			_children[CHD_MAX];
+	Cube				_cube;
 
 public:
 	Link(void);

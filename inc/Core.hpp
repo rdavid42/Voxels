@@ -109,7 +109,8 @@ public:
 	void					processChunkSimplification(Chunk *chunk); // multithread
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) const; // multithread
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) const; // multithread
-	void					generateChunkMesh(Chunk *chunk, int const &depth) const; // multithread
+	// void					generateChunkMesh(Chunk *chunk, int const &depth) const; // multithread
+	void					generateChunkMesh(Chunk *chunk, Octree *current) const; // multithread
 	void					generateChunkGLMesh(Chunk *chunk) const; // main thread only
 
 	/* core */

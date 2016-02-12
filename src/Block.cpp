@@ -88,7 +88,7 @@ Block::getCube(void) const
 	return (cube);
 }
 
-int
+int16_t
 Block::getType(void) const
 {
 	return (_type);
