@@ -80,7 +80,7 @@ Chunk::renderLines(Core &core) const
 {
 	if (_renderDone)
 	{
-		if (mesh.vertices() > 0)
+		if (mesh.vertices() > 0 && vbo != 0)
 		{
 			glBindVertexArray(vao);
 			core.ms.push();

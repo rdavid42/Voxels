@@ -1153,9 +1153,11 @@ Core::updateLeftClick(void)
 		closestBlock->remove();
 		glBindVertexArray(chunk->vao);
 		glDeleteBuffers(1, &chunk->vbo);
-		// generateChunkMesh(chunk, BLOCK_DEPTH);
+		chunk->vbo = 0;
+		chunk->mesh.clear();
 		generateChunkMesh(chunk, chunk);
-		generateChunkGLMesh(chunk);
+		if (chunk->mesh.vertices() > 0)
+			generateChunkGLMesh(chunk);
 	}
 }
 
