@@ -1147,7 +1147,7 @@ Core::init(void)
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	// glfwDisable(GLFW_MOUSE_CURSOR);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);

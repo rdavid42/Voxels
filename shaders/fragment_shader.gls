@@ -5,6 +5,7 @@ uniform float					renderVoxelRidges;
 uniform vec3					color;
 
 in vec2							frag_texture;
+in vec4							view_space;
 // in vec3							frag_normal;
 
 out vec4						outputColor;
@@ -12,10 +13,29 @@ out vec4						outputColor;
 void main(void)
 {
 	vec4		c;
+	float		dist;
+	float		fogFactor;
+	int			fogSelector = 0;
+	float		fogDensity = 0.025;
+	vec4		fogColor = vec4(0.5, 0.5, 0.5, 1.0);
 
+
+	// fog
+	dist = length(view_space);
+	if (fogSelector == 0) // Linear fog
+		fogFactor = (100 - dist) / (100 - 20); // (80 - 20) = far - near
+	else if (fogSelector == 1) //exponential fog
+		fogFactor = 1.0 / exp(dist * fogDensity);
+	else if (fogSelector == 2) // square exponential fog
+		fogFactor = 1.0 /exp((dist * fogDensity) * (dist * fogDensity));
+	fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+	//texture
 	if (renderVoxelRidges > 0.5f)
 		c = vec4(color, 1.0f);
 	else
 		c = texture(tex, frag_texture);
-	outputColor = c;
+
+	//
+	outputColor = mix(fogColor, c, fogFactor);
 }

@@ -9,10 +9,12 @@ in vec2							texture;
 // in vec3							normal;
 
 out vec2						frag_texture;
+out	vec4						view_space;
 // out vec3						frag_normal;
 
 void		main()
 {
+	view_space = view_matrix * vec4(position, 1.0);
 	gl_Position = proj_matrix * view_matrix * obj_matrix * vec4(position, 1.0);
 	frag_texture = texture;
 	// frag_normal = normal;
