@@ -28,13 +28,13 @@ public:
 	virtual Chunk *		getChunk(void);
 	virtual void		remove(void);
 	virtual void		deleteChild(Octree *child);
-	void				backwardSimplification(void);
+	virtual void		backwardSimplification(void);
 	void				createChild(uint32_t const &i, float const &x, float const &y, float const &z, float const &s, int32_t const &state);
 
 	void				setCube(float const &x, float const &y, float const &z, float const &s);
 	Cube				getCube(void) const;
 	Octree *			getChild(uint32_t const &i);
-	void				setChild(uint32_t const &i, Octree *const child);
+	void				setChild(uint32_t const &i, Octree *child);
 
 	Link &				operator=(Link const &rhs);
 

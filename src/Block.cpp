@@ -2,13 +2,17 @@
 #include "Block.hpp"
 #include "Core.hpp"
 
-Block::Block(void) : Octree()
+Block::Block(void) : Octree(), _type(NONE)
 {
-	type = NONE;
 	return ;
 }
 
-Block::Block(int const &t) : Octree(), type(t)
+Block::Block(Octree *parent, int const &state, int const &type) : Octree(parent, state), _type(type)
+{
+	return ;
+}
+
+Block::Block(int const &type) : Octree(), _type(type)
 {
 	return ;
 }
@@ -56,7 +60,7 @@ Block::insert(float const &x, float const &y, float const &z, uint32_t const &de
 {
 	if (getCube().vertexInside(x, y, z))
 	{
-		this->type = type;
+		_type = type;
 		setState(state);
 	}
 	else
@@ -82,6 +86,12 @@ Block::getCube(void) const
 		}
 	}
 	return (cube);
+}
+
+int
+Block::getType(void) const
+{
+	return (_type);
 }
 
 void

@@ -41,10 +41,11 @@ Link::deleteChild(Octree *child)
 	{
 		for (int i = 0; i < CHD_MAX; ++i)
 		{
-			if (_children[i] != NULL && _children[i] == child)
+			if (_children[i] == child)
 			{
 				delete _children[i];
 				_children[i] = NULL;
+				return ;
 			}
 		}
 	}
@@ -64,18 +65,30 @@ Link::backwardSimplification(void)
 {
 	int					i;
 	int					blockType;
+	Link				*parent;
 
-	if (_parent && !(_parent->getState() & CHUNK))
+	if (_parent && !(this->getState() & CHUNK))
 	{
+		parent = static_cast<Link *>(_parent);
 		for (i = 0; i < CHD_MAX; ++i)
 		{
 			if (!_children[i] || !(_children[i]->getState() & BLOCK))
 				return ;
 		}
-		blockType = (static_cast<Block *>(_children[0]))->type;
+		blockType = _children[0]->getType();
 		for (i = 1; i < CHD_MAX; ++i)
-			if (blockType != (static_cast<Block *>(_children[0]))->type)
+			if (blockType != _children[i]->getType())
 				return ;
+		for (i = 0; i < CHD_MAX; ++i)
+		{
+			if (parent->getChild(i) == this)
+			{
+				parent->deleteChild(this);
+				parent->setChild(i, new Block(parent, BLOCK, blockType));
+				parent->backwardSimplification();
+				return;
+			}
+		}
 	}
 }
 
@@ -255,7 +268,7 @@ Link::getChild(uint32_t const &i)
 }
 
 void
-Link::setChild(uint32_t const &i, Octree *const child)
+Link::setChild(uint32_t const &i, Octree *child)
 {
 	_children[i] = child;
 }

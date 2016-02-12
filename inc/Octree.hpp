@@ -17,6 +17,7 @@ protected:
 
 public:
 	Octree(void);
+	Octree(Octree *parent, int const &state);
 	Octree(Octree const &src);
 	virtual ~Octree(void);
 
@@ -32,6 +33,8 @@ public:
 
 	virtual void				setCube(float const &, float const &, float const &, float const &) {};
 	virtual Cube				getCube(void) const = 0;
+	virtual void				backwardSimplification(void) {};
+	virtual int					getType(void) const { return (NONE); };
 	void						setState(int32_t const &state);
 	void						setParent(Octree *parent);
 	int32_t const &				getState(void) const;

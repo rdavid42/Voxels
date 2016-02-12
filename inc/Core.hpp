@@ -82,6 +82,8 @@ public:
 	Block					*closestBlock;
 	std::list<Chunk *>		chunksRemoval;
 
+	size_t					frameRenderedTriangles;
+
 	/* Thread pool */
 	int						pool_size;
 	bool					pool_state;
@@ -103,8 +105,8 @@ public:
 
 	/* generation */
 	void					createTree(Chunk *c, int const &depth, float x, float y, float z) const; // multithread
-	void					processChunkGeneration(Chunk *c) const; // multithread
-	void					processChunkSimplification(Chunk *c) const; // multithread
+	void					processChunkGeneration(Chunk *c); // multithread
+	void					processChunkSimplification(Chunk *chunk); // multithread
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) const; // multithread
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) const; // multithread
 	void					generateChunkMesh(Chunk *chunk, int const &depth) const; // multithread

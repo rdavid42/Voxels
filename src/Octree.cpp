@@ -10,6 +10,12 @@ Octree::Octree(void)
 	return ;
 }
 
+Octree::Octree(Octree *parent, int const &state) 
+	: _state(state), _parent(parent)
+{
+
+}
+
 Octree::Octree(Octree const &src)
 	: _state(src.getState()), _parent(NULL)
 {

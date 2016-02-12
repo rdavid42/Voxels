@@ -275,6 +275,8 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) const // multithread
 	Octree					*tmp, *up;
 	float const				bs = block_size[depth];
 	std::vector<GLfloat>	mesh;
+	int						s; // side texture index
+	int						bt;
 	float const				t[6][3][4] =
 	{
 		{ // GRASS
@@ -308,8 +310,6 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) const // multithread
 			{ 0.1f, 0.2f, 0.0f, 1.0f }
 		}
 	};
-	int								s; // side texture index
-	int								bt;
 
 	//          y
 	//		    2----3
@@ -334,7 +334,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) const // multithread
 				current = static_cast<Block *>(chunk->search(x, y, z, BLOCK, true));
 				if (current)
 				{
-					bt = current->type - 1;
+					bt = current->getType() - 1;
 					up = chunk->search(x, y + bs, z, BLOCK, true); // top
 					if (!up)
 					{
@@ -405,7 +405,7 @@ Core::generateChunkMesh(Chunk *chunk, int const &depth) const // multithread
 }
 
 void
-Core::createTree(Chunk *c, int const &depth, float x, float y, float z) const
+Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) const
 {
 	float			tx, ty, tz;
 	float			bSize;
@@ -415,7 +415,7 @@ Core::createTree(Chunk *c, int const &depth, float x, float y, float z) const
 
 	for (ly = y; ly <= y + 2; ly += bSize)
 	{
-		c->insert(x, ly, z, depth, BLOCK, WOOD);
+		chunk->insert(x, ly, z, depth, BLOCK, WOOD);
 	}
 	for (tx = x + 1; tx > x - 1.5; tx -= bSize)
 	{
@@ -425,7 +425,7 @@ Core::createTree(Chunk *c, int const &depth, float x, float y, float z) const
 			{
 				if (pow(tx - x, 2) + pow(ty - ly, 2) + pow(tz - z, 2) < 1) 
 				{
-					c->insert(tx, ty, tz, depth, BLOCK, LEAF);
+					chunk->insert(tx, ty, tz, depth, BLOCK, LEAF);
 				}
 			}
 
@@ -494,7 +494,7 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 					createTree(chunk, depth, nx, ny + bSize, nz);
 				if ((octree->search(nx, ny + bSize, nz, EMPTY, 1) != NULL
 				&&	 octree->search(nx, ny + bSize, nz)->getState() == EMPTY))
-					chunk->insert(nx, ny, nz, depth, BLOCK, GRASS); // dirt
+					chunk->insert(nx, ny, nz, depth, BLOCK, GRASS);
 				else
 					chunk->insert(nx, ny, nz, depth, BLOCK, DIRT);
 			}
@@ -506,7 +506,7 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 				{
 					if (chunk->getState() != CHUNK)
 						std::cerr << "Error -> generateBlock3d(): " << typeid(chunk).name() << " of state " << chunk->getState() << std::endl;
-					chunk->insert(nx, ny, nz, depth, BLOCK, STONE); //stone
+					chunk->insert(nx, ny, nz, depth, BLOCK, STONE);
 				}
 			}
 		}
@@ -538,13 +538,34 @@ Core::generateBlock(Chunk *chunk, float const &x, float const &y, float const &z
 }
 
 void
-Core::processChunkSimplification(Chunk *chunk) const
+Core::processChunkSimplification(Chunk *chunk) // multithread
 {
-	(void)chunk;
+	float					x, y, z;
+	float					cx, cy, cz;
+	float const				bs = block_size[BLOCK_DEPTH];
+	Octree					*tmp;
+
+	cx = chunk->getCube().getX();
+	cy = chunk->getCube().getY();
+	cz = chunk->getCube().getZ();
+	for (z = cz; z < cz + chunk_size; z += bs)
+	{
+		for (y = cy; y < cy + chunk_size; y += bs)
+		{
+			for (x = cx; x < cx + chunk_size; x += bs)
+			{
+				tmp = chunk->search(x, y, z, BLOCK, false);
+				if (tmp)
+				{
+					tmp->getParent()->backwardSimplification();
+				}
+			}
+		}
+	}
 }
 
 void
-Core::processChunkGeneration(Chunk *chunk) const // multithread
+Core::processChunkGeneration(Chunk *chunk) // multithread
 {
 	float						x, z, y;
 	int							depth;
@@ -557,7 +578,6 @@ Core::processChunkGeneration(Chunk *chunk) const // multithread
 	{
 		chunk->setRenderDone(true);
 		chunk->setGenerated(true);
-		chunk->setRemovable(true);
 		chunk->setRemovable(true);
 		return ;
 	}
@@ -946,8 +966,6 @@ Core::updateChunks(void)
 					chunks[z][y][x] = newChunks[z][y][x];
 		insertChunks();
 	}
-	if (chunksRemoval.size() > 0)
-		clearChunksRemoval();
 }
 
 void
@@ -1015,7 +1033,6 @@ Core::clearChunksRemoval(void)
 	Chunk								*chunk;
 	bool								inView;
 
-	inView = false;
 	if (chunksRemoval.size() > 0)
 	{
 		for (it = chunksRemoval.begin(); it != chunksRemoval.end();)
@@ -1024,6 +1041,7 @@ Core::clearChunksRemoval(void)
 			// std::cerr << chunk << "-> " << "state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << std::endl;
 			if (chunk && chunk->getRemovable())
 			{
+				inView = false;
 				for (int z = 0; z < GEN_SIZE; ++z)
 				{
 					for (int y = 0; y < GEN_SIZE; ++y)
@@ -1155,6 +1173,7 @@ Core::init(void)
 	octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	initChunks();
 	closestBlock = 0;
+	frameRenderedTriangles = 0;
 	return (1);
 }
 
@@ -1191,6 +1210,8 @@ Core::update(void)
 	closestBlock = getClosestBlock();
 	generation();
 	updateChunks();
+	if (chunksRemoval.size() > 0)
+		clearChunksRemoval();
 }
 
 void
@@ -1198,6 +1219,7 @@ Core::render(void)
 {
 	float		ftime = glfwGetTime();
 	int			x, y, z;
+	size_t		t;
 
 	(void)ftime;
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, camera.view.val);
@@ -1205,6 +1227,7 @@ Core::render(void)
 		// render meshes
 		glUniform1f(renderVoxelRidgesLoc, 0.0f);
 		glBindTexture(GL_TEXTURE_2D, tex[0]);
+		t = 0;
 		for (z = 0; z < GEN_SIZE; ++z)
 		{
 			for (y = 0; y < GEN_SIZE; ++y)
@@ -1214,11 +1237,15 @@ Core::render(void)
 					if (chunks[z][y][x] != NULL)
 					{
 						if (camera.cubeInFrustrum(chunks[z][y][x]->getCube()) == INSIDE)
+						{
 							chunks[z][y][x]->render(*this);
+							t += chunks[z][y][x]->mesh.vertices() / 3;
+						}
 					}
 				}
 			}
 		}
+		frameRenderedTriangles = t;
 		// render chunks ridges
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
@@ -1270,7 +1297,7 @@ Core::loop(void)
 		glfwPollEvents();
 		if (currentTime - lastTime >= 1.0)
 		{
-			std::string timers = std::to_string(updateTime) + " / " + std::to_string(renderTime);
+			std::string timers = std::to_string(updateTime) + " / " + std::to_string(renderTime) + " / " + std::to_string(frameRenderedTriangles) + " triangles";
 			glfwSetWindowTitle(window, (std::to_string((int)frames) + " fps [" + timers + "]").c_str());
 			frames = 0.0;
 			lastTime += 1.0;

@@ -12,10 +12,9 @@ class Core;
 class Block : public Octree
 {
 public:
-	int					type;
-
 	Block(void);
-	Block(int const &t);
+	Block(Octree *parent, int const &state, int const &type);
+	Block(int const &type);
 	Block(float const &x, float const &y, float const &z, float const &s);
 	virtual ~Block(void);
 
@@ -25,6 +24,7 @@ public:
 	virtual void			render(Core &core) const;
 	virtual void			renderRidges(Core &core) const;
 	virtual Cube			getCube(void) const;
+	virtual int				getType(void) const;
 	void					remove(void);
 	Chunk *					getChunk(void);
 
@@ -32,6 +32,8 @@ public:
 
 private:
 	Block(Block const &src);
+
+	int						_type;
 };
 
 std::ostream			&operator<<(std::ostream &o, Block const &i);
