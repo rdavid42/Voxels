@@ -31,14 +31,14 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
-	core->camera.vangle -= ((ypos - core->windowHeight / 2) * 0.05);
-	if (core->camera.vangle > 89)
-		core->camera.vangle = 89;
-	if (core->camera.vangle < -89)
-		core->camera.vangle = -89;
-	core->camera.hangle -= ((xpos - core->windowWidth / 2) * 0.05);
+	core->camera.vangle -= ((ypos - core->windowHeight / 2.0f) * 0.05);
+	if (core->camera.vangle > 89.0f)
+		core->camera.vangle = 89.0f;
+	if (core->camera.vangle < -89.0f)
+		core->camera.vangle = -89.0f;
+	core->camera.hangle -= ((xpos - core->windowWidth / 2.0f) * 0.05);
 	core->camera.hangle = fmod(core->camera.hangle, 360);
-	glfwSetCursorPos(core->window, core->windowWidth / 2, core->windowHeight / 2);
+	glfwSetCursorPos(core->window, core->windowWidth / 2.0f, core->windowHeight / 2.0f);
 }
 
 void

@@ -34,7 +34,8 @@ void main(void)
 	if (renderVoxelRidges > 0.5f)
 		c = vec4(color, 1.0f);
 	else
-		c = mix(fogColor, texture(tex, frag_texture), fogFactor);
+		c = texture(tex, frag_texture);
+		// c = mix(fogColor, texture(tex, frag_texture), fogFactor);
 
 	//
 	outputColor = c;
