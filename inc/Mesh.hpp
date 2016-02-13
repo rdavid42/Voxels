@@ -5,6 +5,7 @@
 
 # include <vector>
 # include <iostream>
+# include "Constants.hpp"
 
 class Mesh
 {
@@ -18,22 +19,33 @@ public:
 		float			ty;
 	};
 
-	std::vector<float>				data;
-
 	Mesh(void);
 	~Mesh(void);
 
 	void							reserve(int const &size);
 	void							clear(void);
+	void							createGL(GLuint const &positionLoc, GLuint const &textureLoc);
+	void							deleteGL(void);
 	void							pushVertex(Vertex const &vertex);
 
-	int								size(void) const;
-	int const &						vertices(void) const;
-	int const &						stride(void) const;
+	int								getSize(void) const;
+	int const &						getVertices(void) const;
+	int const &						getStride(void) const;
+	GLenum const &					getMode(void) const;
+	GLuint const &					getVAO(void) const;
+	GLuint const &					getVBO(void) const;
+	GLuint							getPrimitives(void) const;
+
+	void							setMode(GLenum const &mode);
 
 private:
+	GLuint							_vao;
+	GLuint							_vbo;
+	GLenum							_mode;
 	int								_vertices;
+
 	static int						_stride;
+	std::vector<float>				_data;
 };
 
 #endif

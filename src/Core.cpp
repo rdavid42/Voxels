@@ -762,21 +762,6 @@ Core::addTask(Chunk *chunk, int const &id)
 }
 
 void
-Core::generateChunkGLMesh(Chunk *chunk) const
-{
-	glGenVertexArrays(1, &chunk->vao);
-	glBindVertexArray(chunk->vao);
-	glGenBuffers(1, &chunk->vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * chunk->mesh.size(), &chunk->mesh.data[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(positionLoc);
-	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)0);
-	glEnableVertexAttribArray(textureLoc);
-	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 5, (void *)(sizeof(GLfloat) * 3));
-	chunk->mesh.clear();
-}
-
-void
 Core::generation(void)
 {
 	int							cx, cy, cz;
@@ -814,8 +799,7 @@ Core::generation(void)
 					{
 						// wait for the chunk generation and allocate the opengl mesh
 						// opengl functions cannot be called from a thread so we do it on the main thread (current OpenGL context)
-						if (chunk->mesh.vertices() > 0)
-							generateChunkGLMesh(chunk);
+						chunk->mesh.createGL(positionLoc, textureLoc);
 						chunk->setRenderDone(true);
 						chunk->setGenerating(false);
 						chunk->setStopGenerating(false);
@@ -850,6 +834,19 @@ Core::chunkInTaskPool(Chunk const *chunk) const
 	return (false);
 }
 
+Vec3<int>
+Core::getChunksDirection(Chunk *central) const
+{
+	int			x, y, z;
+	// get the vector between the current central chunk and the new one
+	for (z = 0; z < GEN_SIZE; ++z)
+		for (y = 0; y < GEN_SIZE; ++y)
+			for (x = 0; x < GEN_SIZE; ++x)
+				if (central == chunks[z][y][x])
+					return (Vec3<int>(x - center, y - center, z - center));
+	return (Vec3<int>(0, 0, 0));
+}
+
 void
 Core::updateChunks(void)
 {
@@ -865,26 +862,9 @@ Core::updateChunks(void)
 			for (x = 0; x < GEN_SIZE; ++x)
 				newChunks[z][y][x] = NULL;
 	central = static_cast<Chunk *>(octree->search(camera.pos.x, camera.pos.y, camera.pos.z, CHUNK, false));
-	// std::cerr << central << std::endl;
 	if (central != chunks[center][center][center])
 	{
-		dir.set(0, 0, 0);
-		// get the vector between the current central chunk and the new one
-		for (z = 0; z < GEN_SIZE; ++z)
-		{
-			for (y = 0; y < GEN_SIZE; ++y)
-			{
-				for (x = 0; x < GEN_SIZE; ++x)
-				{
-					if (central == chunks[z][y][x])
-					{
-						dir.set(x - center, y - center, z - center);
-						goto nested_break;
-					}
-				}
-			}
-		}
-		nested_break:
+		dir = getChunksDirection(central);
 		if (dir.x == 0 && dir.y == 0 && dir.z == 0)
 			return ; // outside of the generation area
 		// get the new chunk disposition, depending on the new central chunk
@@ -900,8 +880,8 @@ Core::updateChunks(void)
 					{
 						if (chunks[z][y][x] != NULL)
 						{
-							if (chunks[z][y][x]->getGenerating() && !chunks[z][y][x]->getGenerated())
-								chunks[z][y][x]->setStopGenerating(true);
+							// if (chunks[z][y][x]->getGenerating() && !chunks[z][y][x]->getGenerated())
+								// chunks[z][y][x]->setStopGenerating(true);
 							inside = false;
 							for (it = chunksRemoval.begin(); it != chunksRemoval.end(); ++it)
 							{
@@ -935,7 +915,8 @@ Core::insertChunks(void)
 {
 	int									cx, cy, cz;
 	float								px, py, pz;
-	Chunk *								newChunk;
+	Chunk *								chunk;
+	bool								inTaskPool;
 	std::list<Chunk *>::iterator		it, ite;
 
 	for (cz = 0; cz < GEN_SIZE; ++cz)
@@ -952,33 +933,39 @@ Core::insertChunks(void)
 						px = camera.pos.x + (cx - center) * chunk_size;
 						py = camera.pos.y + (cy - center) * chunk_size;
 						pz = camera.pos.z + (cz - center) * chunk_size;
-						newChunk = static_cast<Chunk *>(octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE));
-						it = chunksRemoval.begin();
-						ite = chunksRemoval.end();
-						while (it != ite)
+						chunk = static_cast<Chunk *>(octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE));
+						if (chunk != 0)
 						{
-							if (*it == newChunk)
+							inTaskPool = chunkInTaskPool(chunk);
+							it = chunksRemoval.begin();
+							ite = chunksRemoval.end();
+							while (it != ite)
 							{
-								it = chunksRemoval.erase(it);
-								break;
+								if (*it == chunk)
+								{
+									it = chunksRemoval.erase(it);
+									break;
+								}
+								++it;
 							}
-							++it;
-						}
-						if (newChunk != NULL && !chunkInTaskPool(newChunk))
-						{
-							newChunk->setGenerated(false);
-							newChunk->setGenerating(false);
-							newChunk->setRenderDone(false);
-							newChunk->setStopGenerating(false);
-							newChunk->setRemovable(false);
-							newChunk->vao = 0;
-							newChunk->vbo = 0;
-							if (newChunk != chunks[cz][cy][cx])
+							if (chunk != chunks[cz][cy][cx])
 							{
-								newChunk->pos.x = cx;
-								newChunk->pos.y = cy;
-								newChunk->pos.z = cz;
-								chunks[cz][cy][cx] = newChunk;
+								if (!inTaskPool)
+								{
+									chunk->setGenerated(false);
+									chunk->setGenerating(false);
+									chunk->setRenderDone(false);
+									chunk->setStopGenerating(false);
+									chunk->setRemovable(false);
+								}
+								else
+								{
+									std::cerr << chunk << "-> " << "state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << std::endl;
+								}
+								chunk->pos.x = cx;
+								chunk->pos.y = cy;
+								chunk->pos.z = cz;
+								chunks[cz][cy][cx] = chunk;
 							}
 						}
 					}
@@ -988,12 +975,22 @@ Core::insertChunks(void)
 	}
 }
 
+bool
+Core::chunkInView(Chunk *chunk) const
+{
+	for (int z = 0; z < GEN_SIZE; ++z)
+		for (int y = 0; y < GEN_SIZE; ++y)
+			for (int x = 0; x < GEN_SIZE; ++x)
+				if (chunks[z][y][x] == chunk)
+					return (true);
+	return (false);
+}
+
 void
 Core::clearChunksRemoval(void)
 {
 	std::list<Chunk *>::iterator		it;
-	Chunk								*chunk;
-	bool								inView;
+	Chunk *								chunk;
 
 	if (chunksRemoval.size() > 0)
 	{
@@ -1003,23 +1000,7 @@ Core::clearChunksRemoval(void)
 			// std::cerr << chunk << "-> " << "state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << std::endl;
 			if (chunk && chunk->getRemovable())
 			{
-				inView = false;
-				for (int z = 0; z < GEN_SIZE; ++z)
-				{
-					for (int y = 0; y < GEN_SIZE; ++y)
-					{
-						for (int x = 0; x < GEN_SIZE; ++x)
-						{
-							if (chunks[z][y][x] == chunk)
-							{
-								inView = true;
-								goto nested_break;
-							}
-						}
-					}
-				}
-				nested_break:
-				if (!inView)
+				if (!chunkInView(chunk))
 				{
 					chunk->remove();
 					it = chunksRemoval.erase(it);
@@ -1075,8 +1056,6 @@ Core::initChunks(void)
 	chunks[center][center][center]->setRenderDone(false);
 	chunks[center][center][center]->setStopGenerating(false);
 	chunks[center][center][center]->setRemovable(false);
-	chunks[center][center][center]->vao = 0;
-	chunks[center][center][center]->vbo = 0;
 	insertChunks();
 }
 
@@ -1151,13 +1130,16 @@ Core::updateLeftClick(void)
 	{
 		chunk = closestBlock->getChunk();
 		closestBlock->remove();
-		glBindVertexArray(chunk->vao);
-		glDeleteBuffers(1, &chunk->vbo);
-		chunk->vbo = 0;
+		std::cerr << chunk->mesh.getPrimitives() << std::endl;
 		chunk->mesh.clear();
+		chunk->mesh.deleteGL();
+		std::cerr << chunk->mesh.getPrimitives() << std::endl;
 		generateChunkMesh(chunk, chunk);
-		if (chunk->mesh.vertices() > 0)
-			generateChunkGLMesh(chunk);
+		processChunkSimplification(chunk);
+		std::cerr << chunk->mesh.getPrimitives() << std::endl;
+		chunk->mesh.createGL(positionLoc, textureLoc);
+		chunk->mesh.clear();
+		std::cerr << chunk->mesh.getPrimitives() << std::endl;
 	}
 }
 
@@ -1207,7 +1189,7 @@ Core::render(void)
 						if (camera.cubeInFrustrum(chunks[z][y][x]->getCube()) == INSIDE)
 						{
 							chunks[z][y][x]->render(*this);
-							t += chunks[z][y][x]->mesh.vertices() / 3;
+							t += chunks[z][y][x]->mesh.getPrimitives();
 						}
 					}
 				}
@@ -1218,7 +1200,7 @@ Core::render(void)
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-/*		for (z = 0; z < GEN_SIZE; ++z)
+		for (z = 0; z < GEN_SIZE; ++z)
 		{
 			for (y = 0; y < GEN_SIZE; ++y)
 			{
@@ -1228,7 +1210,7 @@ Core::render(void)
 						chunks[z][y][x]->renderRidges(*this);
 				}
 			}
-		}*/
+		}
 		if (closestBlock != NULL)
 			closestBlock->renderRidges(*this);
 	ms.pop();

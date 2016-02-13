@@ -65,20 +65,8 @@
 # define MAX_BLOCK_DEPTH			6
 // [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE					15 // (n * n * n) must be odd in order to place camera in the center all the time
-# define HEIGHTMAP_SIZE				3
-
-# define TARGET_DIST				1
 
 // Noises bounds
-
-# define FRAC_LIMIT					3.0f
-
-# define MINIMAP_SIZE				200
-# define MINIMAP_PADDING			5
-
-# define CAMERA_FRONT_LIMIT			-0.55 // allow more chunks rendered behind the camera
-
-# define NOISE_NOT_GENERATED		300000.0f
 # define TASK_QUEUE_OVERFLOW		100000
 
 typedef enum

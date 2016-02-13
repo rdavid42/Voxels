@@ -3,14 +3,14 @@
 #include "Chunk.hpp"
 
 Chunk::Chunk(void) : Link(),
-			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
+			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false)
 {
 	_state = CHUNK;
 	return ;
 }
 
 Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s),
-			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false), vao(0), vbo(0)
+			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false)
 {
 	_state = CHUNK;
 	return ;
@@ -18,14 +18,6 @@ Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : L
 
 Chunk::~Chunk(void)
 {
-	if (glIsBuffer(vbo))
-		glDeleteBuffers(1, &vbo);
-	if (glIsVertexArray(vao))
-		glDeleteVertexArrays(1, &vao);
-	if (mesh.size() > 0)
-		mesh.clear();
-	vao = 0;
-	vbo = 0;
 	_generating = false;
 	_generated = false;
 	_renderDone = false;
@@ -64,12 +56,12 @@ Chunk::render(Core &core) const
 	(void)core;
 	if (_renderDone)
 	{
-		if (mesh.vertices() > 0)
+		if (mesh.getVertices() > 0)
 		{
-			glBindVertexArray(vao);
+			glBindVertexArray(mesh.getVAO());
 			core.ms.push();
 				glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
-				glDrawArrays(GL_TRIANGLES, 0, mesh.vertices());
+				glDrawArrays(mesh.getMode(), 0, mesh.getVertices());
 			core.ms.pop();
 		}
 	}
@@ -80,12 +72,12 @@ Chunk::renderLines(Core &core) const
 {
 	if (_renderDone)
 	{
-		if (mesh.vertices() > 0 && vbo != 0)
+		if (mesh.getVertices() > 0)
 		{
-			glBindVertexArray(vao);
+			glBindVertexArray(mesh.getVAO());
 			core.ms.push();
 				glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
-				glDrawArrays(GL_LINES, 0, mesh.vertices());
+				glDrawArrays(GL_LINES, 0, mesh.getVertices());
 			core.ms.pop();
 		}
 	}

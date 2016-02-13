@@ -18,11 +18,8 @@ private:
 	bool							_removable;
 
 public:
-	GLuint							vao;
-	GLuint							vbo;
 	Mesh							mesh;
 	Vec3<uint8_t>					pos; // position relative to other chunks
-	// std::vector<GLfloat>			mesh;
 
 	Chunk(void);
 	Chunk(float const &x, float const &y, float const &z, float const &s);

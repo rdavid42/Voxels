@@ -109,9 +109,7 @@ public:
 	void					processChunkSimplification(Chunk *chunk); // multithread
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) const; // multithread
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) const; // multithread
-	// void					generateChunkMesh(Chunk *chunk, int const &depth) const; // multithread
 	void					generateChunkMesh(Chunk *chunk, Octree *current) const; // multithread
-	void					generateChunkGLMesh(Chunk *chunk) const; // main thread only
 
 	/* core */
 	int						init(void);
@@ -120,9 +118,6 @@ public:
 	void					update(void);
 	void					render(void);
 	void					loop(void);
-	void					clearChunksRemoval(void);
-	bool					chunkInTaskPool(Chunk const *chunk) const;
-	Block					*getClosestBlock(void) const;
 
 	/* Camera */
 
@@ -136,6 +131,11 @@ public:
 
 	void					getLocations(void);
 
+	bool					chunkInView(Chunk *chunk) const;
+	void					clearChunksRemoval(void);
+	bool					chunkInTaskPool(Chunk const *chunk) const;
+	Vec3<int>				getChunksDirection(Chunk *central) const;
+	Block					*getClosestBlock(void) const;
 	void					generation(void);
 	void					insertChunks(void);
 	void					initChunks(void);
