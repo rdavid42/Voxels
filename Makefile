@@ -11,9 +11,6 @@ PLATFORM	:=	$(shell uname)
 CC			=	g++
 HEADER		=	-I./$(INC_PATH) -I./glfw/include -I/usr/local/cuda-6.5/include -I.
 FLAGS		=	-g3 -O2 -Wall -Wextra -Werror -std=gnu++11 -pedantic
-VARS		=	\
-# -DDEBUG \
-# -DPARSER_DEBUG \
 
 ifeq "$(PLATFORM)" "Darwin" #MAC
 GLFW		=	./glfw/libglfw3_darwin.a

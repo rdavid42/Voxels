@@ -97,10 +97,33 @@ Core::loadTexture(char const *filename)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, bmp.width, bmp.height, 0, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	checkGlError(__FILE__, __LINE__);
+	return (texture);
+}
+
+GLuint
+Core::loadTextureArrayFromAtlas(char const *filename)
+{
+	GLuint				texture;
+	Bmp					bmp;
+
+	if (!bmp.load(filename))
+		return (printError("Failed to load bmp !", 0));
+	texture = 0;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, bmp.width);
+	glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB4, 256, 256, 10);
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, 256, 256, 10, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 	checkGlError(__FILE__, __LINE__);
 	return (texture);
 }
@@ -109,7 +132,7 @@ void
 Core::loadTextures(void)
 {
 	tex = new GLuint[1];
-	tex[0] = loadTexture("resources/atlas.bmp");
+	tex[0] = loadTextureArrayFromAtlas("resources/atlas.bmp");
 }
 
 void
@@ -268,7 +291,7 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 	float					x, y, z, s;
 	int						bt;
 	float const				deepestBlockSize = block_size[BLOCK_DEPTH]; // deepest block size
-	static float const		t[6][3][4] =
+/*	static float const		t[6][3][4] =
 	{
 		{ // GRASS
 			{ 0.0f, 0.1f, 0.0f, 1.0f }, // grass/dirt
@@ -299,6 +322,39 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 			{ 0.1f, 0.2f, 0.0f, 1.0f },
 			{ 0.1f, 0.2f, 0.0f, 1.0f },
 			{ 0.1f, 0.2f, 0.0f, 1.0f }
+		}
+	};*/
+	static float const		t[6][3][4] =
+	{
+		{ // GRASS
+			{ 0.0f, 1.0f, 0.0f, 1.0f }, // grass/dirt
+			{ 0.0f, 1.0f, 0.0f, 1.0f }, // dirt
+			{ 0.0f, 1.0f, 0.0f, 1.0f }  // grass
+		},
+		{ // STONE
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f }
+		},
+		{ // COAL
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f }
+		},
+		{ // LEAF
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f }
+		},
+		{ // WOOD
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f }
+		},
+		{ // DIRT
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f },
+			{ 0.0f, 1.0f, 0.0f, 1.0f }
 		}
 	};
 
@@ -1176,7 +1232,6 @@ Core::render(void)
 	ms.push();
 		// render meshes
 		glUniform1f(renderVoxelRidgesLoc, 0.0f);
-		glBindTexture(GL_TEXTURE_2D, tex[0]);
 		t = 0;
 		for (z = 0; z < GEN_SIZE; ++z)
 		{
@@ -1229,6 +1284,8 @@ Core::loop(void)
 	frames = 0.0;
 	lastTime = glfwGetTime();
 	glUseProgram(program);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex[0]);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	while (!glfwWindowShouldClose(window))
 	{

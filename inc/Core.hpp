@@ -123,6 +123,7 @@ public:
 
 	/* textures */
 	void					loadTextures(void);
+	GLuint					loadTextureArrayFromAtlas(char const *filename);
 	GLuint					loadTexture(char const *filename);
 
 	/* matrices */ 

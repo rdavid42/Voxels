@@ -1,6 +1,7 @@
 #version 410
 
-uniform sampler2D				tex;
+// uniform sampler2D				tex;
+uniform sampler2DArray			tex;
 uniform float					renderVoxelRidges;
 uniform vec3					color;
 
@@ -23,7 +24,7 @@ void main(void)
 	// fog
 	dist = length(view_space);
 	if (fogSelector == 0) // Linear fog
-		fogFactor = (100 - dist) / (100 - 20); // (80 - 20) = far - near
+		fogFactor = (100.0 - dist) / (100.0 - 20.0); // (80 - 20) = far - near
 	else if (fogSelector == 1) //exponential fog
 		fogFactor = 1.0 / exp(dist * fogDensity);
 	else if (fogSelector == 2) // exponential squared fog
@@ -34,7 +35,7 @@ void main(void)
 	if (renderVoxelRidges > 0.5f)
 		c = vec4(color, 1.0f);
 	else
-		c = texture(tex, frag_texture);
+		c = texture(tex, vec3(frag_texture, 0.0));
 		// c = mix(fogColor, texture(tex, frag_texture), fogFactor);
 
 	//
