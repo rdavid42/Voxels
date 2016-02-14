@@ -117,14 +117,14 @@ Core::loadTextureArrayFromAtlas(char const *filename)
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8,
 				256, 256, 10,
-				0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+				0, GL_RGB, GL_UNSIGNED_BYTE, 0); // allocate the texture array
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, bmp.width); // set the total atlas size in order to cut through it with glTexSubImage3D
 	for (int x = 0; x < 10; ++x)
 	{
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0,
 						0, 0, x, // z (using x tex coord) is the `index` of the array
 						256, 256, 1, // generate 1 subtexture of 256x256
-						GL_RGB, GL_UNSIGNED_BYTE, bmp.data + (x * 256) * 3); // get the pointer on the texture data using very advanced arithmetics. (`* 3` ?)
+						GL_RGB, GL_UNSIGNED_BYTE, bmp.data + (x * 256) * 3); // get the pointer on the texture data using very advanced arithmetics. (index * width * RGB)
 		checkGlError(__FILE__, __LINE__);
 	}
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
