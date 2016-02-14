@@ -115,28 +115,19 @@ Core::loadTextureArrayFromAtlas(char const *filename)
 	glGenTextures(1, &texture);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-	// glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, bmp.height);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8,
 				256, 256, 10,
 				0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-	glPixelStorei(GL_UNPACK_ROW_LENGTH, bmp.width);
-	for (int iCol = 0; iCol < 10; ++iCol)
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, bmp.width); // set the total atlas size in order to cut through it with glTexSubImage3D
+	for (int x = 0; x < 10; ++x)
 	{
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0,
-						0, 0, iCol,
-						256, 256, 1,
-						GL_RGB, GL_UNSIGNED_BYTE, bmp.data + (iCol * 256) * 3);
+						0, 0, x, // z (using x tex coord) is the `index` of the array
+						256, 256, 1, // generate 1 subtexture of 256x256
+						GL_RGB, GL_UNSIGNED_BYTE, bmp.data + (x * 256) * 3); // get the pointer on the texture data using very advanced arithmetics. (`* 3` ?)
 		checkGlError(__FILE__, __LINE__);
 	}
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	// glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, bmp.height);
-/*	for (int i(0); i < 10; ++i)
-	{
-		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0,
-						0, 0, 0,
-						256, 256, 1,
-						GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
-	}*/
 	// glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -333,7 +324,7 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 		}
 		sd = bt;
 		if (bt == GRASS)
-			sd = 1.0f;
+			sd = DIRT;
 		if (!checkBlockObstructedBottom(chunk, currentCube, deepestBlockSize))
 		{
 			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 0
@@ -345,7 +336,7 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 		}
 		sd = bt;
 		if (bt == GRASS)
-			sd = 0.0f;
+			sd = NONE; // side grass, to rename
 		if (!checkBlockObstructedBack(chunk, currentCube, deepestBlockSize))
 		{
 			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
@@ -1215,7 +1206,7 @@ Core::render(void)
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-		for (z = 0; z < GEN_SIZE; ++z)
+/*		for (z = 0; z < GEN_SIZE; ++z)
 		{
 			for (y = 0; y < GEN_SIZE; ++y)
 			{
@@ -1225,7 +1216,7 @@ Core::render(void)
 						chunks[z][y][x]->renderRidges(*this);
 				}
 			}
-		}
+		}*/
 		if (closestBlock != NULL)
 			closestBlock->renderRidges(*this);
 	ms.pop();
