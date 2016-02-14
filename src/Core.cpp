@@ -75,7 +75,7 @@ Core::getLocations(void)
 	// attribute variables
 	positionLoc = glGetAttribLocation(program, "position");
 	textureLoc = glGetAttribLocation(program, "texture");
-	normalLoc = glGetAttribLocation(program, "normal");
+	textureIndexLoc = glGetAttribLocation(program, "textureIndex");
 	// uniform variables
 	colorLoc = glGetUniformLocation(program, "color");
 	projLoc = glGetUniformLocation(program, "proj_matrix");
@@ -113,18 +113,36 @@ Core::loadTextureArrayFromAtlas(char const *filename)
 		return (printError("Failed to load bmp !", 0));
 	texture = 0;
 	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+	// glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, bmp.height);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8,
+				256, 256, 10,
+				0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, bmp.width);
-	glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB4, 256, 256, 10);
+	for (int iCol = 0; iCol < 10; ++iCol)
+	{
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0,
+						0, 0, iCol,
+						256, 256, 1,
+						GL_RGB, GL_UNSIGNED_BYTE, bmp.data + (iCol * 256) * 3);
+		checkGlError(__FILE__, __LINE__);
+	}
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, 256, 256, 10, GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, bmp.height);
+/*	for (int i(0); i < 10; ++i)
+	{
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0,
+						0, 0, 0,
+						256, 256, 1,
+						GL_RGB, GL_UNSIGNED_BYTE, bmp.data);
+	}*/
+	// glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	// glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-	checkGlError(__FILE__, __LINE__);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 	return (texture);
 }
 
@@ -132,7 +150,8 @@ void
 Core::loadTextures(void)
 {
 	tex = new GLuint[1];
-	tex[0] = loadTextureArrayFromAtlas("resources/atlas.bmp");
+	if (!(tex[0] = loadTextureArrayFromAtlas("resources/atlas.bmp")))
+		exit(0);
 }
 
 void
@@ -289,80 +308,15 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 	Cube					currentCube;
 	int						i;
 	float					x, y, z, s;
-	int						bt;
+	float					bt;
+	float					sd;
 	float const				deepestBlockSize = block_size[BLOCK_DEPTH]; // deepest block size
-/*	static float const		t[6][3][4] =
-	{
-		{ // GRASS
-			{ 0.0f, 0.1f, 0.0f, 1.0f }, // grass/dirt
-			{ 0.1f, 0.2f, 0.0f, 1.0f }, // dirt
-			{ 0.2f, 0.3f, 0.0f, 1.0f }  // grass
-		},
-		{ // STONE
-			{ 0.3f, 0.4f, 0.0f, 1.0f },
-			{ 0.3f, 0.4f, 0.0f, 1.0f },
-			{ 0.3f, 0.4f, 0.0f, 1.0f }
-		},
-		{ // COAL
-			{ 0.4f, 0.5f, 0.0f, 1.0f },
-			{ 0.4f, 0.5f, 0.0f, 1.0f },
-			{ 0.4f, 0.5f, 0.0f, 1.0f }
-		},
-		{ // LEAF
-			{ 0.5f, 0.6f, 0.0f, 1.0f },
-			{ 0.5f, 0.6f, 0.0f, 1.0f },
-			{ 0.5f, 0.6f, 0.0f, 1.0f }
-		},
-		{ // WOOD
-			{ 0.6f, 0.7f, 0.0f, 1.0f },
-			{ 0.6f, 0.7f, 0.0f, 1.0f },
-			{ 0.6f, 0.7f, 0.0f, 1.0f }
-		},
-		{ // DIRT
-			{ 0.1f, 0.2f, 0.0f, 1.0f },
-			{ 0.1f, 0.2f, 0.0f, 1.0f },
-			{ 0.1f, 0.2f, 0.0f, 1.0f }
-		}
-	};*/
-	static float const		t[6][3][4] =
-	{
-		{ // GRASS
-			{ 0.0f, 1.0f, 0.0f, 1.0f }, // grass/dirt
-			{ 0.0f, 1.0f, 0.0f, 1.0f }, // dirt
-			{ 0.0f, 1.0f, 0.0f, 1.0f }  // grass
-		},
-		{ // STONE
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f }
-		},
-		{ // COAL
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f }
-		},
-		{ // LEAF
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f }
-		},
-		{ // WOOD
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f }
-		},
-		{ // DIRT
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f },
-			{ 0.0f, 1.0f, 0.0f, 1.0f }
-		}
-	};
 
 	if (!current)
 		return ;
 	if (current->getState() == BLOCK)
 	{
-		bt = current->getType() - 1;
+		bt = static_cast<float>(current->getType());
 		currentCube = current->getCube();
 		x = currentCube.getX();
 		y = currentCube.getY();
@@ -370,57 +324,63 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 		s = currentCube.getS();
 		if (!checkBlockObstructedUp(chunk, currentCube, deepestBlockSize))
 		{
-			chunk->mesh.pushVertex({x,			y + s,		z,			t[bt][2][0],	t[bt][2][2]}); // 2
-			chunk->mesh.pushVertex({x,			y + s,		z + s,		t[bt][2][1],	t[bt][2][2]}); // 6
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		t[bt][2][1],	t[bt][2][3]}); // 7
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		t[bt][2][1],	t[bt][2][3]}); // 7
-			chunk->mesh.pushVertex({x + s,		y + s,		z,			t[bt][2][0],	t[bt][2][3]}); // 3
-			chunk->mesh.pushVertex({x,			y + s,		z,			t[bt][2][0],	t[bt][2][2]}); // 2
+			chunk->mesh.pushVertex({x,			y + s,		z,			0.0f * 4 * s,	0.0f * 4 * s, bt}); // 2
+			chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f * 4 * s,	0.0f * 4 * s, bt}); // 6
+			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, bt}); // 7
+			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, bt}); // 7
+			chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f * 4 * s,	1.0f * 4 * s, bt}); // 3
+			chunk->mesh.pushVertex({x,			y + s,		z,			0.0f * 4 * s,	0.0f * 4 * s, bt}); // 2
 		}
+		sd = bt;
+		if (bt == GRASS)
+			sd = 1.0f;
 		if (!checkBlockObstructedBottom(chunk, currentCube, deepestBlockSize))
 		{
-			chunk->mesh.pushVertex({x,			y,			z,			t[bt][1][0],	t[bt][1][3]}); // 0
-			chunk->mesh.pushVertex({x + s,		y,			z,			t[bt][1][1],	t[bt][1][3]}); // 1
-			chunk->mesh.pushVertex({x + s,		y,			z + s,		t[bt][1][1],	t[bt][1][2]}); // 5
-			chunk->mesh.pushVertex({x + s,		y,			z + s,		t[bt][1][1],	t[bt][1][2]}); // 5
-			chunk->mesh.pushVertex({x,			y,			z + s,		t[bt][1][0],	t[bt][1][2]}); // 4
-			chunk->mesh.pushVertex({x,			y,			z,			t[bt][1][0],	t[bt][1][3]}); // 0
+			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 0
+			chunk->mesh.pushVertex({x + s,		y,			z,			1.0f * 4 * s,	1.0f * 4 * s, sd}); // 1
+			chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 5
+			chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 5
+			chunk->mesh.pushVertex({x,			y,			z + s,		0.0f * 4 * s,	0.0f * 4 * s, sd}); // 4
+			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 0
 		}
+		sd = bt;
+		if (bt == GRASS)
+			sd = 0.0f;
 		if (!checkBlockObstructedBack(chunk, currentCube, deepestBlockSize))
 		{
-			chunk->mesh.pushVertex({x,			y,			z,			t[bt][0][0],	t[bt][0][2]}); // 0
-			chunk->mesh.pushVertex({x,			y + s,		z,			t[bt][0][0],	t[bt][0][3]}); // 2
-			chunk->mesh.pushVertex({x + s,		y + s,		z,			t[bt][0][1],	t[bt][0][3]}); // 3
-			chunk->mesh.pushVertex({x + s,		y + s,		z,			t[bt][0][1],	t[bt][0][3]}); // 3
-			chunk->mesh.pushVertex({x + s,		y,			z,			t[bt][0][1],	t[bt][0][2]}); // 1
-			chunk->mesh.pushVertex({x,			y,			z,			t[bt][0][0],	t[bt][0][2]}); // 0
+			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
+			chunk->mesh.pushVertex({x,			y + s,		z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 2
+			chunk->mesh.pushVertex({x + s,		y + s,		z,			1.0f * 4 * s,	1.0f * 4 * s, sd}); // 3
+			chunk->mesh.pushVertex({x + s,		y + s,		z,			1.0f * 4 * s,	1.0f * 4 * s, sd}); // 3
+			chunk->mesh.pushVertex({x + s,		y,			z,			1.0f * 4 * s,	0.0f * 4 * s, sd}); // 1
+			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
 		}
 		if (!checkBlockObstructedFront(chunk, currentCube, deepestBlockSize))
 		{
-			chunk->mesh.pushVertex({x,			y,			z + s,		t[bt][0][0],	t[bt][0][2]}); // 4
-			chunk->mesh.pushVertex({x + s,		y,			z + s,		t[bt][0][1],	t[bt][0][2]}); // 5
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		t[bt][0][1],	t[bt][0][3]}); // 7
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		t[bt][0][1],	t[bt][0][3]}); // 7
-			chunk->mesh.pushVertex({x,			y + s,		z + s,		t[bt][0][0],	t[bt][0][3]}); // 6
-			chunk->mesh.pushVertex({x,			y,			z + s,		t[bt][0][0],	t[bt][0][2]}); // 4
+			chunk->mesh.pushVertex({x,			y,			z + s,		0.0f * 4 * s,	0.0f * 4 * s, sd}); // 4
+			chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 5
+			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 7
+			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 7
+			chunk->mesh.pushVertex({x,			y + s,		z + s,		0.0f * 4 * s,	1.0f * 4 * s, sd}); // 6
+			chunk->mesh.pushVertex({x,			y,			z + s,		0.0f * 4 * s,	0.0f * 4 * s, sd}); // 4
 		}
 		if (!checkBlockObstructedLeft(chunk, currentCube, deepestBlockSize))
 		{
-			chunk->mesh.pushVertex({x,			y,			z,			t[bt][0][0],	t[bt][0][2]}); // 0
-			chunk->mesh.pushVertex({x,			y,			z + s,		t[bt][0][1],	t[bt][0][2]}); // 4
-			chunk->mesh.pushVertex({x,			y + s,		z + s,		t[bt][0][1],	t[bt][0][3]}); // 6
-			chunk->mesh.pushVertex({x,			y + s,		z + s,		t[bt][0][1],	t[bt][0][3]}); // 6
-			chunk->mesh.pushVertex({x,			y + s,		z,			t[bt][0][0],	t[bt][0][3]}); // 2
-			chunk->mesh.pushVertex({x,			y,			z,			t[bt][0][0],	t[bt][0][2]}); // 0
+			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
+			chunk->mesh.pushVertex({x,			y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 4
+			chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 6
+			chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 6
+			chunk->mesh.pushVertex({x,			y + s,		z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 2
+			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
 		}
 		if (!checkBlockObstructedRight(chunk, currentCube, deepestBlockSize))
 		{
-			chunk->mesh.pushVertex({x + s,		y,			z,			t[bt][0][0],	t[bt][0][2]}); // 1
-			chunk->mesh.pushVertex({x + s,		y + s,		z,			t[bt][0][0],	t[bt][0][3]}); // 3
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		t[bt][0][1],	t[bt][0][3]}); // 7
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		t[bt][0][1],	t[bt][0][3]}); // 7
-			chunk->mesh.pushVertex({x + s,		y,			z + s,		t[bt][0][1],	t[bt][0][2]}); // 5
-			chunk->mesh.pushVertex({x + s,		y,			z,			t[bt][0][0],	t[bt][0][2]}); // 1
+			chunk->mesh.pushVertex({x + s,		y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 1
+			chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 3
+			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 7
+			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 7
+			chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 5
+			chunk->mesh.pushVertex({x + s,		y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 1
 		}
 	}
 	for (i = 0; i < CHD_MAX; ++i)
@@ -855,7 +815,7 @@ Core::generation(void)
 					{
 						// wait for the chunk generation and allocate the opengl mesh
 						// opengl functions cannot be called from a thread so we do it on the main thread (current OpenGL context)
-						chunk->mesh.createGL(positionLoc, textureLoc);
+						chunk->mesh.createGL(positionLoc, textureLoc, textureIndexLoc);
 						chunk->setRenderDone(true);
 						chunk->setGenerating(false);
 						chunk->setStopGenerating(false);
@@ -1193,7 +1153,7 @@ Core::updateLeftClick(void)
 		generateChunkMesh(chunk, chunk);
 		processChunkSimplification(chunk);
 		std::cerr << chunk->mesh.getPrimitives() << std::endl;
-		chunk->mesh.createGL(positionLoc, textureLoc);
+		chunk->mesh.createGL(positionLoc, textureLoc, textureIndexLoc);
 		chunk->mesh.clear();
 		std::cerr << chunk->mesh.getPrimitives() << std::endl;
 	}
@@ -1284,7 +1244,6 @@ Core::loop(void)
 	frames = 0.0;
 	lastTime = glfwGetTime();
 	glUseProgram(program);
-	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex[0]);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	while (!glfwWindowShouldClose(window))

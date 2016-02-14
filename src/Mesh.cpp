@@ -29,7 +29,7 @@ Mesh::clear(void)
 }
 
 void
-Mesh::createGL(GLuint const &positionLoc, GLuint const &textureLoc)
+Mesh::createGL(GLuint const &positionLoc, GLuint const &textureLoc, GLuint const &textureIndexLoc)
 {
 	glGenVertexArrays(1, &_vao);
 	glBindVertexArray(_vao);
@@ -40,6 +40,8 @@ Mesh::createGL(GLuint const &positionLoc, GLuint const &textureLoc)
 	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * _stride, (void *)0);
 	glEnableVertexAttribArray(textureLoc);
 	glVertexAttribPointer(textureLoc, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * _stride, (void *)(sizeof(GLfloat) * 3));
+	glEnableVertexAttribArray(textureIndexLoc);
+	glVertexAttribPointer(textureIndexLoc, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * _stride, (void *)(sizeof(GLfloat) * 5));
 }
 
 void
@@ -62,6 +64,7 @@ Mesh::pushVertex(Vertex const &vertex)
 	_data.push_back(vertex.z);
 	_data.push_back(vertex.tx);
 	_data.push_back(vertex.ty);
+	_data.push_back(vertex.ti);
 	_vertices++;
 }
 

@@ -17,6 +17,7 @@ public:
 		float			z;
 		float			tx;
 		float			ty;
+		float			ti;
 	};
 
 	Mesh(void);
@@ -24,7 +25,7 @@ public:
 
 	void							reserve(int const &size);
 	void							clear(void);
-	void							createGL(GLuint const &positionLoc, GLuint const &textureLoc);
+	void							createGL(GLuint const &positionLoc, GLuint const &textureLoc, GLuint const &textureIndexLoc);
 	void							deleteGL(void);
 	void							pushVertex(Vertex const &vertex);
 

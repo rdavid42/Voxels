@@ -72,12 +72,12 @@
 typedef enum
 {
 	NONE,
+	DIRT,
 	GRASS,
 	STONE,
 	COAL,
 	LEAF,
 	WOOD,
-	DIRT
 }					block_type;
 
 #endif

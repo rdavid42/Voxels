@@ -6,6 +6,7 @@ uniform float					renderVoxelRidges;
 uniform vec3					color;
 
 in vec2							frag_texture;
+in float						frag_textureIndex;
 in vec4							view_space;
 // in vec3							frag_normal;
 
@@ -35,7 +36,7 @@ void main(void)
 	if (renderVoxelRidges > 0.5f)
 		c = vec4(color, 1.0f);
 	else
-		c = texture(tex, vec3(frag_texture, 0.0));
+		c = texture(tex, vec3(frag_texture.x, frag_texture.y, frag_textureIndex));
 		// c = mix(fogColor, texture(tex, frag_texture), fogFactor);
 
 	//

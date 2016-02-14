@@ -78,7 +78,7 @@ Block::getCube(void) const
 	cube.setS(pcube.getS() / 2.0f);
 	for (i = 0; i < CHD_MAX; ++i)
 	{
-		if (_parent->getChild(i) == this)
+		if (_parent && _parent->getChild(i) == this)
 		{
 			cube.setX(pcube.getX() + ((i >> 0) & MASK_1) * cube.getS());
 			cube.setY(pcube.getY() + ((i >> 1) & MASK_1) * cube.getS());
