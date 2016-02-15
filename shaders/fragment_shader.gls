@@ -37,7 +37,7 @@ void main(void)
 	else
 	{
 		c = texture(tex, vec3(frag_texture.xy, frag_textureIndex));
-		c = fog(fogType, c);
+		// c = fog(fogType, c);
 	}
 
 	outputColor = c;
