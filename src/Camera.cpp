@@ -171,8 +171,8 @@ Camera::rotate(void)
 	float			hr;
 	float			vr;
 
-	hr = hangle * M_PI / 180;
-	vr = vangle * M_PI / 180;
+	hr = hangle * M_PI * 0.0055; //hr = hangle * M_PI / 180;
+	vr = vangle * M_PI * 0.0055; //vr = vangle * M_PI / 180;
 	forward.set(cos(vr) * sin(hr),
 				sin(vr),
 				cos(vr) * cos(hr));

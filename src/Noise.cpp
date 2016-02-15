@@ -1,4 +1,3 @@
-
 #include "Noise.hpp"
 
 Noise::Noise(uint32_t const &arg_seed, uint32_t const &arg_prm_size)
@@ -105,6 +104,8 @@ Noise::perlin(float x, float y, float z)
 // SIMPLEX NOISE
 // ---------------------------------------------------------------------------------
 
+
+
 inline static int
 fastfloor(float const &x)
 {
@@ -135,7 +136,7 @@ dot(int const *g, float const &x, float const &y, float const &z, float const &w
 float
 Noise::scaled_octave_noise_3d(int const &ci, float const &loBound, float const &hiBound, float const &x, float const &y, float const &z)
 {
-    return octave_noise_3d(ci, x, y, z) * (hiBound - loBound) / 2 + (hiBound + loBound) / 2;
+    return octave_noise_3d(ci, x, y, z) * (hiBound - loBound) * 0.5 + (hiBound + loBound) * 0.5;
 }
 
 // 3D Scaled Simplex raw noise.
@@ -144,7 +145,7 @@ Noise::scaled_octave_noise_3d(int const &ci, float const &loBound, float const &
 float
 Noise::scaled_raw_noise_3d(float const &loBound, float const &hiBound, float const &x, float const &y, float const &z)
 {
-    return raw_noise_3d(x, y, z) * (hiBound - loBound) / 2 + (hiBound + loBound) / 2;
+    return raw_noise_3d(x, y, z) * (hiBound - loBound) * 0.5 + (hiBound + loBound) * 0.5;
 }
 
 float
