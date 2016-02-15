@@ -113,7 +113,7 @@ Core::loadTextureArrayFromAtlas(char const *filename)
 		return (printError("Failed to load bmp !", 0));
 	texture = 0;
 	glGenTextures(1, &texture);
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE0); // maybe useless
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8,
 				256, 256, 10,
@@ -490,8 +490,8 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 void
 Core::generateBlock(Chunk *chunk, float const &x, float const &y, float const &z, int const &depth) const // multithread
 {
-	float                       altitude;
-	float                       nx, nz;
+	float						altitude;
+	float						nx, nz;
 	float						ntree;
 	
 	if (!chunk)
@@ -864,16 +864,16 @@ Core::updateChunks(void)
 	std::list<Chunk *>::const_iterator	it;
 	bool								inside;
 
-	for (z = 0; z < GEN_SIZE; ++z)
-		for (y = 0; y < GEN_SIZE; ++y)
-			for (x = 0; x < GEN_SIZE; ++x)
-				newChunks[z][y][x] = NULL;
 	central = static_cast<Chunk *>(octree->search(camera.pos.x, camera.pos.y, camera.pos.z, CHUNK, false));
 	if (central != chunks[center][center][center])
 	{
 		dir = getChunksDirection(central);
 		if (dir.x == 0 && dir.y == 0 && dir.z == 0)
 			return ; // outside of the generation area
+		for (z = 0; z < GEN_SIZE; ++z)
+			for (y = 0; y < GEN_SIZE; ++y)
+				for (x = 0; x < GEN_SIZE; ++x)
+					newChunks[z][y][x] = NULL;
 		// get the new chunk disposition, depending on the new central chunk
 		for (z = 0; z < GEN_SIZE; ++z)
 		{
@@ -1181,6 +1181,23 @@ Core::render(void)
 	(void)ftime;
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, camera.view.val);
 	ms.push();
+		// render chunks ridges
+		glBindVertexArray(selectionVao);
+		glUniform1f(renderVoxelRidgesLoc, 1.0f);
+		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
+/*		for (z = 0; z < GEN_SIZE; ++z)
+		{
+			for (y = 0; y < GEN_SIZE; ++y)
+			{
+				for (x = 0; x < GEN_SIZE; ++x)
+				{
+					if (chunks[z][y][x] != NULL)
+						chunks[z][y][x]->renderRidges(*this);
+				}
+			}
+		}*/
+		if (closestBlock != NULL)
+			closestBlock->renderRidges(*this);
 		// render meshes
 		glUniform1f(renderVoxelRidgesLoc, 0.0f);
 		t = 0;
@@ -1202,23 +1219,6 @@ Core::render(void)
 			}
 		}
 		frameRenderedTriangles = t;
-		// render chunks ridges
-		glBindVertexArray(selectionVao);
-		glUniform1f(renderVoxelRidgesLoc, 1.0f);
-		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-/*		for (z = 0; z < GEN_SIZE; ++z)
-		{
-			for (y = 0; y < GEN_SIZE; ++y)
-			{
-				for (x = 0; x < GEN_SIZE; ++x)
-				{
-					if (chunks[z][y][x] != NULL)
-						chunks[z][y][x]->renderRidges(*this);
-				}
-			}
-		}*/
-		if (closestBlock != NULL)
-			closestBlock->renderRidges(*this);
 	ms.pop();
 	glfwSwapBuffers(window);
 }
@@ -1235,6 +1235,7 @@ Core::loop(void)
 	frames = 0.0;
 	lastTime = glfwGetTime();
 	glUseProgram(program);
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindTexture(GL_TEXTURE_2D, tex[0]);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	while (!glfwWindowShouldClose(window))
