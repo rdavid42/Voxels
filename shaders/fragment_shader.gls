@@ -1,6 +1,5 @@
 #version 410
 
-// uniform sampler2D				tex;
 uniform sampler2DArray			tex;
 uniform float					renderVoxelRidges;
 uniform vec3					color;
@@ -8,7 +7,6 @@ uniform vec3					color;
 in vec2							frag_texture;
 in float						frag_textureIndex;
 in vec4							view_space;
-// in vec3							frag_normal;
 
 out vec4						outputColor;
 
