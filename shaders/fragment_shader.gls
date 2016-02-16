@@ -18,10 +18,10 @@ vec4 fog(int fogType, vec4 color)
 	float			dist = length(view_space);
 
 	if (fogType == 0) // Linear fog
-		fogFactor = (100.0 - dist) * 0.0125; // (far - dist) / (far - near)
-	else if (fogType == 1) //exponential fog
+			fogFactor = 1.25 - dist * 0.0125; // (far - dist) / (far - near)
+	else if (fogType == 1) // Exponential fog
 		fogFactor = 1.0 / exp(dist * fogDensity);
-	else if (fogType == 2) // exponential squared fog
+	else if (fogType == 2) // Exponential squared fog
 		fogFactor = 1.0 / (exp(pow(dist * fogDensity, 2)));
 	fogFactor = clamp(fogFactor, 0.0, 1.0);
 	return (mix(fogColor, color, fogFactor));
@@ -37,7 +37,7 @@ void main(void)
 	else
 	{
 		c = texture(tex, vec3(frag_texture.xy, frag_textureIndex));
-//		c = fog(fogType, c);
+		c = fog(fogType, c);
 	}
 	outputColor = c;
 }
