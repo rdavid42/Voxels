@@ -13,6 +13,7 @@
 # include "Chunk.hpp"
 # include "Block.hpp"
 # include "Noise.hpp"
+# include "CLWrapper.hpp"
 
 # define STARTED	0
 # define STOPPED	1
@@ -93,6 +94,9 @@ public:
 	pthread_t *				threads;
 	std::deque<Chunk *> *	task_queue; // one different pool per thread
 
+	/* OpenCL */
+	CLWrapper				cl;
+
 	Core(void);
 	~Core(void);
 
@@ -105,7 +109,7 @@ public:
 
 	/* generation */
 	void					createTree(Chunk *c, int const &depth, float x, float y, float z) const; // multithread
-	void					processChunkGeneration(Chunk *c); // multithread
+	void					processChunkGeneration(Chunk *chunk, cl_command_queue &cq); // multithread
 	void					processChunkSimplification(Chunk *chunk); // multithread
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) const; // multithread
 	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) const; // multithread

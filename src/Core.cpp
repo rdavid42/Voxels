@@ -32,11 +32,10 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
 	core->camera.vangle -= ((ypos - core->windowHeight * 0.5f) * 0.05);
-	core->camera.vangle =  core->camera.vangle < -89.0f ? -89.0f : (core->camera.vangle > 89.0f ? 89.0f : core->camera.vangle);
-// 	if (core->camera.vangle > 89.0f)
-// 		core->camera.vangle = 89.0f;
-// 	if (core->camera.vangle < -89.0f)
-// 		core->camera.vangle = -89.0f;
+	if (core->camera.vangle > 89.0f)
+		core->camera.vangle = 89.0f;
+	else if (core->camera.vangle < -89.0f)
+		core->camera.vangle = -89.0f;
 	core->camera.hangle -= ((xpos - core->windowWidth * 0.5f) * 0.05f);
 	core->camera.hangle = fmod(core->camera.hangle, 360);
 	glfwSetCursorPos(core->window, core->windowWidth * 0.5f, core->windowHeight * 0.5f);
@@ -404,7 +403,6 @@ Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) cons
 					chunk->insert(tx, ty, tz, depth, BLOCK, LEAF);
 				}
 			}
-
 		}
 	}
 }
@@ -443,28 +441,30 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	float						ntree;
 	float						dbSize;
 	float						bSize;
-	int							i;
+	// int							i;
 	
 	nx = chunk->getCube().getX() + x;
 	ny = chunk->getCube().getY() + y;
 	nz = chunk->getCube().getZ() + z;
 	dbSize = this->block_size[depth] * 2;
 	bSize = this->block_size[depth];
-	ntree = noise->fractal(6, nx, 0, nz);
-
 	n = 0.0f;
-	nstone = noise->fractal(5, nx, ny, nz);
 	// ncoal = nstone;
-	for (i = 0; i < 3; i++)
+/*	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, nx, ny, nz);
-	n /= (i + 1);
+	n /= (i + 1);*/
+	n = 1.0f;
 	if (ny > 0)
 	{
 		n /= (ny / ycap);
 		if (n > 0.90)
 		{
+			// nstone = noise->fractal(5, nx, ny, nz);
+			nstone = 0.0f;
 			if (n < 0.95 && nstone < 0.6)
 			{
+				// ntree = noise->fractal(6, nx, 0, nz);
+				ntree = 0.0f;
 				if (ntree > 0.3 && chunk->search(nx, ny + dbSize, nz) != NULL
 				&&  chunk->search(nx, ny + dbSize, nz)->getState() == EMPTY)
 					createTree(chunk, depth, nx, ny + bSize, nz);
@@ -541,11 +541,12 @@ Core::processChunkSimplification(Chunk *chunk) // multithread
 }
 
 void
-Core::processChunkGeneration(Chunk *chunk) // multithread
+Core::processChunkGeneration(Chunk *chunk, cl_command_queue &cq) // multithread
 {
 	float						x, z, y;
 	int							depth;
 
+	(void)cq;
 	if (chunk->getGenerated())
 		return ;
 	chunk->setGenerated(false);
@@ -585,8 +586,11 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 void *
 Core::executeThread(int const &id) // multithread
 {
-	Chunk			*chunk;
+	Chunk					*chunk;
+	cl_command_queue		cq;
 
+	if (cl.createCommandQueue(&cq) != CL_SUCCESS)
+		return (0);
 	while (true)
 	{
 		// lock task queue and try to pick a task
@@ -617,7 +621,7 @@ Core::executeThread(int const &id) // multithread
 			pthread_mutex_unlock(&task_mutex[id]);
 
 			// process task
-			processChunkGeneration(chunk);
+			processChunkGeneration(chunk, cq);
 		}
 		else
 		{
@@ -1101,6 +1105,8 @@ Core::init(void)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
+	if (cl.init() != CL_SUCCESS)
+		return (0);
 	float const fov = 53.13f;
 	float const aspect = windowWidth * 1.0f / windowHeight;
 	float const near = 0.1f;
@@ -1119,7 +1125,8 @@ Core::init(void)
 	initNoises();
 	loadTextures();
 	createSelectionCube();
-	startThreads();
+	if (!startThreads())
+		return (0);
 	octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	initChunks();
 	closestBlock = 0;
@@ -1186,18 +1193,25 @@ Core::render(void)
 		// render chunks ridges
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
-		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-/*		for (z = 0; z < GEN_SIZE; ++z)
+		for (z = 0; z < GEN_SIZE; ++z)
 		{
 			for (y = 0; y < GEN_SIZE; ++y)
 			{
 				for (x = 0; x < GEN_SIZE; ++x)
 				{
 					if (chunks[z][y][x] != NULL)
-						chunks[z][y][x]->renderRidges(*this);
+					{
+						if (chunks[z][y][x]->getRenderDone())
+						{
+							glUniform3f(colorLoc, 0.0f, 1.0f, 0.0f);
+							chunks[z][y][x]->renderRidges(*this);
+						}
+						// else
+							// glUniform3f(colorLoc, 1.0f, 0.0f, 0.0f);
+					}
 				}
 			}
-		}*/
+		}
 		if (closestBlock != NULL)
 			closestBlock->renderRidges(*this);
 		// render meshes

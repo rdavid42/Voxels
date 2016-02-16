@@ -167,7 +167,7 @@ Noise::raw_noise_3d(float const &x, float const &y, float const &z)
     int const k = fastfloor(z + s);
 
     float const G3 = 1.0f / 6.0f; // Very nice and simple unskew factor, too
-    float const t = (i + j + k)*G3;
+    float const t = (i + j + k) * G3;
     float const X0 = i - t; // Unskew the cell origin back to (x,y,z) space
     float const Y0 = j - t;
     float const Z0 = k - t;
@@ -304,8 +304,8 @@ Noise::fractal(int const &ci, float const &x, float const &y, float const &z)
 	return (total / maxAmplitude);
 }
 
-Noise
-&Noise::operator=(Noise const &rhs)
+Noise &
+Noise::operator=(Noise const &rhs)
 {
 	if (this != &rhs)
 	{

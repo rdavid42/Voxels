@@ -17,7 +17,7 @@ GLFW		=	./glfw/libglfw3_darwin.a
 LIBS		=	$(GLFW) -lm -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo -lpthread -framework OpenCL
 else ifeq "$(PLATFORM)" "Linux" #LINUX
 GLFW		=	./glfw/libglfw3_linux.a
-LIBS		=	$(GLFW) -lGL -lX11 -lXrandr -lXi -lXxf86vm -lpthread -lXcursor -lXinerama
+LIBS		=	$(GLFW) -lGL -lX11 -lXrandr -lXi -lXxf86vm -lpthread -lXcursor -lXinerama `libpng-config --libs` -lOpenCL -L/usr/local/cuda-6.5/lib64
 # -lXext -lXdamage -ldrm -lXrender
 else ifeq "$(PLATFORM)" "Win32" #WINDOWS
 GLFW		=	./glfw/libglfw3_win32.a
