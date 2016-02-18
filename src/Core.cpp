@@ -421,7 +421,7 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 					sd = bt;
 					if (bt == GRASS)
 						sd = DIRT;
-					if ((iy - 1 > 0 && chunk->getBlock(ix, iy - 1, iz).getType() == AIR) || iy - 1 < 0) // Bottom
+					if ((iy - 1 >= 0 && chunk->getBlock(ix, iy - 1, iz).getType() == AIR) || iy - 1 < 0) // Bottom
 					{
 						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	1.0f, sd - 1}); // 0
 						chunk->mesh.pushVertex({x + s,		y,			z,			1.0f,	1.0f, sd - 1}); // 1
@@ -433,7 +433,7 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 					sd = bt;
 					if (bt == GRASS)
 						sd = SIDE_GRASS; // side grass, to rename
-					if ((iz - 1 > 0 && chunk->getBlock(ix, iy, iz - 1).getType() == AIR) || iz - 1 < 0) // Back
+					if ((iz - 1 >= 0 && chunk->getBlock(ix, iy, iz - 1).getType() == AIR) || iz - 1 < 0) // Back
 					{
 						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
 						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	1.0f, sd - 1}); // 2
@@ -451,7 +451,7 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 						chunk->mesh.pushVertex({x,			y + s,		z + s,		0.0f,	1.0f, sd - 1}); // 6
 						chunk->mesh.pushVertex({x,			y,			z + s,		0.0f,	0.0f, sd - 1}); // 4
 					}
-					if ((ix - 1 > 0 && chunk->getBlock(ix - 1, iy, iz).getType() == AIR) || ix - 1 < 0) // Left
+					if ((ix - 1 >= 0 && chunk->getBlock(ix - 1, iy, iz).getType() == AIR) || ix - 1 < 0) // Left
 					{
 						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
 						chunk->mesh.pushVertex({x,			y,			z + s,		1.0f,	0.0f, sd - 1}); // 4
