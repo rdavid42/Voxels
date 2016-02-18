@@ -172,7 +172,6 @@ glErrorCallback(GLenum			source,
 void
 Core::createSelectionCube(void)
 {
-
 	//          y
 	//		    2----3
 	//		   /|   /|
@@ -224,165 +223,6 @@ Core::createSelectionCube(void)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * selectionIndicesSize, indices, GL_STATIC_DRAW);
 }
 
-/*
-void
-Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
-{
-	Cube					currentCube;
-	int						i;
-	float					x, y, z, s;
-	float					bt;
-	float					sd;
-	float const				deepestBlockSize = block_size[BLOCK_DEPTH]; // deepest block size
-
-	if (!current)
-		return ;
-	if (current->getState() == BLOCK)
-	{
-		bt = static_cast<float>(current->getType());
-		currentCube = current->getCube();
-		x = currentCube.getX();
-		y = currentCube.getY();
-		z = currentCube.getZ();
-		s = currentCube.getS();
-		if (!checkBlockObstructedUp(chunk, currentCube, deepestBlockSize))
-		{
-			chunk->mesh.pushVertex({x,			y + s,		z,			0.0f * 4 * s,	0.0f * 4 * s, bt}); // 2
-			chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f * 4 * s,	0.0f * 4 * s, bt}); // 6
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, bt}); // 7
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, bt}); // 7
-			chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f * 4 * s,	1.0f * 4 * s, bt}); // 3
-			chunk->mesh.pushVertex({x,			y + s,		z,			0.0f * 4 * s,	0.0f * 4 * s, bt}); // 2
-		}
-		sd = bt;
-		if (bt == GRASS)
-			sd = DIRT;
-		if (!checkBlockObstructedBottom(chunk, currentCube, deepestBlockSize))
-		{
-			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 0
-			chunk->mesh.pushVertex({x + s,		y,			z,			1.0f * 4 * s,	1.0f * 4 * s, sd}); // 1
-			chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 5
-			chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 5
-			chunk->mesh.pushVertex({x,			y,			z + s,		0.0f * 4 * s,	0.0f * 4 * s, sd}); // 4
-			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 0
-		}
-		sd = bt;
-		if (bt == GRASS)
-			sd = NONE; // side grass, to rename
-		if (!checkBlockObstructedBack(chunk, currentCube, deepestBlockSize))
-		{
-			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
-			chunk->mesh.pushVertex({x,			y + s,		z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 2
-			chunk->mesh.pushVertex({x + s,		y + s,		z,			1.0f * 4 * s,	1.0f * 4 * s, sd}); // 3
-			chunk->mesh.pushVertex({x + s,		y + s,		z,			1.0f * 4 * s,	1.0f * 4 * s, sd}); // 3
-			chunk->mesh.pushVertex({x + s,		y,			z,			1.0f * 4 * s,	0.0f * 4 * s, sd}); // 1
-			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
-		}
-		if (!checkBlockObstructedFront(chunk, currentCube, deepestBlockSize))
-		{
-			chunk->mesh.pushVertex({x,			y,			z + s,		0.0f * 4 * s,	0.0f * 4 * s, sd}); // 4
-			chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 5
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 7
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 7
-			chunk->mesh.pushVertex({x,			y + s,		z + s,		0.0f * 4 * s,	1.0f * 4 * s, sd}); // 6
-			chunk->mesh.pushVertex({x,			y,			z + s,		0.0f * 4 * s,	0.0f * 4 * s, sd}); // 4
-		}
-		if (!checkBlockObstructedLeft(chunk, currentCube, deepestBlockSize))
-		{
-			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
-			chunk->mesh.pushVertex({x,			y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 4
-			chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 6
-			chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 6
-			chunk->mesh.pushVertex({x,			y + s,		z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 2
-			chunk->mesh.pushVertex({x,			y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 0
-		}
-		if (!checkBlockObstructedRight(chunk, currentCube, deepestBlockSize))
-		{
-			chunk->mesh.pushVertex({x + s,		y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 1
-			chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f * 4 * s,	1.0f * 4 * s, sd}); // 3
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 7
-			chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f * 4 * s,	1.0f * 4 * s, sd}); // 7
-			chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f * 4 * s,	0.0f * 4 * s, sd}); // 5
-			chunk->mesh.pushVertex({x + s,		y,			z,			0.0f * 4 * s,	0.0f * 4 * s, sd}); // 1
-		}
-	}
-	for (i = 0; i < CHD_MAX; ++i)
-		generateChunkMesh(chunk, current->getChild(i));
-}
-*/
-/*
-inline bool
-checkBlockObstructedUp(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cx, cz;
-
-	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
-		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
-			if (!chunk->search(cx, c.getY() + c.getS(), cz, BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedBottom(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cx, cz;
-
-	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
-		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
-			if (!chunk->search(cx, c.getY() - c.getS(), cz, BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedBack(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cx, cy;
-
-	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
-		for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
-			if (!chunk->search(cx, cy, c.getZ() - c.getS(), BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedFront(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cx, cy;
-
-	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
-		for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
-			if (!chunk->search(cx, cy, c.getZ() + c.getS(), BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedLeft(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cy, cz;
-
-	for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
-		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
-			if (!chunk->search(c.getX() - c.getS(), cy, cz, BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedRight(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cy, cz;
-
-	for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
-		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
-			if (!chunk->search(c.getX() + c.getS(), cy, cz, BLOCK, false))
-				return (false);
-	return (true);
-}
-*/
 void
 Core::generateChunkMesh(Chunk *chunk) const // multithread
 {
@@ -410,69 +250,33 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 				if (bt != AIR)
 				{
 					if ((iy + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE) // Up
-					{
-						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	0.0f, bt - 1}); // 2
-						chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f,	0.0f, bt - 1}); // 6
-						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, bt - 1}); // 7
-						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, bt - 1}); // 7
-						chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f,	1.0f, bt - 1}); // 3
-						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	0.0f, bt - 1}); // 2
-					}
+						chunk->mesh.pushUpFace(x, y, z, s, bt - 1);
 					sd = bt;
 					if (bt == GRASS)
 						sd = DIRT;
 					if ((iy - 1 >= 0 && chunk->getBlock(ix, iy - 1, iz).getType() == AIR) || iy - 1 < 0) // Bottom
-					{
-						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	1.0f, sd - 1}); // 0
-						chunk->mesh.pushVertex({x + s,		y,			z,			1.0f,	1.0f, sd - 1}); // 1
-						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
-						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
-						chunk->mesh.pushVertex({x,			y,			z + s,		0.0f,	0.0f, sd - 1}); // 4
-						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	1.0f, sd - 1}); // 0
-					}
+						chunk->mesh.pushBottomFace(x, y, z, s, sd - 1);
 					sd = bt;
 					if (bt == GRASS)
-						sd = SIDE_GRASS; // side grass, to rename
+						sd = SIDE_GRASS;
 					if ((iz - 1 >= 0 && chunk->getBlock(ix, iy, iz - 1).getType() == AIR) || iz - 1 < 0) // Back
-					{
-						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
-						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	1.0f, sd - 1}); // 2
-						chunk->mesh.pushVertex({x + s,		y + s,		z,			1.0f,	1.0f, sd - 1}); // 3
-						chunk->mesh.pushVertex({x + s,		y + s,		z,			1.0f,	1.0f, sd - 1}); // 3
-						chunk->mesh.pushVertex({x + s,		y,			z,			1.0f,	0.0f, sd - 1}); // 1
-						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
-					}
+						chunk->mesh.pushBackFace(x, y, z, s, sd - 1);
 					if ((iz + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == CHUNK_SIZE) // Front
-					{
-						chunk->mesh.pushVertex({x,			y,			z + s,		0.0f,	0.0f, sd - 1}); // 4
-						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
-						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 7
-						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 7
-						chunk->mesh.pushVertex({x,			y + s,		z + s,		0.0f,	1.0f, sd - 1}); // 6
-						chunk->mesh.pushVertex({x,			y,			z + s,		0.0f,	0.0f, sd - 1}); // 4
-					}
+						chunk->mesh.pushFrontFace(x, y, z, s, sd - 1);
 					if ((ix - 1 >= 0 && chunk->getBlock(ix - 1, iy, iz).getType() == AIR) || ix - 1 < 0) // Left
-					{
-						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
-						chunk->mesh.pushVertex({x,			y,			z + s,		1.0f,	0.0f, sd - 1}); // 4
-						chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 6
-						chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 6
-						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	1.0f, sd - 1}); // 2
-						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
-					}
+						chunk->mesh.pushLeftFace(x, y, z, s, sd - 1);
 					if ((ix + 1 < CHUNK_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == CHUNK_SIZE) // Right
-					{
-						chunk->mesh.pushVertex({x + s,		y,			z,			0.0f,	0.0f, sd - 1}); // 1
-						chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f,	1.0f, sd - 1}); // 3
-						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 7
-						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 7
-						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
-						chunk->mesh.pushVertex({x + s,		y,			z,			0.0f,	0.0f, sd - 1}); // 1
-					}
+						chunk->mesh.pushRightFace(x, y, z, s, sd - 1);
 				}
 			}
 		}
 	}
+}
+
+void
+Core::generateGreedyMesh(Chunk *chunk) const
+{
+	(void)chunk;
 }
 
 /*void
@@ -818,11 +622,11 @@ Core::generation(void)
 	Chunk						*chunk;
 
 	// get new chunks inside rendering area and add them to generation queues
-	for (cz = 0; cz < GEN_SIZE; ++cz)
+	for (cz = 0; cz < GEN_SIZE_Z; ++cz)
 	{
-		for (cy = 0; cy < GEN_SIZE; ++cy)
+		for (cy = 0; cy < GEN_SIZE_Y; ++cy)
 		{
-			for (cx = 0; cx < GEN_SIZE; ++cx)
+			for (cx = 0; cx < GEN_SIZE_X; ++cx)
 			{
 				if (chunks[cz][cy][cx] != NULL)
 				{
@@ -880,20 +684,20 @@ Core::chunkInTaskPool(Chunk const *chunk) const
 	}
 	return (false);
 }
-
+/*
 Vec3<int>
 Core::getChunksDirection(Chunk *central) const
 {
 	int			x, y, z;
 	// get the vector between the current central chunk and the new one
-	for (z = 0; z < GEN_SIZE; ++z)
-		for (y = 0; y < GEN_SIZE; ++y)
-			for (x = 0; x < GEN_SIZE; ++x)
+	for (z = 0; z < GEN_SIZE_Z; ++z)
+		for (y = 0; y < GEN_SIZE_Y; ++y)
+			for (x = 0; x < GEN_SIZE_X; ++x)
 				if (central == chunks[z][y][x])
 					return (Vec3<int>(x - center, y - center, z - center));
 	return (Vec3<int>(0, 0, 0));
 }
-
+*/
 void
 Core::insertChunks(void)
 {
@@ -902,11 +706,11 @@ Core::insertChunks(void)
 	bool								inTaskPool;
 	std::list<Chunk *>::iterator		it, ite;
 
-	for (cz = 0; cz < GEN_SIZE; ++cz)
+	for (cz = 0; cz < GEN_SIZE_Z; ++cz)
 	{
-		for (cy = 0; cy < GEN_SIZE; ++cy)
+		for (cy = 0; cy < GEN_SIZE_Y; ++cy)
 		{
-			for (cx = 0; cx < GEN_SIZE; ++cx)
+			for (cx = 0; cx < GEN_SIZE_X; ++cx)
 			{
 				if (chunks[cz][cy][cx] == NULL)
 				{
@@ -951,9 +755,9 @@ Core::insertChunks(void)
 bool
 Core::chunkInView(Chunk *chunk) const
 {
-	for (int z = 0; z < GEN_SIZE; ++z)
-		for (int y = 0; y < GEN_SIZE; ++y)
-			for (int x = 0; x < GEN_SIZE; ++x)
+	for (int z = 0; z < GEN_SIZE_Z; ++z)
+		for (int y = 0; y < GEN_SIZE_Y; ++y)
+			for (int x = 0; x < GEN_SIZE_X; ++x)
 				if (chunks[z][y][x] == chunk)
 					return (true);
 	return (false);
@@ -984,11 +788,10 @@ Core::initChunks(void)
 {
 	int				x, y, z;
 
-	for (z = 0; z < GEN_SIZE; ++z)
-		for (y = 0; y < GEN_SIZE; ++y)
-			for (x = 0; x < GEN_SIZE; ++x)
+	for (z = 0; z < GEN_SIZE_Z; ++z)
+		for (y = 0; y < GEN_SIZE_Y; ++y)
+			for (x = 0; x < GEN_SIZE_X; ++x)
 				chunks[z][y][x] = NULL;
-	center = (GEN_SIZE - 1) / 2;
 	// Create initial chunk
 	insertChunks();
 }
@@ -1026,6 +829,7 @@ Core::init(void)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
+	cl.init();
 	float const fov = 53.13f;
 	float const aspect = windowWidth * 1.0f / windowHeight;
 	float const near = 0.1f;
@@ -1048,6 +852,8 @@ Core::init(void)
 	initChunks();
 	closestBlock = 0;
 	frameRenderedTriangles = 0;
+	std::cerr << sizeof(Chunk) << std::endl;
+	std::cerr << GEN_SIZE_Z * GEN_SIZE_Y * GEN_SIZE_X * sizeof(Chunk) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * sizeof(Block) << " bytes" << std::endl;
 	return (1);
 }
 /*
@@ -1105,11 +911,11 @@ Core::render(void)
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-		for (z = 0; z < GEN_SIZE; ++z)
+		for (z = 0; z < GEN_SIZE_Z; ++z)
 		{
-			for (y = 0; y < GEN_SIZE; ++y)
+			for (y = 0; y < GEN_SIZE_Y; ++y)
 			{
-				for (x = 0; x < GEN_SIZE; ++x)
+				for (x = 0; x < GEN_SIZE_X; ++x)
 				{
 					if (chunks[z][y][x] != NULL)
 						chunks[z][y][x]->renderRidges(*this);
@@ -1121,11 +927,11 @@ Core::render(void)
 		// render meshes
 		glUniform1f(renderVoxelRidgesLoc, 0.0f);
 		t = 0;
-		for (z = 0; z < GEN_SIZE; ++z)
+		for (z = 0; z < GEN_SIZE_Z; ++z)
 		{
-			for (y = 0; y < GEN_SIZE; ++y)
+			for (y = 0; y < GEN_SIZE_Y; ++y)
 			{
-				for (x = 0; x < GEN_SIZE; ++x)
+				for (x = 0; x < GEN_SIZE_X; ++x)
 				{
 					if (chunks[z][y][x] != NULL)
 					{
