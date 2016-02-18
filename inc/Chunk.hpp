@@ -5,10 +5,11 @@
 # include <iostream>
 # include <vector>
 # include "Constants.hpp"
-# include "Link.hpp"
+# include "Cube.hpp"
 # include "Mesh.hpp"
+# include "Block.hpp"
 
-class Chunk : public Link
+class Chunk
 {
 private:
 	bool							_generating;
@@ -16,6 +17,8 @@ private:
 	bool							_renderDone;
 	bool							_stopGenerating;
 	bool							_removable;
+	Cube							_cube;
+	Block							***_blocks;
 
 public:
 	Mesh							mesh;
@@ -23,13 +26,13 @@ public:
 
 	Chunk(void);
 	Chunk(float const &x, float const &y, float const &z, float const &s);
-	virtual ~Chunk(void);
+	~Chunk(void);
 
-	virtual	void					render(Core &core) const;
-	virtual	void					renderLines(Core &core) const;
-	virtual	void					renderRidges(Core &core) const;
-	virtual void					deleteChild(Octree *child);
-	virtual Chunk *					getChunk(void);
+	void							init(void);
+
+	void							render(Core &core) const;
+	void							renderLines(Core &core) const;
+	void							renderRidges(Core &core) const;
 
 	bool const &					getGenerating(void);
 	bool const &					getGenerated(void);
@@ -42,6 +45,11 @@ public:
 	void							setRenderDone(bool const &val);
 	void							setStopGenerating(bool const &val);
 	void							setRemovable(bool const &val);
+
+	void							setBlock(int const &x, int const &y, int const &z, uint8_t const &type);
+	Block const &					getBlock(int const &x, int const &y, int const &z);
+
+	Cube const &					getCube(void) const;
 
 	Chunk							&operator=(Chunk const &rhs);
 

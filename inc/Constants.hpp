@@ -47,22 +47,9 @@
 # define MASK_31					0x7FFFFFFF
 # define MASK_32					0xFFFFFFFF
 
-# define CHD_MAX					8
+# define CHUNK_SIZE					32
+# define BLOCK_SIZE					1.0
 
-// Octree states
-# define ERROR						-1
-# define EMPTY						0
-# define GROUND						1
-# define BLOCK						2
-# define CHUNK						4
-# define LINK						8
-
-# define OCTREE_SIZE				2147483648
-
-# define CHUNK_DEPTH				28 // insert from octree
-# define BLOCK_DEPTH				5 // insert from chunk depth [1..6]
-# define MAX_BLOCK_DEPTH			6
-// [1, 3, 5, 7, 9, ...]
 # define GEN_SIZE					15 // (n * n * n) must be odd in order to place camera in the center all the time
 
 // Noises bounds
@@ -70,13 +57,14 @@
 
 typedef enum
 {
-	NONE,
+	AIR,
+	SIDE_GRASS,
 	DIRT,
 	GRASS,
 	STONE,
 	COAL,
 	LEAF,
-	WOOD,
+	WOOD
 }					block_type;
 
 #endif

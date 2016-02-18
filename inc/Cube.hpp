@@ -18,7 +18,7 @@ public:
 	Cube(void);
 	Cube(float const &x, float const &y, float const &z, float const &s);
 	Cube(Cube const &src);
-	virtual ~Cube(void);
+	~Cube(void);
 
 	float const &			getX(void) const;
 	float const &			getY(void) const;
@@ -32,7 +32,7 @@ public:
 	bool					vertexInside(float const &x, float const &y, float const &z) const;
 	Vec3<float>				getVertexPosition(Vec3<float> const &normal) const;
 
-	Cube				&operator=(Cube const &rhs);
+	Cube					&operator=(Cube const &rhs);
 };
 
 std::ostream				&operator<<(std::ostream &o, Cube const &i);

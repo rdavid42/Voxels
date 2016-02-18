@@ -72,9 +72,6 @@ public:
 	/* Octree */
 
 	Noise *					noise;
-	Link					*octree;
-	float					chunk_size; // size of a chunk
-	float					block_size[MAX_BLOCK_DEPTH]; // size of a block inside a chunk
 	int						center; // central chunk's index, `chunks[center][center][center]`
 	Chunk *					chunks[GEN_SIZE]
 								  [GEN_SIZE]
@@ -106,14 +103,12 @@ public:
 	/* generation */
 	void					createTree(Chunk *c, int const &depth, float x, float y, float z) const; // multithread
 	void					processChunkGeneration(Chunk *c); // multithread
-	void					processChunkSimplification(Chunk *chunk); // multithread
-	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &depth, int const &ycap) const; // multithread
-	void					generateBlock(Chunk *c, float const &x, float const &y, float const &z, int const &depth) const; // multithread
-	void					generateChunkMesh(Chunk *chunk, Octree *current) const; // multithread
+	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &ycap) const; // multithread
+	void					generateChunkMesh(Chunk *chunk) const; // multithread
 
 	/* core */
 	int						init(void);
-	void					updateLeftClick(void);
+	// void					updateLeftClick(void);
 	void					updateChunks(void);
 	void					update(void);
 	void					render(void);
@@ -133,10 +128,9 @@ public:
 	void					getLocations(void);
 
 	bool					chunkInView(Chunk *chunk) const;
-	void					clearChunksRemoval(void);
 	bool					chunkInTaskPool(Chunk const *chunk) const;
 	Vec3<int>				getChunksDirection(Chunk *central) const;
-	Block					*getClosestBlock(void) const;
+	// Block					*getClosestBlock(void) const;
 	void					generation(void);
 	void					insertChunks(void);
 	void					initChunks(void);

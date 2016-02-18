@@ -8,7 +8,6 @@ Core::Core(void)
 Core::~Core(void)
 {
 	stopThreads();
-	delete octree;
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	std::cerr << "done" << std::endl;
@@ -32,11 +31,10 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
 	core->camera.vangle -= ((ypos - core->windowHeight * 0.5f) * 0.05);
-	core->camera.vangle =  core->camera.vangle < -89.0f ? -89.0f : (core->camera.vangle > 89.0f ? 89.0f : core->camera.vangle);
-// 	if (core->camera.vangle > 89.0f)
-// 		core->camera.vangle = 89.0f;
-// 	if (core->camera.vangle < -89.0f)
-// 		core->camera.vangle = -89.0f;
+	if (core->camera.vangle > 89.0f)
+		core->camera.vangle = 89.0f;
+	else if (core->camera.vangle < -89.0f)
+		core->camera.vangle = -89.0f;
 	core->camera.hangle -= ((xpos - core->windowWidth * 0.5f) * 0.05f);
 	core->camera.hangle = fmod(core->camera.hangle, 360);
 	glfwSetCursorPos(core->window, core->windowWidth * 0.5f, core->windowHeight * 0.5f);
@@ -48,9 +46,12 @@ mouse_button_callback(GLFWwindow *window, int button, int action, int mods)
 {
 	Core		*core = static_cast<Core *>(glfwGetWindowUserPointer(window));
 
+	(void)button;
+	(void)action;
+	(void)core;
 	(void)mods;
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-		core->updateLeftClick();
+	// if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+		// core->updateLeftClick();
 }
 
 // *************************************************************************************************
@@ -223,78 +224,7 @@ Core::createSelectionCube(void)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * selectionIndicesSize, indices, GL_STATIC_DRAW);
 }
 
-inline bool
-checkBlockObstructedUp(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cx, cz;
-
-	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
-		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
-			if (!chunk->search(cx, c.getY() + c.getS(), cz, BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedBottom(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cx, cz;
-
-	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
-		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
-			if (!chunk->search(cx, c.getY() - c.getS(), cz, BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedBack(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cx, cy;
-
-	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
-		for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
-			if (!chunk->search(cx, cy, c.getZ() - c.getS(), BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedFront(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cx, cy;
-
-	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
-		for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
-			if (!chunk->search(cx, cy, c.getZ() + c.getS(), BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedLeft(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cy, cz;
-
-	for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
-		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
-			if (!chunk->search(c.getX() - c.getS(), cy, cz, BLOCK, false))
-				return (false);
-	return (true);
-}
-
-inline bool
-checkBlockObstructedRight(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
-{
-	float		cy, cz;
-
-	for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
-		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
-			if (!chunk->search(c.getX() + c.getS(), cy, cz, BLOCK, false))
-				return (false);
-	return (true);
-}
-
+/*
 void
 Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 {
@@ -379,8 +309,173 @@ Core::generateChunkMesh(Chunk *chunk, Octree *current) const // multithread
 	for (i = 0; i < CHD_MAX; ++i)
 		generateChunkMesh(chunk, current->getChild(i));
 }
+*/
+/*
+inline bool
+checkBlockObstructedUp(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
+{
+	float		cx, cz;
 
+	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
+		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
+			if (!chunk->search(cx, c.getY() + c.getS(), cz, BLOCK, false))
+				return (false);
+	return (true);
+}
+
+inline bool
+checkBlockObstructedBottom(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
+{
+	float		cx, cz;
+
+	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
+		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
+			if (!chunk->search(cx, c.getY() - c.getS(), cz, BLOCK, false))
+				return (false);
+	return (true);
+}
+
+inline bool
+checkBlockObstructedBack(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
+{
+	float		cx, cy;
+
+	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
+		for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
+			if (!chunk->search(cx, cy, c.getZ() - c.getS(), BLOCK, false))
+				return (false);
+	return (true);
+}
+
+inline bool
+checkBlockObstructedFront(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
+{
+	float		cx, cy;
+
+	for (cx = c.getX(); cx < c.getX() + c.getS(); cx += deepestBlockSize)
+		for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
+			if (!chunk->search(cx, cy, c.getZ() + c.getS(), BLOCK, false))
+				return (false);
+	return (true);
+}
+
+inline bool
+checkBlockObstructedLeft(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
+{
+	float		cy, cz;
+
+	for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
+		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
+			if (!chunk->search(c.getX() - c.getS(), cy, cz, BLOCK, false))
+				return (false);
+	return (true);
+}
+
+inline bool
+checkBlockObstructedRight(Chunk *chunk, Cube const &c, float const &deepestBlockSize)
+{
+	float		cy, cz;
+
+	for (cy = c.getY(); cy < c.getY() + c.getS(); cy += deepestBlockSize)
+		for (cz = c.getZ(); cz < c.getZ() + c.getS(); cz += deepestBlockSize)
+			if (!chunk->search(c.getX() + c.getS(), cy, cz, BLOCK, false))
+				return (false);
+	return (true);
+}
+*/
 void
+Core::generateChunkMesh(Chunk *chunk) const // multithread
+{
+	float					x, y, z, s;
+	float					bt;
+	float					sd;
+	float					cx, cy, cz, cs;
+	int						ix, iy, iz;
+
+	cx = chunk->getCube().getX();
+	cy = chunk->getCube().getY();
+	cz = chunk->getCube().getZ();
+	cs = chunk->getCube().getS();
+	s = BLOCK_SIZE;
+	for (x = cx; x < cx + cs; x += BLOCK_SIZE)
+	{
+		for (y = cy; y < cy + cs; y += BLOCK_SIZE)
+		{
+			for (z = cz; z < cz + cs; z += BLOCK_SIZE)
+			{
+				ix = (x - cx) / BLOCK_SIZE;
+				iy = (y - cy) / BLOCK_SIZE;
+				iz = (z - cz) / BLOCK_SIZE;
+				bt = chunk->getBlock(ix, iy, iz).getType();
+				if (bt != AIR)
+				{
+					if ((iy + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE) // Up
+					{
+						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	0.0f, bt - 1}); // 2
+						chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f,	0.0f, bt - 1}); // 6
+						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, bt - 1}); // 7
+						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, bt - 1}); // 7
+						chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f,	1.0f, bt - 1}); // 3
+						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	0.0f, bt - 1}); // 2
+					}
+					sd = bt;
+					if (bt == GRASS)
+						sd = DIRT;
+					if ((iy - 1 > 0 && chunk->getBlock(ix, iy - 1, iz).getType() == AIR) || iy - 1 < 0) // Bottom
+					{
+						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	1.0f, sd - 1}); // 0
+						chunk->mesh.pushVertex({x + s,		y,			z,			1.0f,	1.0f, sd - 1}); // 1
+						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
+						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
+						chunk->mesh.pushVertex({x,			y,			z + s,		0.0f,	0.0f, sd - 1}); // 4
+						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	1.0f, sd - 1}); // 0
+					}
+					sd = bt;
+					if (bt == GRASS)
+						sd = SIDE_GRASS; // side grass, to rename
+					if ((iz - 1 > 0 && chunk->getBlock(ix, iy, iz - 1).getType() == AIR) || iz - 1 < 0) // Back
+					{
+						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
+						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	1.0f, sd - 1}); // 2
+						chunk->mesh.pushVertex({x + s,		y + s,		z,			1.0f,	1.0f, sd - 1}); // 3
+						chunk->mesh.pushVertex({x + s,		y + s,		z,			1.0f,	1.0f, sd - 1}); // 3
+						chunk->mesh.pushVertex({x + s,		y,			z,			1.0f,	0.0f, sd - 1}); // 1
+						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
+					}
+					if ((iz + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == CHUNK_SIZE) // Front
+					{
+						chunk->mesh.pushVertex({x,			y,			z + s,		0.0f,	0.0f, sd - 1}); // 4
+						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
+						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 7
+						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 7
+						chunk->mesh.pushVertex({x,			y + s,		z + s,		0.0f,	1.0f, sd - 1}); // 6
+						chunk->mesh.pushVertex({x,			y,			z + s,		0.0f,	0.0f, sd - 1}); // 4
+					}
+					if ((ix - 1 > 0 && chunk->getBlock(ix - 1, iy, iz).getType() == AIR) || ix - 1 < 0) // Left
+					{
+						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
+						chunk->mesh.pushVertex({x,			y,			z + s,		1.0f,	0.0f, sd - 1}); // 4
+						chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 6
+						chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 6
+						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	1.0f, sd - 1}); // 2
+						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
+					}
+					if ((ix + 1 < CHUNK_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == CHUNK_SIZE) // Right
+					{
+						chunk->mesh.pushVertex({x + s,		y,			z,			0.0f,	0.0f, sd - 1}); // 1
+						chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f,	1.0f, sd - 1}); // 3
+						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 7
+						chunk->mesh.pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, sd - 1}); // 7
+						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
+						chunk->mesh.pushVertex({x + s,		y,			z,			0.0f,	0.0f, sd - 1}); // 1
+					}
+				}
+			}
+		}
+	}
+}
+
+/*void
 Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) const
 {
 	float			tx, ty, tz;
@@ -408,7 +503,7 @@ Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) cons
 		}
 	}
 }
-
+*/
 void
 Core::initNoises(void) // multithread
 {
@@ -434,107 +529,57 @@ Core::initNoises(void) // multithread
 }
 
 void
-Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const &z, int const &depth, int const &ycap) const // multithread
+Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const &z, int const &ycap) const // multithread
 {
 	float						n;
 	float						nstone;
-	// float						ncoal;
-	float						nx, nz, ny;
-	float						ntree;
-	float						dbSize;
-	float						bSize;
+	float						cx, cy, cz;
+	float						wx, wy, wz;
+	// float						ntree;
+	// float						dbSize;
+	// float						bSize;
 	int							i;
-	
-	nx = chunk->getCube().getX() + x;
-	ny = chunk->getCube().getY() + y;
-	nz = chunk->getCube().getZ() + z;
-	dbSize = this->block_size[depth] * 2;
-	bSize = this->block_size[depth];
-	ntree = noise->fractal(6, nx, 0, nz);
 
+	wx = chunk->getCube().getX() + x;
+	wy = chunk->getCube().getY() + y;
+	wz = chunk->getCube().getZ() + z;
+
+	cx = x / BLOCK_SIZE;
+	cy = y / BLOCK_SIZE;
+	cz = z / BLOCK_SIZE;
+
+	// dbSize = this->block_size[depth] * 2;
+	// bSize = this->block_size[depth];
+	// ntree = noise->fractal(6, wx, 0, wz);
+
+	if (cx < 0.0 || cx >= CHUNK_SIZE || cy < 0.0 || cy >= CHUNK_SIZE || cz < 0.0 || cz >= CHUNK_SIZE)
+		std::cerr << cx << ", " << cy << ", " << cz << std::endl;
 	n = 0.0f;
-	nstone = noise->fractal(5, nx, ny, nz);
-	// ncoal = nstone;
+	nstone = noise->fractal(5, wx, wy, wz);
 	for (i = 0; i < 3; i++)
-		n += noise->octave_noise_3d(i, nx, ny, nz);
+		n += noise->octave_noise_3d(i, wx, wy, wz);
 	n /= (i + 1);
-	if (ny > 0)
+	if (wy > 0)
 	{
-		n /= (ny / ycap);
+		n /= (wy / ycap);
 		if (n > 0.90)
 		{
 			if (n < 0.95 && nstone < 0.6)
 			{
-				if (ntree > 0.3 && chunk->search(nx, ny + dbSize, nz) != NULL
-				&&  chunk->search(nx, ny + dbSize, nz)->getState() == EMPTY)
-					createTree(chunk, depth, nx, ny + bSize, nz);
-				if ((octree->search(nx, ny + bSize, nz, EMPTY, 1) != NULL
-				&&	 octree->search(nx, ny + bSize, nz)->getState() == EMPTY))
-					chunk->insert(nx, ny, nz, depth, BLOCK, GRASS);
+				// if (ntree > 0.3 && chunk->search(wx, wy + dbSize, wz) != NULL
+				// &&  chunk->search(wx, wy + dbSize, wz)->getState() == EMPTY)
+					// createTree(chunk, depth, wx, wy + bSize, wz);
+				if (cy + 1 < CHUNK_SIZE && chunk->getBlock(cx, cy + 1, cz).getType() == AIR)
+					chunk->setBlock(cx, cy, cz, GRASS);
 				else
-					chunk->insert(nx, ny, nz, depth, BLOCK, DIRT);
+					chunk->setBlock(cx, cy, cz, DIRT);
 			}
 			else
 			{
 				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
-					chunk->insert(nx, ny, nz, depth, BLOCK, COAL);
+					chunk->setBlock(cx, cy, cz, COAL);
 				else
-				{
-					if (chunk->getState() != CHUNK)
-						std::cerr << "Error -> generateBlock3d(): " << typeid(chunk).name() << " of state " << chunk->getState() << std::endl;
-					chunk->insert(nx, ny, nz, depth, BLOCK, STONE);
-				}
-			}
-		}
-	}
-}
-
-void
-Core::generateBlock(Chunk *chunk, float const &x, float const &y, float const &z, int const &depth) const // multithread
-{
-	float						altitude;
-	float						nx, nz;
-	float						ntree;
-	
-	if (!chunk)
-	{
-		std::cerr << "Null chunk!" << std::endl;
-		return ;
-	}
-	nx = chunk->getCube().getX() + x;
-	nz = chunk->getCube().getZ() + z;
-	altitude = 0.0f;
-	ntree = noise->fractal(6, nx, y, nz);
-	for (int i = 0; i < 10.0f; i++)
-		altitude += noise->fractal(2, nx, y, nz);
-	if (ntree > 0.3)
-		createTree(chunk, depth, nx, altitude, nz);
-	for (; altitude > -25.0f; altitude -= this->block_size[depth])
-		  chunk->insert(nx, altitude, nz, depth, BLOCK, GRASS);
-}
-
-void
-Core::processChunkSimplification(Chunk *chunk) // multithread
-{
-	float					x, y, z;
-	float					cx, cy, cz;
-	float const				bs = block_size[BLOCK_DEPTH];
-	Octree					*tmp;
-
-	cx = chunk->getCube().getX();
-	cy = chunk->getCube().getY();
-	cz = chunk->getCube().getZ();
-	for (z = cz; z < cz + chunk_size; z += bs)
-	{
-		for (y = cy; y < cy + chunk_size; y += bs)
-		{
-			for (x = cx; x < cx + chunk_size; x += bs)
-			{
-				tmp = chunk->search(x, y, z, BLOCK, false);
-				if (tmp)
-				{
-					tmp->getParent()->backwardSimplification();
-				}
+					chunk->setBlock(cx, cy, cz, STONE);
 			}
 		}
 	}
@@ -544,12 +589,10 @@ void
 Core::processChunkGeneration(Chunk *chunk) // multithread
 {
 	float						x, z, y;
-	int							depth;
 
 	if (chunk->getGenerated())
 		return ;
 	chunk->setGenerated(false);
-	depth = BLOCK_DEPTH;
 	if (chunk->getStopGenerating())
 	{
 		chunk->setRenderDone(true);
@@ -557,11 +600,11 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 		chunk->setRemovable(true);
 		return ;
 	}
-	for (z = 0.0f; z < this->chunk_size; z += this->block_size[depth])
+	for (z = 0.0f; z < CHUNK_SIZE; z += BLOCK_SIZE)
 	{
-		for (x = 0.0f; x < this->chunk_size; x += this->block_size[depth])
+		for (x = 0.0f; x < CHUNK_SIZE; x += BLOCK_SIZE)
 		{
-			for (y = this->chunk_size; y >= 0.0f; y -= this->block_size[depth])
+			for (y = 0.0f; y < CHUNK_SIZE; y += BLOCK_SIZE)
 			{
 				if (chunk->getStopGenerating())
 				{
@@ -569,13 +612,11 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 					return ;
 				}
 				if (chunk)
-					generateBlock3d(chunk, x, y, z, depth, 50);
-				//generateBlock(chunk, x, 1.5, z, depth);
+					generateBlock3d(chunk, x, y, z, 50);
 			}
 		}
 	}
-	processChunkSimplification(chunk);
-	generateChunkMesh(chunk, chunk);
+	generateChunkMesh(chunk);
 	chunk->setGenerated(true);
 	chunk->setRemovable(true);
 }
@@ -608,7 +649,7 @@ Core::executeThread(int const &id) // multithread
 
 		// pick task to process
 		chunk = task_queue[id].front();
-		if (chunk != 0 && chunk->getState() == CHUNK)
+		if (chunk != 0)
 		{
 			task_queue[id].pop_front();
 
@@ -621,10 +662,6 @@ Core::executeThread(int const &id) // multithread
 		}
 		else
 		{
-			if (chunk)
-				std::cerr << "Error -> executeThread(): " << typeid(chunk).name() << " of state " << chunk->getState() << std::endl;
-			else
-				std::cerr << "Null chunk!" << std::endl;
 			is_task_locked[id] = false;
 			pthread_mutex_unlock(&task_mutex[id]);
 			task_queue[id].pop_front();
@@ -712,6 +749,7 @@ Core::startThreads(void)
 	ThreadArgs		*ta;
 
 	this->pool_size = this->getConcurrentThreads() + 1;
+	// pool_size = 1;
 	if (this->pool_size <= 0)
 		this->pool_size = 1;
 	std::cerr << "Concurrent threads: " << this->pool_size << std::endl;
@@ -857,73 +895,9 @@ Core::getChunksDirection(Chunk *central) const
 }
 
 void
-Core::updateChunks(void)
-{
-	Chunk								*central;
-	int									x, y, z;
-	Vec3<int>							dir;
-	Chunk								*newChunks[GEN_SIZE][GEN_SIZE][GEN_SIZE];
-	std::list<Chunk *>::const_iterator	it;
-	bool								inside;
-
-	central = static_cast<Chunk *>(octree->search(camera.pos.x, camera.pos.y, camera.pos.z, CHUNK, false));
-	if (central != chunks[center][center][center])
-	{
-		dir = getChunksDirection(central);
-		if (dir.x == 0 && dir.y == 0 && dir.z == 0)
-			return ; // outside of the generation area
-		for (z = 0; z < GEN_SIZE; ++z)
-			for (y = 0; y < GEN_SIZE; ++y)
-				for (x = 0; x < GEN_SIZE; ++x)
-					newChunks[z][y][x] = NULL;
-		// get the new chunk disposition, depending on the new central chunk
-		for (z = 0; z < GEN_SIZE; ++z)
-		{
-			for (y = 0; y < GEN_SIZE; ++y)
-			{
-				for (x = 0; x < GEN_SIZE; ++x)
-				{
-					if (x - dir.x < 0 || x - dir.x >= GEN_SIZE
-					||	y - dir.y < 0 || y - dir.y >= GEN_SIZE
-					||	z - dir.z < 0 || z - dir.z >= GEN_SIZE)
-					{
-						if (chunks[z][y][x] != NULL)
-						{
-							// if (chunks[z][y][x]->getGenerating() && !chunks[z][y][x]->getGenerated())
-								// chunks[z][y][x]->setStopGenerating(true);
-							inside = false;
-							for (it = chunksRemoval.begin(); it != chunksRemoval.end(); ++it)
-							{
-								if (*it == chunks[z][y][x])
-								{
-									inside = true;
-									break;
-								}
-							}
-							if (!inside)
-								chunksRemoval.push_front(chunks[z][y][x]);
-						}
-					}
-					else
-						newChunks[z - dir.z][y - dir.y][x - dir.x] = chunks[z][y][x];
-				}
-			}
-		}
-		newChunks[center][center][center] = central;
-		// copy new chunk disposition
-		for (z = 0; z < GEN_SIZE; ++z)
-			for (y = 0; y < GEN_SIZE; ++y)
-				for (x = 0; x < GEN_SIZE; ++x)
-					chunks[z][y][x] = newChunks[z][y][x];
-		insertChunks();
-	}
-}
-
-void
 Core::insertChunks(void)
 {
 	int									cx, cy, cz;
-	float								px, py, pz;
 	Chunk *								chunk;
 	bool								inTaskPool;
 	std::list<Chunk *>::iterator		it, ite;
@@ -937,45 +911,35 @@ Core::insertChunks(void)
 				if (chunks[cz][cy][cx] == NULL)
 				{
 					// place new chunks in the camera perimeter, ignoring the central chunk
-					if (cz != center || cy != center || cx != center)
+					chunk = new Chunk(cx * CHUNK_SIZE, cy * CHUNK_SIZE, cz * CHUNK_SIZE, CHUNK_SIZE);
+					if (chunk != 0)
 					{
-						px = camera.pos.x + (cx - center) * chunk_size;
-						py = camera.pos.y + (cy - center) * chunk_size;
-						pz = camera.pos.z + (cz - center) * chunk_size;
-						chunk = static_cast<Chunk *>(octree->insert(px, py, pz, CHUNK_DEPTH, CHUNK, NONE));
-						if (chunk != 0)
+						inTaskPool = chunkInTaskPool(chunk);
+						it = chunksRemoval.begin();
+						ite = chunksRemoval.end();
+						while (it != ite)
 						{
-							inTaskPool = chunkInTaskPool(chunk);
-							it = chunksRemoval.begin();
-							ite = chunksRemoval.end();
-							while (it != ite)
+							if (*it == chunk)
 							{
-								if (*it == chunk)
-								{
-									it = chunksRemoval.erase(it);
-									break;
-								}
-								++it;
+								it = chunksRemoval.erase(it);
+								break;
 							}
-							if (chunk != chunks[cz][cy][cx])
+							++it;
+						}
+						if (chunk != chunks[cz][cy][cx])
+						{
+							if (!inTaskPool)
 							{
-								if (!inTaskPool)
-								{
-									chunk->setGenerated(false);
-									chunk->setGenerating(false);
-									chunk->setRenderDone(false);
-									chunk->setStopGenerating(false);
-									chunk->setRemovable(false);
-								}
-								else
-								{
-									std::cerr << chunk << "-> " << "state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << std::endl;
-								}
-								chunk->pos.x = cx;
-								chunk->pos.y = cy;
-								chunk->pos.z = cz;
-								chunks[cz][cy][cx] = chunk;
+								chunk->setGenerated(false);
+								chunk->setGenerating(false);
+								chunk->setRenderDone(false);
+								chunk->setStopGenerating(false);
+								chunk->setRemovable(false);
 							}
+							chunk->pos.x = cx;
+							chunk->pos.y = cy;
+							chunk->pos.z = cz;
+							chunks[cz][cy][cx] = chunk;
 						}
 					}
 				}
@@ -994,35 +958,7 @@ Core::chunkInView(Chunk *chunk) const
 					return (true);
 	return (false);
 }
-
-void
-Core::clearChunksRemoval(void)
-{
-	std::list<Chunk *>::iterator		it;
-	Chunk *								chunk;
-
-	if (chunksRemoval.size() > 0)
-	{
-		for (it = chunksRemoval.begin(); it != chunksRemoval.end();)
-		{
-			chunk = *it;
-			// std::cerr << chunk << "-> " << "state: " << (int)chunk->getGenerating() << (int)chunk->getGenerated() << (int)chunk->getRenderDone() << (int)chunk->getStopGenerating() << (int)chunk->getRemovable() << std::endl;
-			if (chunk && chunk->getRemovable())
-			{
-				if (!chunkInView(chunk))
-				{
-					chunk->remove();
-					it = chunksRemoval.erase(it);
-				}
-				else
-					it++;
-			}
-			else
-				it++;
-		}
-	}
-}
-
+/*
 Block *
 Core::getClosestBlock(void) const
 {
@@ -1042,29 +978,18 @@ Core::getClosestBlock(void) const
 	}
 	return (NULL);
 }
-
+*/
 void
 Core::initChunks(void)
 {
 	int				x, y, z;
-	int				i;
 
 	for (z = 0; z < GEN_SIZE; ++z)
 		for (y = 0; y < GEN_SIZE; ++y)
 			for (x = 0; x < GEN_SIZE; ++x)
 				chunks[z][y][x] = NULL;
 	center = (GEN_SIZE - 1) / 2;
-	chunk_size = OCTREE_SIZE / powf(2, CHUNK_DEPTH);
-	for (i = 1; i < MAX_BLOCK_DEPTH; ++i)
-		block_size[i] = chunk_size / powf(2, i);
 	// Create initial chunk
-	chunks[center][center][center] = static_cast<Chunk *>(octree->insert(camera.pos.x, camera.pos.y, camera.pos.z,
-																		CHUNK_DEPTH, CHUNK, NONE));
-	chunks[center][center][center]->setGenerated(false);
-	chunks[center][center][center]->setGenerating(false);
-	chunks[center][center][center]->setRenderDone(false);
-	chunks[center][center][center]->setStopGenerating(false);
-	chunks[center][center][center]->setRemovable(false);
 	insertChunks();
 }
 
@@ -1120,16 +1045,12 @@ Core::init(void)
 	loadTextures();
 	createSelectionCube();
 	startThreads();
-	octree = new Link(-OCTREE_SIZE / 2, -OCTREE_SIZE / 2, -OCTREE_SIZE / 2, OCTREE_SIZE);
 	initChunks();
 	closestBlock = 0;
 	frameRenderedTriangles = 0;
-	std::cerr << "sizeof(Octree) = " << sizeof(Octree) << " bytes" << std::endl;
-	std::cerr << "sizeof(Link)   = " << sizeof(Link) << " bytes" << std::endl;
-	std::cerr << "sizeof(Block)  = " << sizeof(Block) << " bytes" << std::endl;
 	return (1);
 }
-
+/*
 void
 Core::updateLeftClick(void)
 {
@@ -1151,11 +1072,11 @@ Core::updateLeftClick(void)
 		std::cerr << chunk->mesh.getPrimitives() << std::endl;
 	}
 }
-
+*/
 void
 Core::update(void)
 {
-	std::cerr << "remove list: " << chunksRemoval.size() << std::endl;
+	// std::cerr << "remove list: " << chunksRemoval.size() << std::endl;
 	glfwSetCursorPos(window, windowWidth / 2.0f, windowHeight / 2.0f);
 	camera.rotate();
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -1166,11 +1087,8 @@ Core::update(void)
 		camera.strafeLeft();
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.strafeRight();
-	closestBlock = getClosestBlock();
 	generation();
-	updateChunks();
-	if (chunksRemoval.size() > 0)
-		clearChunksRemoval();
+	// closestBlock = getClosestBlock();
 }
 
 void
@@ -1187,7 +1105,7 @@ Core::render(void)
 		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
-/*		for (z = 0; z < GEN_SIZE; ++z)
+		for (z = 0; z < GEN_SIZE; ++z)
 		{
 			for (y = 0; y < GEN_SIZE; ++y)
 			{
@@ -1197,9 +1115,9 @@ Core::render(void)
 						chunks[z][y][x]->renderRidges(*this);
 				}
 			}
-		}*/
-		if (closestBlock != NULL)
-			closestBlock->renderRidges(*this);
+		}
+		// if (closestBlock != NULL)
+			// closestBlock->renderRidges(*this);
 		// render meshes
 		glUniform1f(renderVoxelRidgesLoc, 0.0f);
 		t = 0;

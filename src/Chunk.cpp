@@ -1,18 +1,19 @@
 
-#include "Core.hpp"
 #include "Chunk.hpp"
+#include "Core.hpp"
 
-Chunk::Chunk(void) : Link(),
+Chunk::Chunk(void) :
 			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false)
 {
-	_state = CHUNK;
+	init();
 	return ;
 }
 
-Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) : Link(x, y, z, s),
+Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) :
 			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false)
 {
-	_state = CHUNK;
+	init();
+	_cube = Cube(x, y, z, s);
 	return ;
 }
 
@@ -23,31 +24,27 @@ Chunk::~Chunk(void)
 	_renderDone = false;
 	_stopGenerating = false;
 	_removable = false;
-	for (int i = 0; i < CHD_MAX; ++i)
+	for (int i = 0; i < CHUNK_SIZE; ++i)
 	{
-		if (_children[i] != NULL)
-			delete _children[i];
-		_children[i] = NULL;
+		for (int j = 0; j < CHUNK_SIZE; ++j)
+			delete [] _blocks[i][j];
+		delete [] _blocks[i];
 	}
+	delete [] _blocks;
 }
 
 void
-Chunk::deleteChild(Octree *child)
+Chunk::init(void)
 {
-	for (int i = 0; i < CHD_MAX; ++i)
+	_blocks = new Block **[CHUNK_SIZE];
+	for (int i = 0; i < CHUNK_SIZE; ++i)
 	{
-		if (_children[i] == child)
+		_blocks[i] = new Block *[CHUNK_SIZE];
+		for (int j = 0; j < CHUNK_SIZE; ++j)
 		{
-			delete _children[i];
-			_children[i] = NULL;
+			_blocks[i][j] = new Block[CHUNK_SIZE];
 		}
 	}
-}
-
-Chunk *
-Chunk::getChunk(void)
-{
-	return (this);
 }
 
 void
@@ -93,6 +90,24 @@ Chunk::renderRidges(Core &core) const
 		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 		glDrawElements(GL_LINES, core.selectionIndicesSize, GL_UNSIGNED_SHORT, (void *)0);
 	core.ms.pop();
+}
+
+void
+Chunk::setBlock(int const &x, int const &y, int const &z, uint8_t const &type)
+{
+	_blocks[x][y][z].setType(type);
+}
+
+Block const &
+Chunk::getBlock(int const &x, int const &y, int const &z)
+{
+	return (_blocks[x][y][z]);
+}
+
+Cube const &
+Chunk::getCube(void) const
+{
+	return (_cube);
 }
 
 bool const &
