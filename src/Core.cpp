@@ -222,7 +222,42 @@ Core::createSelectionCube(void)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, selectionVbo[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * selectionIndicesSize, indices, GL_STATIC_DRAW);
 }
+/*
+void
+Core::createAxis(void)
+{
+	//          y
+	//		    2----3
+	//		   /|   /|
+	//		 6----7  |
+	//		 |  0-|--1   x
+	//		 |/   | /
+	//		 4____5
+	//		z
 
+	selectionVerticesSize = 24;
+	selectionIndicesSize = 24;
+	static GLfloat const		vertices[36] =
+	{
+		0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // 0
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // 1
+		0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, // 0
+		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, // 2
+		0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, // 0
+		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f  // 4
+	};
+
+	glGenVertexArrays(1, &selectionVao);
+	glBindVertexArray(selectionVao);
+	glGenBuffers(2, &selectionVbo[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, selectionVbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * selectionVerticesSize, vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(positionLoc);
+	glVertexAttribPointer(positionLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 3, (void *)0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, selectionVbo[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * selectionIndicesSize, indices, GL_STATIC_DRAW);
+}*/
+/*
 void
 Core::generateChunkMesh(Chunk *chunk) const // multithread
 {
@@ -272,51 +307,90 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 		}
 	}
 }
-/*
-inline int
-getBlockId(int const &x, int const &y, int const &z)
-{
-	return ((x * CHUNK_SIZE + y) * CHUNK_SIZE + z);
-}
-
+*/
 void
-Core::generateGreedyMesh(Chunk *chunk) const
+Core::generateChunkMesh(Chunk *chunk) const
 {
-	static int const		totalSize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
-	Block					*tmpBlocks;
-	Block const				*blocks = chunk->getBlocks();
-	float					x, y, z;
+	float					x, y, z, s;
+	float					bx, by, bz;
+	float					sz;
 	float					cx, cy, cz;
 	int						ix, iy, iz;
-	int						i;
+	float					bt;
+	float					sd;
+	int						lastBlockType;
 
 	cx = chunk->getCube().getX();
 	cy = chunk->getCube().getY();
 	cz = chunk->getCube().getZ();
-	tmpBlocks = new Block[totalSize];
-	for (int k = 0; k < totalSize; ++k)
-		tmpBlocks[k].setType(blocks[k].getType());
-	for (x = cx; x < cx + CHUNK_SIZE; x += BLOCK_SIZE)
+	s = BLOCK_SIZE;
+	for (y = cy; y < cy + CHUNK_SIZE; y += BLOCK_SIZE)
 	{
-		for (y = cy; y < cy + CHUNK_SIZE; y += BLOCK_SIZE)
+		for (x = cx; x < cx + CHUNK_SIZE; x += BLOCK_SIZE)
 		{
+			// init face line
+			lastBlockType = AIR;
+			sz = 0.0f;
 			for (z = cz; z < cz + CHUNK_SIZE; z += BLOCK_SIZE)
 			{
 				ix = (x - cx) / BLOCK_SIZE;
 				iy = (y - cy) / BLOCK_SIZE;
 				iz = (z - cz) / BLOCK_SIZE;
-				i = getBlockId(ix, iy, iz);
-				if (tmpBlocks[i].getType() != NONE && tmpBlocks[i].getType() != AIR)
+				bt = chunk->getBlock(ix, iy, iz).getType();
+				if (sz > 0.0f && (lastBlockType != bt || lastBlockType == AIR))
 				{
-					
+					chunk->mesh.pushUpFace(bx, by, bz, s, s, sz, lastBlockType - 1);
+					lastBlockType = AIR;
+					sz = 0.0f;
+				}
+				if (bt != AIR)
+				{
+					if (sz == 0.0f && ((iy + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE))
+					{
+						bx = x;
+						by = y;
+						bz = z;
+						lastBlockType = bt;
+						sz = BLOCK_SIZE;
+					}
+					else if (lastBlockType == bt)
+						sz += BLOCK_SIZE;
+					if (sz > 0.0f && (lastBlockType != bt || lastBlockType == AIR || z >= cz + CHUNK_SIZE - BLOCK_SIZE))
+					{
+						chunk->mesh.pushUpFace(bx, by, bz, s, s, sz, lastBlockType - 1);
+						lastBlockType = AIR;
+						sz = 0.0f;
+					}
+					// if ((iy + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE) // Up
+						// chunk->mesh.pushUpFace(x, y, z, s, bt - 1);
+					sd = bt;
+/*					if (bt == GRASS)
+						sd = DIRT;*/
+					if ((iy - 1 >= 0 && chunk->getBlock(ix, iy - 1, iz).getType() == AIR) || iy - 1 < 0) // Bottom
+						chunk->mesh.pushBottomFace(x, y, z, s, sd - 1);
+					sd = bt;
+					if (bt == GRASS)
+						sd = SIDE_GRASS;
+					if ((iz - 1 >= 0 && chunk->getBlock(ix, iy, iz - 1).getType() == AIR) || iz - 1 < 0) // Back
+						chunk->mesh.pushBackFace(x, y, z, s, sd - 1);
+					if ((iz + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == CHUNK_SIZE) // Front
+						chunk->mesh.pushFrontFace(x, y, z, s, sd - 1);
+					if ((ix - 1 >= 0 && chunk->getBlock(ix - 1, iy, iz).getType() == AIR) || ix - 1 < 0) // Left
+						chunk->mesh.pushLeftFace(x, y, z, s, sd - 1);
+					if ((ix + 1 < CHUNK_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == CHUNK_SIZE) // Right
+						chunk->mesh.pushRightFace(x, y, z, s, sd - 1);
+				}
+				else
+				{
+					// reinit face line
+					lastBlockType = AIR;
+					sz = 0.0f;
 				}
 			}
 		}
 	}
-	delete [] tmpBlocks;
-	(void)chunk;
 }
-*/
+
 /*void
 Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) const
 {
@@ -789,6 +863,8 @@ Core::insertChunks(void)
 		}
 	}
 }
+
+
 
 bool
 Core::chunkInView(Chunk *chunk) const

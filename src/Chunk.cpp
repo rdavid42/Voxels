@@ -31,12 +31,6 @@ Chunk::deleteBlocks(void)
 {
 	if (_blocks != 0)
 	{
-/*		for (int i = 0; i < CHUNK_SIZE; ++i)
-		{
-			for (int j = 0; j < CHUNK_SIZE; ++j)
-				delete [] _blocks[i][j];
-			delete [] _blocks[i];
-		}*/
 		delete [] _blocks;
 		_blocks = 0;
 	}
@@ -50,15 +44,6 @@ Chunk::init(void)
 	_renderDone = false;
 	_stopGenerating = false;
 	_removable = false;
-/*	_blocks = new Block **[CHUNK_SIZE];
-	for (int i = 0; i < CHUNK_SIZE; ++i)
-	{
-		_blocks[i] = new Block *[CHUNK_SIZE];
-		for (int j = 0; j < CHUNK_SIZE; ++j)
-		{
-			_blocks[i][j] = new Block[CHUNK_SIZE];
-		}
-	}*/
 	_blocks = new Block[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
 }
 
@@ -110,14 +95,12 @@ Chunk::renderRidges(Core &core) const
 void
 Chunk::setBlock(int const &x, int const &y, int const &z, uint8_t const &type)
 {
-	// _blocks[x][y][z].setType(type);
 	_blocks[(x * CHUNK_SIZE + y) * CHUNK_SIZE + z].setType(type);
 }
 
 Block const &
 Chunk::getBlock(int const &x, int const &y, int const &z) const
 {
-	// return (_blocks[x][y][z]);
 	return (_blocks[(x * CHUNK_SIZE + y) * CHUNK_SIZE + z]);
 }
 
