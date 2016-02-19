@@ -249,7 +249,7 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 				bt = chunk->getBlock(ix, iy, iz).getType();
 				if (bt != AIR)
 				{
-					if ((iy + 1 < CHUNK_SIZE / BLOCK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE / BLOCK_SIZE) // Up
+					if ((iy + 1 < ARRAY_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == ARRAY_SIZE) // Up
 						chunk->mesh.pushUpFace(x, y, z, s, bt - 1);
 					sd = bt;
 					if (bt == GRASS)
@@ -261,11 +261,11 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 						sd = SIDE_GRASS;
 					if ((iz - 1 >= 0 && chunk->getBlock(ix, iy, iz - 1).getType() == AIR) || iz - 1 < 0) // Back
 						chunk->mesh.pushBackFace(x, y, z, s, sd - 1);
-					if ((iz + 1 < CHUNK_SIZE / BLOCK_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == CHUNK_SIZE / BLOCK_SIZE) // Front
+					if ((iz + 1 < ARRAY_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == ARRAY_SIZE) // Front
 						chunk->mesh.pushFrontFace(x, y, z, s, sd - 1);
 					if ((ix - 1 >= 0 && chunk->getBlock(ix - 1, iy, iz).getType() == AIR) || ix - 1 < 0) // Left
 						chunk->mesh.pushLeftFace(x, y, z, s, sd - 1);
-					if ((ix + 1 < CHUNK_SIZE / BLOCK_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == CHUNK_SIZE / BLOCK_SIZE) // Right
+					if ((ix + 1 < ARRAY_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == ARRAY_SIZE) // Right
 						chunk->mesh.pushRightFace(x, y, z, s, sd - 1);
 				}
 			}
@@ -435,7 +435,7 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 				// if (ntree > 0.3 && chunk->search(wx, wy + dbSize, wz) != NULL
 				// &&  chunk->search(wx, wy + dbSize, wz)->getState() == EMPTY)
 					// createTree(chunk, depth, wx, wy + bSize, wz);
-				if (cy + 1 < CHUNK_SIZE / BLOCK_SIZE && chunk->getBlock(cx, cy + 1, cz).getType() == AIR)
+				if (cy + 1 < ARRAY_SIZE && chunk->getBlock(cx, cy + 1, cz).getType() == AIR)
 					chunk->setBlock(cx, cy, cz, GRASS);
 				else
 					chunk->setBlock(cx, cy, cz, DIRT);

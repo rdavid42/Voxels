@@ -18,7 +18,7 @@
 
 # define CHUNK_SIZE					8
 # define BLOCK_SIZE					0.25
-
+# define ARRAY_SIZE					(CHUNK_SIZE / BLOCK_SIZE) // Doit etre un int
 # define GEN_SIZE_X					15
 # define GEN_SIZE_Y					6
 # define GEN_SIZE_Z					15

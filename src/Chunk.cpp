@@ -53,13 +53,13 @@ Chunk::init(void)
 /*	_blocks = new Block **[CHUNK_SIZE];
 	for (int i = 0; i < CHUNK_SIZE; ++i)
 	{
-		_blocks[i] = new Block *[(int)(CHUNK_SIZE / BLOCK_SIZE)];
-		for (int j = 0; j < CHUNK_SIZE / BLOCK_SIZE; ++j)
+		_blocks[i] = new Block *[(int)(ARRAY_SIZE)];
+		for (int j = 0; j < ARRAY_SIZE; ++j)
 		{
-			_blocks[i][j] = new Block[(int)(CHUNK_SIZE / BLOCK_SIZE)];
+			_blocks[i][j] = new Block[(int)(ARRAY_SIZE)];
 		}
 	}*/
-	_blocks = new Block[(int)((CHUNK_SIZE / BLOCK_SIZE) * (CHUNK_SIZE / BLOCK_SIZE) * (CHUNK_SIZE / BLOCK_SIZE))];
+	_blocks = new Block[(int)((ARRAY_SIZE) * (ARRAY_SIZE) * (ARRAY_SIZE))];
 }
 
 void
@@ -111,14 +111,14 @@ void
 Chunk::setBlock(int const &x, int const &y, int const &z, uint8_t const &type)
 {
 	// _blocks[x][y][z].setType(type);
-	_blocks[(int)((x * (CHUNK_SIZE / BLOCK_SIZE) + y) * (CHUNK_SIZE / BLOCK_SIZE) + z)].setType(type);
+	_blocks[(int)((x * (ARRAY_SIZE) + y) * (ARRAY_SIZE) + z)].setType(type);
 }
 
 Block const &
 Chunk::getBlock(int const &x, int const &y, int const &z) const
 {
 	// return (_blocks[x][y][z]);
-	return (_blocks[(int)((x * (CHUNK_SIZE / BLOCK_SIZE) + y) * (CHUNK_SIZE / BLOCK_SIZE)+ z)]);
+	return (_blocks[(int)((x * (ARRAY_SIZE) + y) * (ARRAY_SIZE)+ z)]);
 }
 
 Block const *
