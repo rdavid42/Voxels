@@ -30,7 +30,6 @@ public:
 	void					setS(float const &s);
 
 	bool					vertexInside(float const &x, float const &y, float const &z) const;
-	Vec3<float>				getVertexPosition(Vec3<float> const &normal) const;
 
 	Cube					&operator=(Cube const &rhs);
 };

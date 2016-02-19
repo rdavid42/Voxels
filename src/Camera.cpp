@@ -124,14 +124,28 @@ Camera::updateFrustrum(void)
 	_planes[FAR_PLANE].set(farTopRight, farTopLeft, farBottomLeft);
 }
 
+Vec3<float>
+Camera::getVertexPosition(Vec3<float> const &position, Vec3<float> const &normal) const
+{
+	Vec3<float>			pos(position.x, position.y, position.z);
+
+	if (normal.x > 0.0f)
+		pos.x += CHUNK_SIZE;
+	if (normal.y > 0.0f)
+		pos.y += CHUNK_SIZE;
+	if (normal.z > 0.0f)
+		pos.z += CHUNK_SIZE;
+	return (pos);
+}
+
 frustrum_collision
-Camera::cubeInFrustrum(Cube const &cube)
+Camera::cubeInFrustrum(Vec3<float> const &position)
 {
 	frustrum_collision			result = INSIDE;
 
 	for (int i = 0; i < FRUSTRUM_PLANES; ++i)
 	{
-		if (_planes[i].distance(cube.getVertexPosition(_planes[i].normal)) < 0.0f)
+		if (_planes[i].distance(getVertexPosition(position, _planes[i].normal)) < 0.0f)
 			return (OUTSIDE);
 	}
 	return (result);

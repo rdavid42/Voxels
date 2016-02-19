@@ -9,11 +9,12 @@ Chunk::Chunk(void) :
 	return ;
 }
 
-Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) :
+Chunk::Chunk(float const &x, float const &y, float const &z) :
 			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false)
 {
 	init();
-	_cube = Cube(x, y, z, s);
+	_position.set(x, y, z);
+	//_cube = Cube(x, y, z, s);
 	return ;
 }
 
@@ -85,8 +86,8 @@ Chunk::renderRidges(Core &core) const
 {
 	(void)core;
 	core.ms.push();
-	core.ms.translate(_cube.getX(), _cube.getY(), _cube.getZ());
-	core.ms.scale(_cube.getS(), _cube.getS(), _cube.getS());
+	core.ms.translate(_position.x, _position.y, _position.z);
+	core.ms.scale(CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
 		glUniformMatrix4fv(core.objLoc, 1, GL_FALSE, core.ms.top().val);
 		glDrawElements(GL_LINES, core.selectionIndicesSize, GL_UNSIGNED_SHORT, (void *)0);
 	core.ms.pop();
@@ -104,10 +105,10 @@ Chunk::getBlock(int const &x, int const &y, int const &z)
 	return (_blocks[x][y][z]);
 }
 
-Cube const &
+Vec3<float> const &
 Chunk::getCube(void) const
 {
-	return (_cube);
+	return (_position);
 }
 
 bool const &

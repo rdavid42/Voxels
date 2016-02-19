@@ -8,6 +8,7 @@
 # include "Cube.hpp"
 # include "Mesh.hpp"
 # include "Block.hpp"
+# include "Vec3.hpp"
 
 class Chunk
 {
@@ -17,15 +18,14 @@ private:
 	bool							_renderDone;
 	bool							_stopGenerating;
 	bool							_removable;
-	Cube							_cube;
+	Vec3<float>						_position;
 	Block							***_blocks;
 
 public:
 	Mesh							mesh;
-	Vec3<uint8_t>					pos; // position relative to other chunks
 
 	Chunk(void);
-	Chunk(float const &x, float const &y, float const &z, float const &s);
+	Chunk(float const &x, float const &y, float const &z);
 	~Chunk(void);
 
 	void							init(void);
@@ -49,7 +49,7 @@ public:
 	void							setBlock(int const &x, int const &y, int const &z, uint8_t const &type);
 	Block const &					getBlock(int const &x, int const &y, int const &z);
 
-	Cube const &					getCube(void) const;
+	Vec3<float> const &				getCube(void) const;
 
 	Chunk							&operator=(Chunk const &rhs);
 

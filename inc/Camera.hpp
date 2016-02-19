@@ -5,6 +5,7 @@
 # include "Mat4Stack.hpp"
 # include "Plane.hpp"
 # include "Cube.hpp"
+# include "Constants.hpp"
 
 # define TOP_PLANE			0
 # define BOTTOM_PLANE		1
@@ -42,7 +43,8 @@ public:
 	void					setView(void);
 	void					initFrustrum(void);
 	void					updateFrustrum(void);
-	frustrum_collision		cubeInFrustrum(Cube const &cube);
+	Vec3<float>				getVertexPosition(Vec3<float> const &position, Vec3<float> const &normal) const;
+	frustrum_collision		cubeInFrustrum(Vec3<float> const &cube);
 	void					moveForward(void);
 	void					moveBackward(void);
 	void					strafeRight(void);

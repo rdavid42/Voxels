@@ -392,10 +392,10 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 	float					cx, cy, cz, cs;
 	int						ix, iy, iz;
 
-	cx = chunk->getCube().getX();
-	cy = chunk->getCube().getY();
-	cz = chunk->getCube().getZ();
-	cs = chunk->getCube().getS();
+	cx = chunk->getCube().x;
+	cy = chunk->getCube().y;
+	cz = chunk->getCube().z;
+	cs = CHUNK_SIZE;
 	s = BLOCK_SIZE;
 	for (x = cx; x < cx + cs; x += BLOCK_SIZE)
 	{
@@ -540,9 +540,9 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	// float						bSize;
 	int							i;
 
-	wx = chunk->getCube().getX() + x;
-	wy = chunk->getCube().getY() + y;
-	wz = chunk->getCube().getZ() + z;
+	wx = chunk->getCube().x + x;
+	wy = chunk->getCube().y + y;
+	wz = chunk->getCube().z + z;
 
 	cx = x / BLOCK_SIZE;
 	cy = y / BLOCK_SIZE;
@@ -552,8 +552,8 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	// bSize = this->block_size[depth];
 	// ntree = noise->fractal(6, wx, 0, wz);
 
-	if (cx < 0.0 || cx >= CHUNK_SIZE || cy < 0.0 || cy >= CHUNK_SIZE || cz < 0.0 || cz >= CHUNK_SIZE)
-		std::cerr << cx << ", " << cy << ", " << cz << std::endl;
+// 	if (cx < 0.0 || cx >= CHUNK_SIZE || cy < 0.0 || cy >= CHUNK_SIZE || cz < 0.0 || cz >= CHUNK_SIZE)
+// 		std::cerr << cx << ", " << cy << ", " << cz << std::endl;
 	n = 0.0f;
 	nstone = noise->fractal(5, wx, wy, wz);
 	for (i = 0; i < 3; i++)
@@ -911,7 +911,7 @@ Core::insertChunks(void)
 				if (chunks[cz][cy][cx] == NULL)
 				{
 					// place new chunks in the camera perimeter, ignoring the central chunk
-					chunk = new Chunk(cx * CHUNK_SIZE, cy * CHUNK_SIZE, cz * CHUNK_SIZE, CHUNK_SIZE);
+					chunk = new Chunk(cx * CHUNK_SIZE, cy * CHUNK_SIZE, cz * CHUNK_SIZE);
 					if (chunk != 0)
 					{
 						inTaskPool = chunkInTaskPool(chunk);
@@ -936,9 +936,6 @@ Core::insertChunks(void)
 								chunk->setStopGenerating(false);
 								chunk->setRemovable(false);
 							}
-							chunk->pos.x = cx;
-							chunk->pos.y = cy;
-							chunk->pos.z = cz;
 							chunks[cz][cy][cx] = chunk;
 						}
 					}

@@ -48,7 +48,7 @@
 # define MASK_32					0xFFFFFFFF
 
 # define CHUNK_SIZE					32
-# define BLOCK_SIZE					1.0
+# define BLOCK_SIZE					1
 
 # define GEN_SIZE					5 // (n * n * n) must be odd in order to place camera in the center all the time
 
