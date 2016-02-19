@@ -12,14 +12,17 @@ Camera::~Camera(void)
 // init -> set -> setView -> initFrustrum -> updateFrustrum
 
 void
-Camera::init(float const &fov, float const &aspect, float const &near, float const &far)
+Camera::init(float const &x, float const &y, float const &z, float const &fov, float const &aspect, float const &near, float const &far)
 {
 	_fov = fov;
 	_aspect = aspect;
 	_near = near;
 	_far = far;
-	speed = 0.3;
-	pos.set(0.0f, 30.0f, 15.0f);
+	initSpeed = 0.5f;
+	speed = initSpeed;
+	boostMax = initSpeed * 5.0f;
+	boostInc = speed / 20.0f;
+	pos.set(x, y, z);
 	lookAt.set(0.0f, 0.0f, 0.0f);
 	forward.set(lookAt - pos);
 	forward.normalize();
@@ -149,6 +152,20 @@ Camera::cubeInFrustrum(Vec3<float> const &position)
 			return (OUTSIDE);
 	}
 	return (result);
+}
+
+void
+Camera::enableBoost(void)
+{
+	if (speed < boostMax)
+		speed += boostInc;
+}
+
+void
+Camera::disableBoost(void)
+{
+	if (speed > initSpeed)
+		speed -= boostInc;
 }
 
 void

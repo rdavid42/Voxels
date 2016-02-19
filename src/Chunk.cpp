@@ -2,8 +2,7 @@
 #include "Chunk.hpp"
 #include "Core.hpp"
 
-Chunk::Chunk(void) :
-			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false)
+Chunk::Chunk(void)
 {
 	init();
 	return ;
@@ -24,27 +23,43 @@ Chunk::~Chunk(void)
 	_renderDone = false;
 	_stopGenerating = false;
 	_removable = false;
-	for (int i = 0; i < CHUNK_SIZE; ++i)
+	deleteBlocks();
+}
+
+void
+Chunk::deleteBlocks(void)
+{
+	if (_blocks != 0)
 	{
-		for (int j = 0; j < CHUNK_SIZE; ++j)
-			delete [] _blocks[i][j];
-		delete [] _blocks[i];
+/*		for (int i = 0; i < CHUNK_SIZE; ++i)
+		{
+			for (int j = 0; j < CHUNK_SIZE; ++j)
+				delete [] _blocks[i][j];
+			delete [] _blocks[i];
+		}*/
+		delete [] _blocks;
+		_blocks = 0;
 	}
-	delete [] _blocks;
 }
 
 void
 Chunk::init(void)
 {
-	_blocks = new Block **[(int)(CHUNK_SIZE / BLOCK_SIZE)];
-	for (int i = 0; i < CHUNK_SIZE / BLOCK_SIZE; ++i)
+	_generating = false;
+	_generated = false;
+	_renderDone = false;
+	_stopGenerating = false;
+	_removable = false;
+/*	_blocks = new Block **[CHUNK_SIZE];
+	for (int i = 0; i < CHUNK_SIZE; ++i)
 	{
 		_blocks[i] = new Block *[(int)(CHUNK_SIZE / BLOCK_SIZE)];
 		for (int j = 0; j < CHUNK_SIZE / BLOCK_SIZE; ++j)
 		{
 			_blocks[i][j] = new Block[(int)(CHUNK_SIZE / BLOCK_SIZE)];
 		}
-	}
+	}*/
+	_blocks = new Block[(int)((CHUNK_SIZE / BLOCK_SIZE) * (CHUNK_SIZE / BLOCK_SIZE) * (CHUNK_SIZE / BLOCK_SIZE))];
 }
 
 void
@@ -95,13 +110,21 @@ Chunk::renderRidges(Core &core) const
 void
 Chunk::setBlock(int const &x, int const &y, int const &z, uint8_t const &type)
 {
-	_blocks[x][y][z].setType(type);
+	// _blocks[x][y][z].setType(type);
+	_blocks[(int)((x * (CHUNK_SIZE / BLOCK_SIZE) + y) * (CHUNK_SIZE / BLOCK_SIZE) + z)].setType(type);
 }
 
 Block const &
-Chunk::getBlock(int const &x, int const &y, int const &z)
+Chunk::getBlock(int const &x, int const &y, int const &z) const
 {
-	return (_blocks[x][y][z]);
+	// return (_blocks[x][y][z]);
+	return (_blocks[(int)((x * (CHUNK_SIZE / BLOCK_SIZE) + y) * (CHUNK_SIZE / BLOCK_SIZE)+ z)]);
+}
+
+Block const *
+Chunk::getBlocks(void) const
+{
+	return (_blocks);
 }
 
 Vec3<float> const &

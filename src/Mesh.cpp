@@ -68,6 +68,81 @@ Mesh::pushVertex(Vertex const &vertex)
 	_vertices++;
 }
 
+//          y
+//		    2----3
+//		   /|   /|
+//		 6----7  |
+//		 |  0-|--1 x
+//		 |/   | /
+//		 4____5
+//		z
+
+void
+Mesh::pushUpFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
+{
+	pushVertex({x,			y + s,		z,			0.0f,	0.0f, tex}); // 2
+	pushVertex({x,			y + s,		z + s,		1.0f,	0.0f, tex}); // 6
+	pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, tex}); // 7
+	pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, tex}); // 7
+	pushVertex({x + s,		y + s,		z,			0.0f,	1.0f, tex}); // 3
+	pushVertex({x,			y + s,		z,			0.0f,	0.0f, tex}); // 2
+}
+
+void
+Mesh::pushBottomFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
+{
+	pushVertex({x,			y,			z,			0.0f,	1.0f, tex}); // 0
+	pushVertex({x + s,		y,			z,			1.0f,	1.0f, tex}); // 1
+	pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, tex}); // 5
+	pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, tex}); // 5
+	pushVertex({x,			y,			z + s,		0.0f,	0.0f, tex}); // 4
+	pushVertex({x,			y,			z,			0.0f,	1.0f, tex}); // 0
+}
+
+void
+Mesh::pushBackFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
+{
+	pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+	pushVertex({x,			y + s,		z,			0.0f,	1.0f, tex}); // 2
+	pushVertex({x + s,		y + s,		z,			1.0f,	1.0f, tex}); // 3
+	pushVertex({x + s,		y + s,		z,			1.0f,	1.0f, tex}); // 3
+	pushVertex({x + s,		y,			z,			1.0f,	0.0f, tex}); // 1
+	pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+}
+
+void
+Mesh::pushFrontFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
+{
+	pushVertex({x,			y,			z + s,		0.0f,	0.0f, tex}); // 4
+	pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, tex}); // 5
+	pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, tex}); // 7
+	pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, tex}); // 7
+	pushVertex({x,			y + s,		z + s,		0.0f,	1.0f, tex}); // 6
+	pushVertex({x,			y,			z + s,		0.0f,	0.0f, tex}); // 4
+}
+
+void
+Mesh::pushLeftFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
+{
+	pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+	pushVertex({x,			y,			z + s,		1.0f,	0.0f, tex}); // 4
+	pushVertex({x,			y + s,		z + s,		1.0f,	1.0f, tex}); // 6
+	pushVertex({x,			y + s,		z + s,		1.0f,	1.0f, tex}); // 6
+	pushVertex({x,			y + s,		z,			0.0f,	1.0f, tex}); // 2
+	pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+}
+
+void
+Mesh::pushRightFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
+{
+	pushVertex({x + s,		y,			z,			0.0f,	0.0f, tex}); // 1
+	pushVertex({x + s,		y + s,		z,			0.0f,	1.0f, tex}); // 3
+	pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, tex}); // 7
+	pushVertex({x + s,		y + s,		z + s,		1.0f,	1.0f, tex}); // 7
+	pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, tex}); // 5
+	pushVertex({x + s,		y,			z,			0.0f,	0.0f, tex}); // 1
+}
+
 int
 Mesh::getSize(void) const
 {
@@ -109,6 +184,12 @@ Mesh::getPrimitives(void) const
 {
 	if (_mode == GL_TRIANGLES)
 		return (_vertices / 3);
+	else if (_mode == GL_QUADS)
+		return (_vertices / 4);
+	else if (_mode == GL_TRIANGLE_FAN)
+		return (_vertices / 4);
+	else if (_mode == GL_TRIANGLE_STRIP)
+		return (_vertices / 4);
 	return (_vertices);
 }
 

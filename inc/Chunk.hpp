@@ -13,15 +13,16 @@
 class Chunk
 {
 private:
+	Block							*_blocks;
 	bool							_generating;
 	bool							_generated;
 	bool							_renderDone;
 	bool							_stopGenerating;
 	bool							_removable;
 	Vec3<float>						_position;
-	Block							***_blocks;
 
 public:
+	Cube							_cube;
 	Mesh							mesh;
 
 	Chunk(void);
@@ -29,6 +30,7 @@ public:
 	~Chunk(void);
 
 	void							init(void);
+	void							deleteBlocks(void);
 
 	void							render(Core &core) const;
 	void							renderLines(Core &core) const;
@@ -47,9 +49,11 @@ public:
 	void							setRemovable(bool const &val);
 
 	void							setBlock(int const &x, int const &y, int const &z, uint8_t const &type);
-	Block const &					getBlock(int const &x, int const &y, int const &z);
+	Block const &					getBlock(int const &x, int const &y, int const &z) const;
 
 	Vec3<float> const &				getCube(void) const;
+
+	Block const *					getBlocks(void) const;
 
 	Chunk							&operator=(Chunk const &rhs);
 

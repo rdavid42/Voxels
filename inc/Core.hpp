@@ -13,6 +13,7 @@
 # include "Chunk.hpp"
 # include "Block.hpp"
 # include "Noise.hpp"
+# include "CLWrapper.hpp"
 
 # define STARTED	0
 # define STOPPED	1
@@ -72,10 +73,9 @@ public:
 	/* Octree */
 
 	Noise *					noise;
-	int						center; // central chunk's index, `chunks[center][center][center]`
-	Chunk *					chunks[GEN_SIZE]
-								  [GEN_SIZE]
-								  [GEN_SIZE]; // camera chunk in the center
+	Chunk *					chunks[GEN_SIZE_Z]
+								  [GEN_SIZE_Y]
+								  [GEN_SIZE_X]; // camera chunk in the center
 	Block					*closestBlock;
 	std::list<Chunk *>		chunksRemoval;
 
@@ -89,6 +89,9 @@ public:
 	pthread_mutex_t *		task_mutex;
 	pthread_t *				threads;
 	std::deque<Chunk *> *	task_queue; // one different pool per thread
+
+	/* OpenCL */
+	CLWrapper				cl;
 
 	Core(void);
 	~Core(void);
@@ -105,6 +108,7 @@ public:
 	void					processChunkGeneration(Chunk *c); // multithread
 	void					generateBlock3d(Chunk *c, float const &x, float const &y, float const &z, int const &ycap) const; // multithread
 	void					generateChunkMesh(Chunk *chunk) const; // multithread
+	void					generateGreedyMesh(Chunk *chunk) const; // multithread
 
 	/* core */
 	int						init(void);
@@ -129,7 +133,7 @@ public:
 
 	bool					chunkInView(Chunk *chunk) const;
 	bool					chunkInTaskPool(Chunk const *chunk) const;
-	Vec3<int>				getChunksDirection(Chunk *central) const;
+	// Vec3<int>				getChunksDirection(Chunk *central) const;
 	// Block					*getClosestBlock(void) const;
 	void					generation(void);
 	void					insertChunks(void);
