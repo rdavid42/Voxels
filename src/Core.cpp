@@ -403,13 +403,13 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 		{
 			for (z = cz; z < cz + cs; z += BLOCK_SIZE)
 			{
-				ix = (x - cx) / BLOCK_SIZE;
-				iy = (y - cy) / BLOCK_SIZE;
-				iz = (z - cz) / BLOCK_SIZE;
+				ix = ((x - cx) / BLOCK_SIZE);
+				iy = ((y - cy) / BLOCK_SIZE);
+				iz = ((z - cz) / BLOCK_SIZE);
 				bt = chunk->getBlock(ix, iy, iz).getType();
 				if (bt != AIR)
 				{
-					if ((iy + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE) // Up
+					if ((iy + 1 < CHUNK_SIZE / BLOCK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE / BLOCK_SIZE) // Up
 					{
 						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	0.0f, bt - 1}); // 2
 						chunk->mesh.pushVertex({x,			y + s,		z + s,		1.0f,	0.0f, bt - 1}); // 6
@@ -442,7 +442,7 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 						chunk->mesh.pushVertex({x + s,		y,			z,			1.0f,	0.0f, sd - 1}); // 1
 						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
 					}
-					if ((iz + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == CHUNK_SIZE) // Front
+					if ((iz + 1 < CHUNK_SIZE / BLOCK_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == CHUNK_SIZE / BLOCK_SIZE) // Front
 					{
 						chunk->mesh.pushVertex({x,			y,			z + s,		0.0f,	0.0f, sd - 1}); // 4
 						chunk->mesh.pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, sd - 1}); // 5
@@ -460,7 +460,7 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 						chunk->mesh.pushVertex({x,			y + s,		z,			0.0f,	1.0f, sd - 1}); // 2
 						chunk->mesh.pushVertex({x,			y,			z,			0.0f,	0.0f, sd - 1}); // 0
 					}
-					if ((ix + 1 < CHUNK_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == CHUNK_SIZE) // Right
+					if ((ix + 1 < CHUNK_SIZE / BLOCK_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == CHUNK_SIZE / BLOCK_SIZE) // Right
 					{
 						chunk->mesh.pushVertex({x + s,		y,			z,			0.0f,	0.0f, sd - 1}); // 1
 						chunk->mesh.pushVertex({x + s,		y + s,		z,			0.0f,	1.0f, sd - 1}); // 3
@@ -504,6 +504,30 @@ Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) cons
 	}
 }
 */
+// void
+// Core::initNoises(void) // multithread
+// {
+// 	noise = new Noise(42, 256);
+// 	// octaves range     : 1.0 - 6.0
+// 	// frequency range   : 0.0 - 1.0
+// 	// lacunarity range  : ?
+// 	// amplitude range   : > 0.0
+// 	// persistence range : 0.0 - 10
+// 	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 0.1); // bruit 3d test					//	0
+// 	noise->configs.emplace_back(6, 0.008, 1.0, 0.9, 1.0); // bruit 3d équilibré				//	1
+// 	noise->configs.emplace_back(2, 0.008, 10.0, 0.9, 1.0); // bruit 3d monde des reves		//	2
+// 	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop		//	3
+// 	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La vallée Danna					//	4
+// 	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.					//	5
+// 	noise->configs.emplace_back(5, 6, 0.2, 0.2, 1);		// Tree								//	6
+// 	srandom(time(NULL));
+// 	std::cerr	<< "octaves:     " << this->noise->configs.at(0).octaves << std::endl
+// 				<< "frequency:   " << this->noise->configs.at(0).frequency << std::endl
+// 				<< "lacunarity:  " << this->noise->configs.at(0).lacunarity << std::endl
+// 				<< "amplitude:   " << this->noise->configs.at(0).amplitude << std::endl
+// 				<< "persistence: " << this->noise->configs.at(0).persistence << std::endl;
+// }
+
 void
 Core::initNoises(void) // multithread
 {
@@ -555,7 +579,7 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 // 	if (cx < 0.0 || cx >= CHUNK_SIZE || cy < 0.0 || cy >= CHUNK_SIZE || cz < 0.0 || cz >= CHUNK_SIZE)
 // 		std::cerr << cx << ", " << cy << ", " << cz << std::endl;
 	n = 0.0f;
-	nstone = noise->fractal(5, wx, wy, wz);
+	nstone = noise->fractal(6, wx, wy, wz);
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, wx, wy, wz);
 	n /= (i + 1);
@@ -569,7 +593,7 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 				// if (ntree > 0.3 && chunk->search(wx, wy + dbSize, wz) != NULL
 				// &&  chunk->search(wx, wy + dbSize, wz)->getState() == EMPTY)
 					// createTree(chunk, depth, wx, wy + bSize, wz);
-				if (cy + 1 < CHUNK_SIZE && chunk->getBlock(cx, cy + 1, cz).getType() == AIR)
+				if (cy + 1 < CHUNK_SIZE / BLOCK_SIZE && chunk->getBlock(cx, cy + 1, cz).getType() == AIR)
 					chunk->setBlock(cx, cy, cz, GRASS);
 				else
 					chunk->setBlock(cx, cy, cz, DIRT);

@@ -14,7 +14,6 @@ Chunk::Chunk(float const &x, float const &y, float const &z) :
 {
 	init();
 	_position.set(x, y, z);
-	//_cube = Cube(x, y, z, s);
 	return ;
 }
 
@@ -37,13 +36,13 @@ Chunk::~Chunk(void)
 void
 Chunk::init(void)
 {
-	_blocks = new Block **[CHUNK_SIZE];
-	for (int i = 0; i < CHUNK_SIZE; ++i)
+	_blocks = new Block **[(int)(CHUNK_SIZE / BLOCK_SIZE)];
+	for (int i = 0; i < CHUNK_SIZE / BLOCK_SIZE; ++i)
 	{
-		_blocks[i] = new Block *[CHUNK_SIZE];
-		for (int j = 0; j < CHUNK_SIZE; ++j)
+		_blocks[i] = new Block *[(int)(CHUNK_SIZE / BLOCK_SIZE)];
+		for (int j = 0; j < CHUNK_SIZE / BLOCK_SIZE; ++j)
 		{
-			_blocks[i][j] = new Block[CHUNK_SIZE];
+			_blocks[i][j] = new Block[(int)(CHUNK_SIZE / BLOCK_SIZE)];
 		}
 	}
 }
