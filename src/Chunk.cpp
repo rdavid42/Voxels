@@ -24,13 +24,23 @@ Chunk::~Chunk(void)
 	_renderDone = false;
 	_stopGenerating = false;
 	_removable = false;
-	for (int i = 0; i < CHUNK_SIZE; ++i)
+	deleteBlocks();
+}
+
+void
+Chunk::deleteBlocks(void)
+{
+	if (_blocks != 0)
 	{
-		for (int j = 0; j < CHUNK_SIZE; ++j)
-			delete [] _blocks[i][j];
-		delete [] _blocks[i];
+		for (int i = 0; i < CHUNK_SIZE; ++i)
+		{
+			for (int j = 0; j < CHUNK_SIZE; ++j)
+				delete [] _blocks[i][j];
+			delete [] _blocks[i];
+		}
+		delete [] _blocks;
+		_blocks = 0;
 	}
-	delete [] _blocks;
 }
 
 void

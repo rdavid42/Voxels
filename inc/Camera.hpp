@@ -33,11 +33,14 @@ public:
 	Vec3<float>				forward;
 	Vec3<float>				up;
 	Vec3<float>				right;
+	float					boostMax;
+	float					boostInc;
+	float					initSpeed;
 	float					speed;
 	float					hangle; //horizontal camera angle
 	float					vangle; //vertical camera angle
 
-	void					init(float const &fov, float const &aspect, float const &near, float const &far);
+	void					init(float const &x, float const &y, float const &z, float const &fov, float const &aspect, float const &near, float const &far);
 	void					set(void);
 	void					setView(void);
 	void					initFrustrum(void);
@@ -48,6 +51,8 @@ public:
 	void					strafeRight(void);
 	void					strafeLeft(void);
 	void					rotate(void);
+	void					enableBoost(void);
+	void					disableBoost(void);
 
 private:
 	float					_near; // near plane distance

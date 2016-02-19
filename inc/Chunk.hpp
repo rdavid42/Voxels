@@ -29,6 +29,7 @@ public:
 	~Chunk(void);
 
 	void							init(void);
+	void							deleteBlocks(void);
 
 	void							render(Core &core) const;
 	void							renderLines(Core &core) const;

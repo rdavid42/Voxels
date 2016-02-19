@@ -655,6 +655,8 @@ Core::generation(void)
 						chunk->setGenerating(false);
 						chunk->setStopGenerating(false);
 						chunk->setRemovable(true);
+						chunk->mesh.clear();
+						// chunk->deleteBlocks();
 					}
 				}
 			}
@@ -829,13 +831,13 @@ Core::init(void)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
-	cl.init();
+	// cl.init();
 	float const fov = 53.13f;
 	float const aspect = windowWidth * 1.0f / windowHeight;
 	float const near = 0.1f;
 	float const far = 1000.0f;
 	buildProjectionMatrix(projMatrix, fov, near, far);
-	camera.init(fov, aspect, near, far);
+	camera.init(CHUNK_SIZE * GEN_SIZE_X / 2, CHUNK_SIZE * GEN_SIZE_Y, CHUNK_SIZE * GEN_SIZE_Z / 2, fov, aspect, near, far);
 	if (!initShaders(vertexShader, fragmentShader, program))
 		return (0);
 	getLocations();
@@ -885,6 +887,10 @@ Core::update(void)
 	// std::cerr << "remove list: " << chunksRemoval.size() << std::endl;
 	glfwSetCursorPos(window, windowWidth / 2.0f, windowHeight / 2.0f);
 	camera.rotate();
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
+		camera.enableBoost();
+	else
+		camera.disableBoost();
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		camera.moveForward();
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -908,7 +914,7 @@ Core::render(void)
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, camera.view.val);
 	ms.push();
 		// render chunks ridges
-		glBindVertexArray(selectionVao);
+/*		glBindVertexArray(selectionVao);
 		glUniform1f(renderVoxelRidgesLoc, 1.0f);
 		glUniform3f(colorLoc, 1.0f, 1.0f, 1.0f);
 		for (z = 0; z < GEN_SIZE_Z; ++z)
@@ -921,7 +927,7 @@ Core::render(void)
 						chunks[z][y][x]->renderRidges(*this);
 				}
 			}
-		}
+		}*/
 		// if (closestBlock != NULL)
 			// closestBlock->renderRidges(*this);
 		// render meshes

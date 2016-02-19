@@ -68,6 +68,15 @@ Mesh::pushVertex(Vertex const &vertex)
 	_vertices++;
 }
 
+//          y
+//		    2----3
+//		   /|   /|
+//		 6----7  |
+//		 |  0-|--1 x
+//		 |/   | /
+//		 4____5
+//		z
+
 void
 Mesh::pushUpFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
 {
@@ -175,6 +184,12 @@ Mesh::getPrimitives(void) const
 {
 	if (_mode == GL_TRIANGLES)
 		return (_vertices / 3);
+	else if (_mode == GL_QUADS)
+		return (_vertices / 4);
+	else if (_mode == GL_TRIANGLE_FAN)
+		return (_vertices / 4);
+	else if (_mode == GL_TRIANGLE_STRIP)
+		return (_vertices / 4);
 	return (_vertices);
 }
 
