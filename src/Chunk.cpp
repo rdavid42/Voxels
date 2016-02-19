@@ -2,15 +2,14 @@
 #include "Chunk.hpp"
 #include "Core.hpp"
 
-Chunk::Chunk(void) :
-			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false)
+Chunk::Chunk(void)
 {
 	init();
 	return ;
 }
 
-Chunk::Chunk(float const &x, float const &y, float const &z, float const &s) :
-			_generating(false), _generated(false), _renderDone(false), _stopGenerating(false), _removable(false)
+Chunk::Chunk(float const &x, float const &y, float const &z, float const &s)
+			
 {
 	init();
 	_cube = Cube(x, y, z, s);
@@ -46,6 +45,11 @@ Chunk::deleteBlocks(void)
 void
 Chunk::init(void)
 {
+	_generating = false;
+	_generated = false;
+	_renderDone = false;
+	_stopGenerating = false;
+	_removable = false;
 /*	_blocks = new Block **[CHUNK_SIZE];
 	for (int i = 0; i < CHUNK_SIZE; ++i)
 	{
@@ -111,10 +115,16 @@ Chunk::setBlock(int const &x, int const &y, int const &z, uint8_t const &type)
 }
 
 Block const &
-Chunk::getBlock(int const &x, int const &y, int const &z)
+Chunk::getBlock(int const &x, int const &y, int const &z) const
 {
 	// return (_blocks[x][y][z]);
 	return (_blocks[(x * CHUNK_SIZE + y) * CHUNK_SIZE + z]);
+}
+
+Block const *
+Chunk::getBlocks(void) const
+{
+	return (_blocks);
 }
 
 Cube const &

@@ -272,13 +272,51 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 		}
 	}
 }
+/*
+inline int
+getBlockId(int const &x, int const &y, int const &z)
+{
+	return ((x * CHUNK_SIZE + y) * CHUNK_SIZE + z);
+}
 
 void
 Core::generateGreedyMesh(Chunk *chunk) const
 {
+	static int const		totalSize = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
+	Block					*tmpBlocks;
+	Block const				*blocks = chunk->getBlocks();
+	float					x, y, z;
+	float					cx, cy, cz;
+	int						ix, iy, iz;
+	int						i;
+
+	cx = chunk->getCube().getX();
+	cy = chunk->getCube().getY();
+	cz = chunk->getCube().getZ();
+	tmpBlocks = new Block[totalSize];
+	for (int k = 0; k < totalSize; ++k)
+		tmpBlocks[k].setType(blocks[k].getType());
+	for (x = cx; x < cx + CHUNK_SIZE; x += BLOCK_SIZE)
+	{
+		for (y = cy; y < cy + CHUNK_SIZE; y += BLOCK_SIZE)
+		{
+			for (z = cz; z < cz + CHUNK_SIZE; z += BLOCK_SIZE)
+			{
+				ix = (x - cx) / BLOCK_SIZE;
+				iy = (y - cy) / BLOCK_SIZE;
+				iz = (z - cz) / BLOCK_SIZE;
+				i = getBlockId(ix, iy, iz);
+				if (tmpBlocks[i].getType() != NONE && tmpBlocks[i].getType() != AIR)
+				{
+					
+				}
+			}
+		}
+	}
+	delete [] tmpBlocks;
 	(void)chunk;
 }
-
+*/
 /*void
 Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) const
 {
@@ -852,6 +890,8 @@ Core::init(void)
 	initChunks();
 	closestBlock = 0;
 	frameRenderedTriangles = 0;
+	std::cerr << "sizeof(Chunk) = " << sizeof(Chunk) << " bytes" << std::endl;
+	std::cerr << "sizeof(Block) = " << sizeof(Block) << " bytes" << std::endl;
 	return (1);
 }
 /*

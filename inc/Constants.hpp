@@ -20,7 +20,7 @@
 # define BLOCK_SIZE					1.0
 
 # define GEN_SIZE_X					15
-# define GEN_SIZE_Y					8
+# define GEN_SIZE_Y					6
 # define GEN_SIZE_Z					15
 
 // Noises bounds
@@ -35,7 +35,8 @@ typedef enum
 	STONE,
 	COAL,
 	LEAF,
-	WOOD
+	WOOD,
+	NONE // for greedy meshing
 }					block_type;
 
 #endif
