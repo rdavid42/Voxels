@@ -317,9 +317,9 @@ Core::initNoises(void) // multithread
 	// lacunarity range  : ?
 	// amplitude range   : > 0.0
 	// persistence range : 0.0 - 10
-	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 0.1); // bruit 3d test					//	0
-	noise->configs.emplace_back(6, 0.005, 1.0, 0.9, 1.0); // bruit 3d équilibré				//	1
-	noise->configs.emplace_back(2, 0.005, 10.0, 0.9, 1.0); // bruit 3d monde des reves		//	2
+	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 4.0); // bruit 3d test					//	0
+	noise->configs.emplace_back(6, 0.001, 1.0, 0.9, 8.0); // bruit 3d équilibré				//	1
+	noise->configs.emplace_back(2, 0.001, 10.0, 5.0, 10.0); // bruit 3d monde des reves		//	2
 	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop		//	3
 	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La vallée Danna					//	4
 	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.					//	5
@@ -358,15 +358,15 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 
 	n = 0.0f;
 	ncoal = noise->fractal(5, wx, wy, wz);
-	for (i = 0; i < 3; i++)
-		n += noise->octave_noise_3d(i, wx, wy, wz);
+	for (i = 0; i < 3; ++i)
+		n += noise->octave_noise_3d(i, wx, wy, wz) * 3;
 	n /= (i + 1);
 	if (wy > 0)
 	{
 		n /= (wy / ycap);
 		if (n > 0.90)
 		{
-			if (n < 1.2)
+			if (n < 1.0)
 			{
 				// if (ntree > 0.3 && chunk->search(wx, wy + dbSize, wz) != NULL
 				// &&  chunk->search(wx, wy + dbSize, wz)->getState() == EMPTY)

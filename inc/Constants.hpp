@@ -19,9 +19,9 @@
 # define CHUNK_SIZE					32
 # define BLOCK_SIZE					1.0
 
-# define GEN_SIZE_X					30
-# define GEN_SIZE_Y					2
-# define GEN_SIZE_Z					30
+# define GEN_SIZE_X					15
+# define GEN_SIZE_Y					8
+# define GEN_SIZE_Z					15
 
 // Noises bounds
 # define TASK_QUEUE_OVERFLOW		100000
