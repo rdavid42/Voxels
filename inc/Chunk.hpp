@@ -18,7 +18,8 @@ private:
 	bool							_stopGenerating;
 	bool							_removable;
 	Cube							_cube;
-	Block							***_blocks;
+	// Block							***_blocks;
+	Block							*_blocks;
 
 public:
 	Mesh							mesh;

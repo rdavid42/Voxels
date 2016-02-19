@@ -318,8 +318,8 @@ Core::initNoises(void) // multithread
 	// amplitude range   : > 0.0
 	// persistence range : 0.0 - 10
 	noise->configs.emplace_back(4, 0.01, 0.5, 0.1, 0.1); // bruit 3d test					//	0
-	noise->configs.emplace_back(6, 0.008, 1.0, 0.9, 1.0); // bruit 3d équilibré				//	1
-	noise->configs.emplace_back(2, 0.008, 10.0, 0.9, 1.0); // bruit 3d monde des reves		//	2
+	noise->configs.emplace_back(6, 0.005, 1.0, 0.9, 1.0); // bruit 3d équilibré				//	1
+	noise->configs.emplace_back(2, 0.005, 10.0, 0.9, 1.0); // bruit 3d monde des reves		//	2
 	noise->configs.emplace_back(3, 0.1, 0.1, 0.1, 0.2); // Des montagnes, mais pas trop		//	3
 	noise->configs.emplace_back(6, 0.1, 0.0, 0.1, 10.0); // La vallée Danna					//	4
 	noise->configs.emplace_back(1, 0.2, 0.0, 0.1, 4.0); // Les montagnes.					//	5
@@ -336,7 +336,7 @@ void
 Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const &z, int const &ycap) const // multithread
 {
 	float						n;
-	float						nstone;
+	float						ncoal;
 	float						cx, cy, cz;
 	float						wx, wy, wz;
 	// float						ntree;
@@ -356,10 +356,8 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 	// bSize = this->block_size[depth];
 	// ntree = noise->fractal(6, wx, 0, wz);
 
-	if (cx < 0.0 || cx >= CHUNK_SIZE || cy < 0.0 || cy >= CHUNK_SIZE || cz < 0.0 || cz >= CHUNK_SIZE)
-		std::cerr << cx << ", " << cy << ", " << cz << std::endl;
 	n = 0.0f;
-	nstone = noise->fractal(5, wx, wy, wz);
+	ncoal = noise->fractal(5, wx, wy, wz);
 	for (i = 0; i < 3; i++)
 		n += noise->octave_noise_3d(i, wx, wy, wz);
 	n /= (i + 1);
@@ -368,19 +366,19 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 		n /= (wy / ycap);
 		if (n > 0.90)
 		{
-			if (n < 0.95 && nstone < 0.6)
+			if (n < 1.2)
 			{
 				// if (ntree > 0.3 && chunk->search(wx, wy + dbSize, wz) != NULL
 				// &&  chunk->search(wx, wy + dbSize, wz)->getState() == EMPTY)
 					// createTree(chunk, depth, wx, wy + bSize, wz);
-				if (cy + 1 < CHUNK_SIZE && chunk->getBlock(cx, cy + 1, cz).getType() == AIR)
+				if ((cy + 1 < CHUNK_SIZE && chunk->getBlock(cx, cy + 1, cz).getType() == AIR) || cy + 1 == CHUNK_SIZE)
 					chunk->setBlock(cx, cy, cz, GRASS);
 				else
 					chunk->setBlock(cx, cy, cz, DIRT);
 			}
 			else
 			{
-				if ((nstone > 0.75 && nstone < 0.76) || (nstone > 0.65 && nstone < 0.66))
+				if ((ncoal > 0.85 && ncoal < 0.86) || (ncoal > 0.75 && ncoal < 0.76))
 					chunk->setBlock(cx, cy, cz, COAL);
 				else
 					chunk->setBlock(cx, cy, cz, STONE);
@@ -408,7 +406,7 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 	{
 		for (x = 0.0f; x < CHUNK_SIZE; x += BLOCK_SIZE)
 		{
-			for (y = 0.0f; y < CHUNK_SIZE; y += BLOCK_SIZE)
+			for (y = CHUNK_SIZE - BLOCK_SIZE; y >= 0.0f; y -= BLOCK_SIZE)
 			{
 				if (chunk->getStopGenerating())
 				{
@@ -854,8 +852,6 @@ Core::init(void)
 	initChunks();
 	closestBlock = 0;
 	frameRenderedTriangles = 0;
-	std::cerr << sizeof(Chunk) << std::endl;
-	std::cerr << GEN_SIZE_Z * GEN_SIZE_Y * GEN_SIZE_X * sizeof(Chunk) * CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * sizeof(Block) << " bytes" << std::endl;
 	return (1);
 }
 /*
