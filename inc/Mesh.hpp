@@ -28,9 +28,11 @@ public:
 	void							createGL(GLuint const &positionLoc, GLuint const &textureLoc, GLuint const &textureIndexLoc);
 	void							deleteGL(void);
 	void							pushVertex(Vertex const &vertex);
+	void							pushQuad(int const &type, float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex);
 	void							pushUpFace(float const &x, float const &y, float const &z, float const &s, float const &tex);
 	void							pushUpFace(float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex);
 	void							pushBottomFace(float const &x, float const &y, float const &z, float const &s, float const &tex);
+	void							pushBottomFace(float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex);
 	void							pushBackFace(float const &x, float const &y, float const &z, float const &s, float const &tex);
 	void							pushFrontFace(float const &x, float const &y, float const &z, float const &s, float const &tex);
 	void							pushLeftFace(float const &x, float const &y, float const &z, float const &s, float const &tex);

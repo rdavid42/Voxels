@@ -89,17 +89,6 @@ Mesh::pushUpFace(float const &x, float const &y, float const &z, float const &s,
 }
 
 void
-Mesh::pushUpFace(float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex)
-{
-	pushVertex({x,			y + sy,		z,			0.0f,	0.0f, tex}); // 2
-	pushVertex({x,			y + sy,		z + sz,		1.0f * sz,	0.0f, tex}); // 6
-	pushVertex({x + sx,		y + sy,		z + sz,		1.0f * sz,	1.0f, tex}); // 7
-	pushVertex({x + sx,		y + sy,		z + sz,		1.0f * sz,	1.0f, tex}); // 7
-	pushVertex({x + sx,		y + sy,		z,			0.0f,	1.0f, tex}); // 3
-	pushVertex({x,			y + sy,		z,			0.0f,	0.0f, tex}); // 2
-}
-
-void
 Mesh::pushBottomFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
 {
 	pushVertex({x,			y,			z,			0.0f,	1.0f, tex}); // 0
@@ -108,6 +97,52 @@ Mesh::pushBottomFace(float const &x, float const &y, float const &z, float const
 	pushVertex({x + s,		y,			z + s,		1.0f,	0.0f, tex}); // 5
 	pushVertex({x,			y,			z + s,		0.0f,	0.0f, tex}); // 4
 	pushVertex({x,			y,			z,			0.0f,	1.0f, tex}); // 0
+}
+
+void
+Mesh::pushQuad(int const &type, float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex)
+{
+	if (type == 0) // up, counter clockwise
+	{
+		pushVertex({x,			y + sy,		z,			0.0f,	0.0f, tex}); // 2
+		pushVertex({x,			y + sy,		z + sz,		1.0f * sz,	0.0f, tex}); // 6
+		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * sz,	1.0f * sx, tex}); // 7
+		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * sz,	1.0f * sx, tex}); // 7
+		pushVertex({x + sx,		y + sy,		z,			0.0f,	1.0f * sx, tex}); // 3
+		pushVertex({x,			y + sy,		z,			0.0f,	0.0f, tex}); // 2
+	}
+	else // bottom clockwise
+	{
+		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+		pushVertex({x + sx,		y,			z,			0.0f,	1.0f * sx, tex}); // 1
+		pushVertex({x + sx,		y,			z + sz,		1.0f * sz,	1.0f * sx, tex}); // 5
+		pushVertex({x + sx,		y,			z + sz,		1.0f * sz,	1.0f * sx, tex}); // 5
+		pushVertex({x,			y,			z + sz,		1.0f * sz,	0.0f, tex}); // 4
+		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+	}
+}
+
+void
+Mesh::pushUpFace(float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex)
+{
+	pushVertex({x,			y + sy,		z,			0.0f,	0.0f, tex}); // 2
+	pushVertex({x,			y + sy,		z + sz,		1.0f * sz,	0.0f, tex}); // 6
+	pushVertex({x + sx,		y + sy,		z + sz,		1.0f * sz,	1.0f * sx, tex}); // 7
+	pushVertex({x + sx,		y + sy,		z + sz,		1.0f * sz,	1.0f * sx, tex}); // 7
+	pushVertex({x + sx,		y + sy,		z,			0.0f,	1.0f * sx, tex}); // 3
+	pushVertex({x,			y + sy,		z,			0.0f,	0.0f, tex}); // 2
+}
+
+void
+Mesh::pushBottomFace(float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex)
+{
+	(void)sy;
+	pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+	pushVertex({x + sx,		y,			z,			0.0f,	1.0f * sx, tex}); // 1
+	pushVertex({x + sx,		y,			z + sz,		1.0f * sz,	1.0f * sx, tex}); // 5
+	pushVertex({x + sx,		y,			z + sz,		1.0f * sz,	1.0f * sx, tex}); // 5
+	pushVertex({x,			y,			z + sz,		1.0f * sz,	0.0f, tex}); // 4
+	pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
 }
 
 void

@@ -308,89 +308,6 @@ Core::generateChunkMesh(Chunk *chunk) const // multithread
 	}
 }
 */
-void
-Core::generateChunkMesh(Chunk *chunk) const
-{
-	float					x, y, z, s;
-	float					bx, by, bz;
-	float					sz;
-	float					cx, cy, cz;
-	int						ix, iy, iz;
-	float					bt;
-	float					sd;
-	int						lastBlockType;
-
-	cx = chunk->getCube().getX();
-	cy = chunk->getCube().getY();
-	cz = chunk->getCube().getZ();
-	s = BLOCK_SIZE;
-	for (y = cy; y < cy + CHUNK_SIZE; y += BLOCK_SIZE)
-	{
-		for (x = cx; x < cx + CHUNK_SIZE; x += BLOCK_SIZE)
-		{
-			// init face line
-			lastBlockType = AIR;
-			sz = 0.0f;
-			for (z = cz; z < cz + CHUNK_SIZE; z += BLOCK_SIZE)
-			{
-				ix = (x - cx) / BLOCK_SIZE;
-				iy = (y - cy) / BLOCK_SIZE;
-				iz = (z - cz) / BLOCK_SIZE;
-				bt = chunk->getBlock(ix, iy, iz).getType();
-				if (sz > 0.0f && (lastBlockType != bt || lastBlockType == AIR))
-				{
-					chunk->mesh.pushUpFace(bx, by, bz, s, s, sz, lastBlockType - 1);
-					lastBlockType = AIR;
-					sz = 0.0f;
-				}
-				if (bt != AIR)
-				{
-					if (sz == 0.0f && ((iy + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE))
-					{
-						bx = x;
-						by = y;
-						bz = z;
-						lastBlockType = bt;
-						sz = BLOCK_SIZE;
-					}
-					else if (lastBlockType == bt)
-						sz += BLOCK_SIZE;
-					if (sz > 0.0f && (lastBlockType != bt || lastBlockType == AIR || z >= cz + CHUNK_SIZE - BLOCK_SIZE))
-					{
-						chunk->mesh.pushUpFace(bx, by, bz, s, s, sz, lastBlockType - 1);
-						lastBlockType = AIR;
-						sz = 0.0f;
-					}
-					// if ((iy + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE) // Up
-						// chunk->mesh.pushUpFace(x, y, z, s, bt - 1);
-					sd = bt;
-/*					if (bt == GRASS)
-						sd = DIRT;*/
-					if ((iy - 1 >= 0 && chunk->getBlock(ix, iy - 1, iz).getType() == AIR) || iy - 1 < 0) // Bottom
-						chunk->mesh.pushBottomFace(x, y, z, s, sd - 1);
-					sd = bt;
-					if (bt == GRASS)
-						sd = SIDE_GRASS;
-					if ((iz - 1 >= 0 && chunk->getBlock(ix, iy, iz - 1).getType() == AIR) || iz - 1 < 0) // Back
-						chunk->mesh.pushBackFace(x, y, z, s, sd - 1);
-					if ((iz + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == CHUNK_SIZE) // Front
-						chunk->mesh.pushFrontFace(x, y, z, s, sd - 1);
-					if ((ix - 1 >= 0 && chunk->getBlock(ix - 1, iy, iz).getType() == AIR) || ix - 1 < 0) // Left
-						chunk->mesh.pushLeftFace(x, y, z, s, sd - 1);
-					if ((ix + 1 < CHUNK_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == CHUNK_SIZE) // Right
-						chunk->mesh.pushRightFace(x, y, z, s, sd - 1);
-				}
-				else
-				{
-					// reinit face line
-					lastBlockType = AIR;
-					sz = 0.0f;
-				}
-			}
-		}
-	}
-}
-
 /*void
 Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) const
 {
@@ -530,7 +447,7 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 			}
 		}
 	}
-	generateChunkMesh(chunk);
+	chunk->generateMesh();
 	chunk->setGenerated(true);
 	chunk->setRemovable(true);
 }

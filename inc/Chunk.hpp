@@ -24,6 +24,16 @@ public:
 	Vec3<uint8_t>					pos; // position relative to other chunks
 	Mesh							mesh;
 
+	typedef enum					e_voxelFace
+	{
+		V_UP,
+		V_BOTTOM,
+		V_BACK,
+		V_FRONT,
+		V_LEFT,
+		V_RIGHT
+	}								voxelFace;
+
 	Chunk(void);
 	Chunk(float const &x, float const &y, float const &z, float const &s);
 	~Chunk(void);
@@ -34,6 +44,9 @@ public:
 	void							render(Core &core) const;
 	void							renderLines(Core &core) const;
 	void							renderRidges(Core &core) const;
+
+	bool							checkEmpty(int const &side, Vec3<int> const &p) const;
+	void							generateMesh(void);
 
 	bool const &					getGenerating(void);
 	bool const &					getGenerated(void);
