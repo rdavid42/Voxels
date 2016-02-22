@@ -46,7 +46,8 @@ public:
 	void							renderRidges(Core &core) const;
 
 	bool							checkEmpty(int const &side, Vec3<int> const &p) const;
-	void							generateMesh(void);
+	void							generateGreedyMesh(void);
+	void							generateNaiveMesh(void);
 
 	bool const &					getGenerating(void);
 	bool const &					getGenerated(void);

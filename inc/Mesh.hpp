@@ -7,19 +7,19 @@
 # include <iostream>
 # include "Constants.hpp"
 
+typedef struct
+{
+	float			x;
+	float			y;
+	float			z;
+	float			tx;
+	float			ty;
+	float			ti;
+}					Vertex;
+
 class Mesh
 {
 public:
-	struct Vertex
-	{
-		float			x;
-		float			y;
-		float			z;
-		float			tx;
-		float			ty;
-		float			ti;
-	};
-
 	Mesh(void);
 	~Mesh(void);
 

@@ -21,8 +21,21 @@ key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	(void)scancode;
 	(void)mods;
 	(void)core;
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (action == GLFW_PRESS)
+	{
+		if (key == GLFW_KEY_ESCAPE)
+			glfwSetWindowShouldClose(window, GL_TRUE);
+		else if (key == GLFW_KEY_P)
+		{
+			GLint		res;
+
+			glGetIntegerv(GL_POLYGON_MODE, &res);
+			if (res == GL_LINE)
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			else if (res == GL_FILL)
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+	}
 }
 
 static void
@@ -38,7 +51,6 @@ cursor_pos_callback(GLFWwindow* window, double xpos, double ypos)
 	core->camera.hangle -= ((xpos - core->windowWidth * 0.5f) * 0.05f);
 	core->camera.hangle = fmod(core->camera.hangle, 360);
 	glfwSetCursorPos(core->window, core->windowWidth * 0.5f, core->windowHeight * 0.5f);
-
 }
 
 void
@@ -257,57 +269,7 @@ Core::createAxis(void)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, selectionVbo[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLushort) * selectionIndicesSize, indices, GL_STATIC_DRAW);
 }*/
-/*
-void
-Core::generateChunkMesh(Chunk *chunk) const // multithread
-{
-	float					x, y, z, s;
-	float					bt;
-	float					sd;
-	float					cx, cy, cz, cs;
-	int						ix, iy, iz;
 
-	cx = chunk->getCube().getX();
-	cy = chunk->getCube().getY();
-	cz = chunk->getCube().getZ();
-	cs = chunk->getCube().getS();
-	s = BLOCK_SIZE;
-	for (x = cx; x < cx + cs; x += BLOCK_SIZE)
-	{
-		for (y = cy; y < cy + cs; y += BLOCK_SIZE)
-		{
-			for (z = cz; z < cz + cs; z += BLOCK_SIZE)
-			{
-				ix = (x - cx) / BLOCK_SIZE;
-				iy = (y - cy) / BLOCK_SIZE;
-				iz = (z - cz) / BLOCK_SIZE;
-				bt = chunk->getBlock(ix, iy, iz).getType();
-				if (bt != AIR)
-				{
-					if ((iy + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy + 1, iz).getType() == AIR) || iy + 1 == CHUNK_SIZE) // Up
-						chunk->mesh.pushUpFace(x, y, z, s, bt - 1);
-					sd = bt;
-					if (bt == GRASS)
-						sd = DIRT;
-					if ((iy - 1 >= 0 && chunk->getBlock(ix, iy - 1, iz).getType() == AIR) || iy - 1 < 0) // Bottom
-						chunk->mesh.pushBottomFace(x, y, z, s, sd - 1);
-					sd = bt;
-					if (bt == GRASS)
-						sd = SIDE_GRASS;
-					if ((iz - 1 >= 0 && chunk->getBlock(ix, iy, iz - 1).getType() == AIR) || iz - 1 < 0) // Back
-						chunk->mesh.pushBackFace(x, y, z, s, sd - 1);
-					if ((iz + 1 < CHUNK_SIZE && chunk->getBlock(ix, iy, iz + 1).getType() == AIR) || iz + 1 == CHUNK_SIZE) // Front
-						chunk->mesh.pushFrontFace(x, y, z, s, sd - 1);
-					if ((ix - 1 >= 0 && chunk->getBlock(ix - 1, iy, iz).getType() == AIR) || ix - 1 < 0) // Left
-						chunk->mesh.pushLeftFace(x, y, z, s, sd - 1);
-					if ((ix + 1 < CHUNK_SIZE && chunk->getBlock(ix + 1, iy, iz).getType() == AIR) || ix + 1 == CHUNK_SIZE) // Right
-						chunk->mesh.pushRightFace(x, y, z, s, sd - 1);
-				}
-			}
-		}
-	}
-}
-*/
 /*void
 Core::createTree(Chunk *chunk, int const &depth, float x, float y, float z) const
 {
@@ -395,7 +357,7 @@ Core::generateBlock3d(Chunk *chunk, float const &x, float const &y, float const 
 		n /= (wy / ycap);
 		if (n > 0.90)
 		{
-			if (n < 1.0)
+			if (n < 0.95)
 			{
 				// if (ntree > 0.3 && chunk->search(wx, wy + dbSize, wz) != NULL
 				// &&  chunk->search(wx, wy + dbSize, wz)->getState() == EMPTY)
@@ -447,7 +409,8 @@ Core::processChunkGeneration(Chunk *chunk) // multithread
 			}
 		}
 	}
-	chunk->generateMesh();
+	// chunk->generateNaiveMesh();
+	chunk->generateGreedyMesh();
 	chunk->setGenerated(true);
 	chunk->setRemovable(true);
 }
@@ -786,9 +749,11 @@ Core::insertChunks(void)
 bool
 Core::chunkInView(Chunk *chunk) const
 {
-	for (int z = 0; z < GEN_SIZE_Z; ++z)
-		for (int y = 0; y < GEN_SIZE_Y; ++y)
-			for (int x = 0; x < GEN_SIZE_X; ++x)
+	int			x, y, z;
+
+	for (z = 0; z < GEN_SIZE_Z; ++z)
+		for (y = 0; y < GEN_SIZE_Y; ++y)
+			for (x = 0; x < GEN_SIZE_X; ++x)
 				if (chunks[z][y][x] == chunk)
 					return (true);
 	return (false);
@@ -883,6 +848,7 @@ Core::init(void)
 	initChunks();
 	closestBlock = 0;
 	frameRenderedTriangles = 0;
+	std::cerr << "sizeof(Mesh)  = " << sizeof(Mesh) << " bytes" << std::endl;
 	std::cerr << "sizeof(Chunk) = " << sizeof(Chunk) << " bytes" << std::endl;
 	std::cerr << "sizeof(Block) = " << sizeof(Block) << " bytes" << std::endl;
 	return (1);
@@ -996,7 +962,6 @@ Core::loop(void)
 	frames = 0.0;
 	lastTime = glfwGetTime();
 	glUseProgram(program);
-	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindTexture(GL_TEXTURE_2D, tex[0]);
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, projMatrix.val);
 	while (!glfwWindowShouldClose(window))

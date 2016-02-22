@@ -127,16 +127,116 @@ Chunk::checkEmpty(int const &side, Vec3<int> const &p) const
 }
 
 void
-Chunk::generateMesh(void)
+Chunk::generateGreedyMesh(void)
 {
 	float					x, y, z, bs;
-	Vec3<float>				b[6]; // position of quads up/bottom/back/front/left/right
-	Vec3<float>				s[6]; // size of quads
+	Vec3<float>				c; // chunk world position
+	Vec3<int>				i; // block coordinate
+	float					bt; // current block type
+	int						j, k, l;
+	char					hq[2][CHUNK_SIZE][CHUNK_SIZE][3]; // [up/bottom][x][z][width(z)/height(x)/type]
+	int						qz[2]; // current quad z (up/bottom)
+
+	c.set(_cube.getX(), _cube.getY(), _cube.getZ());
+	bs = BLOCK_SIZE;
+	for (y = c.y; y < c.y + CHUNK_SIZE; y += BLOCK_SIZE)
+	{
+		for (j = 0; j < 2; ++j)
+			for (k = 0; k < CHUNK_SIZE; ++k)
+				for (l = 0; l < CHUNK_SIZE; ++l)
+				{
+					hq[j][k][l][0] = 0;
+					hq[j][k][l][1] = 1;
+					hq[j][k][l][2] = AIR;
+				}
+		for (x = c.x; x < c.x + CHUNK_SIZE; x += BLOCK_SIZE)
+		{
+			for (j = 0; j < 2; ++j)
+				qz[j] = -1;
+			for (z = c.z; z < c.z + CHUNK_SIZE; z += BLOCK_SIZE)
+			{
+				i.set((x - c.x) / BLOCK_SIZE, (y - c.y) / BLOCK_SIZE, (z - c.z) / BLOCK_SIZE);
+				bt = getBlock(i.x, i.y, i.z).getType();
+				if (bt != AIR)
+				{
+					for (j = 0; j < 2; ++j)
+					{
+						if (checkEmpty(j, i))
+						{
+							if (qz[j] == -1)
+							{
+								qz[j] = i.z;
+								hq[j][i.x][qz[j]][2] = bt;
+							}
+							if (bt == hq[j][i.x][qz[j]][2])
+								hq[j][i.x][qz[j]][0]++;
+							else
+							{
+								qz[j] = i.z;
+								hq[j][i.x][qz[j]][2] = bt;
+								hq[j][i.x][qz[j]][0]++;
+							}
+						}
+						else
+							qz[j] = -1;
+					}
+					if (checkEmpty(V_BACK, i)) // Back
+						mesh.pushBackFace(x, y, z, bs, getTextureIndex(V_BACK, bt));
+					if (checkEmpty(V_FRONT, i)) // Front
+						mesh.pushFrontFace(x, y, z, bs, getTextureIndex(V_FRONT, bt));
+					if (checkEmpty(V_LEFT, i)) // Left
+						mesh.pushLeftFace(x, y, z, bs, getTextureIndex(V_LEFT, bt));
+					if (checkEmpty(V_RIGHT, i)) // Right
+						mesh.pushRightFace(x, y, z, bs, getTextureIndex(V_RIGHT, bt));
+				}
+				else
+				{
+					for (j = 0; j < 2; ++j)
+						qz[j] = -1;
+				}
+			}
+		}
+		// merge horizontal quads
+		for (j = 0; j < 2; ++j)
+		{
+			for (k = CHUNK_SIZE - 1; k > 0; --k) // x, merge backwards, skip first row
+			{
+				for (l = 0; l < CHUNK_SIZE; ++l) // z
+				{
+					if (hq[j][k][l][2] != AIR)
+					{
+						if (hq[j][k][l][0] == hq[j][k - 1][l][0]	// same quad width
+						&&	hq[j][k][l][2] == hq[j][k - 1][l][2])	// same quad type
+						{
+							hq[j][k - 1][l][1] += hq[j][k][l][1];	// add height
+							hq[j][k][l][0] = 0;						// clear merged quad
+							hq[j][k][l][1] = 1;
+							hq[j][k][l][2] = AIR;
+						}
+					}
+				}
+			}
+		}
+		// push horizontal quads
+		for (j = 0; j < 2; ++j)
+			for (k = 0; k < CHUNK_SIZE; ++k) // x
+				for (l = 0; l < CHUNK_SIZE; ++l) // z
+					if (hq[j][k][l][2] != AIR)
+						mesh.pushQuad(j, c.x + k * bs, y, c.z + l * bs,
+									hq[j][k][l][1] * BLOCK_SIZE, bs, hq[j][k][l][0] * BLOCK_SIZE,
+									getTextureIndex(j, hq[j][k][l][2]));
+	}
+	// merge vertical quads
+	// push vertical quads
+}
+
+void
+Chunk::generateNaiveMesh(void)
+{
+	float					x, y, z, bs;
 	float					cx, cy, cz; // chunk world coordinate
 	Vec3<int>				i; // block coordinate
 	float					bt; // block type
-	int						lbt[6]; // last block type for each side of a voxel
-	int						j; // reusable index
 
 	cx = getCube().getX();
 	cy = getCube().getY();
@@ -146,54 +246,18 @@ Chunk::generateMesh(void)
 	{
 		for (x = cx; x < cx + CHUNK_SIZE; x += BLOCK_SIZE)
 		{
-			// init greedy voxels up and bottom
-			for (j = 0; j < 2; ++j)
-			{
-				lbt[j] = AIR;
-				s[j].set(bs, bs, 0.0f);
-			}
-			// --------------
 			for (z = cz; z < cz + CHUNK_SIZE; z += BLOCK_SIZE)
 			{
 				// set current block index
 				i.set((x - cx) / BLOCK_SIZE, (y - cy) / BLOCK_SIZE, (z - cz) / BLOCK_SIZE);
 				// get current block type
 				bt = getBlock(i.x, i.y, i.z).getType();
-				for (j = 0; j < 2; ++j)
-				{
-					if (s[j].z > 0.0f && (lbt[j] != bt || lbt[j] == AIR))
-					{
-						mesh.pushQuad(j, b[j].x, b[j].y, b[j].z, s[j].x, s[j].y, s[j].z, getTextureIndex(j, lbt[j]));
-						lbt[j] = AIR;
-						s[j].z = 0.0f;
-					}
-				}
 				if (bt != AIR)
 				{
-					// up/bottom quads init and generation
-					for (j = 0; j < 2; ++j)
-					{
-						if (s[j].z == 0.0f && checkEmpty(j, i))
-						{
-							b[j].x = x;
-							b[j].y = y;
-							b[j].z = z;
-							lbt[j] = bt;
-							s[j].z = BLOCK_SIZE;
-						}
-						else if (lbt[j] == bt)
-							s[j].z += BLOCK_SIZE;
-						if (s[j].z > 0.0f && (lbt[j] != bt || lbt[j] == AIR || z >= cz + CHUNK_SIZE - BLOCK_SIZE))
-						{
-							mesh.pushQuad(j, b[j].x, b[j].y, b[j].z, bs, bs, s[j].z, getTextureIndex(j, lbt[j]));
-							lbt[j] = AIR;
-							s[j].z = 0.0f;
-						}
-					}
-					// if ((i.y + 1 < CHUNK_SIZE && getBlock(i.x, i.y + 1, i.z).getType() == AIR) || i.y + 1 == CHUNK_SIZE) // Up
-						// mesh.pushUpFace(x, y, z, bs, getTextureIndex(V_UP, bt));
-					// if ((i.y - 1 >= 0 && getBlock(i.x, i.y - 1, i.z).getType() == AIR) || i.y - 1 < 0) // Bottom
-						// mesh.pushBottomFace(x, y, z, bs, getTextureIndex(V_BOTTOM, bt));
+					if (checkEmpty(V_UP, i))
+						mesh.pushUpFace(x, y, z, bs, getTextureIndex(V_UP, bt));
+					if (checkEmpty(V_BOTTOM, i))
+						mesh.pushBottomFace(x, y, z, bs, getTextureIndex(V_BOTTOM, bt));
 					if (checkEmpty(V_BACK, i)) // Back
 						mesh.pushBackFace(x, y, z, bs, getTextureIndex(V_BACK, bt));
 					if (checkEmpty(V_FRONT, i)) // Front

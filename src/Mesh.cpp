@@ -1,7 +1,8 @@
 
 #include "Mesh.hpp"
+#include "Chunk.hpp"
 
-int Mesh::_stride = sizeof(Mesh::Vertex) / sizeof(float);
+int Mesh::_stride = sizeof(Vertex) / sizeof(float);
 
 Mesh::Mesh(void) : _vao(0), _vbo(0), _mode(GL_TRIANGLES), _vertices(0)
 {
@@ -102,22 +103,22 @@ Mesh::pushBottomFace(float const &x, float const &y, float const &z, float const
 void
 Mesh::pushQuad(int const &type, float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex)
 {
-	if (type == 0) // up, counter clockwise
+	if (type == Chunk::V_UP) // up, counter clockwise
 	{
 		pushVertex({x,			y + sy,		z,			0.0f,	0.0f, tex}); // 2
-		pushVertex({x,			y + sy,		z + sz,		1.0f * sz,	0.0f, tex}); // 6
-		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * sz,	1.0f * sx, tex}); // 7
-		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * sz,	1.0f * sx, tex}); // 7
-		pushVertex({x + sx,		y + sy,		z,			0.0f,	1.0f * sx, tex}); // 3
+		pushVertex({x,			y + sy,		z + sz,		1.0f * (sz / BLOCK_SIZE),	0.0f, tex}); // 6
+		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sx / BLOCK_SIZE), tex}); // 7
+		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sx / BLOCK_SIZE), tex}); // 7
+		pushVertex({x + sx,		y + sy,		z,			0.0f,	1.0f * (sx / BLOCK_SIZE), tex}); // 3
 		pushVertex({x,			y + sy,		z,			0.0f,	0.0f, tex}); // 2
 	}
-	else // bottom clockwise
+	else if (type == Chunk::V_BOTTOM) // bottom, clockwise
 	{
 		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
-		pushVertex({x + sx,		y,			z,			0.0f,	1.0f * sx, tex}); // 1
-		pushVertex({x + sx,		y,			z + sz,		1.0f * sz,	1.0f * sx, tex}); // 5
-		pushVertex({x + sx,		y,			z + sz,		1.0f * sz,	1.0f * sx, tex}); // 5
-		pushVertex({x,			y,			z + sz,		1.0f * sz,	0.0f, tex}); // 4
+		pushVertex({x + sx,		y,			z,			0.0f,	1.0f * (sx / BLOCK_SIZE), tex}); // 1
+		pushVertex({x + sx,		y,			z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sx / BLOCK_SIZE), tex}); // 5
+		pushVertex({x + sx,		y,			z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sx / BLOCK_SIZE), tex}); // 5
+		pushVertex({x,			y,			z + sz,		1.0f * (sz / BLOCK_SIZE),	0.0f, tex}); // 4
 		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
 	}
 }
