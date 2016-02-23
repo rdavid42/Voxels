@@ -142,13 +142,17 @@ Chunk::generateGreedyMesh(void)
 	for (y = c.y; y < c.y + CHUNK_SIZE; y += BLOCK_SIZE)
 	{
 		for (j = 0; j < 2; ++j)
+		{
 			for (k = 0; k < CHUNK_SIZE; ++k)
+			{
 				for (l = 0; l < CHUNK_SIZE; ++l)
 				{
 					hq[j][k][l][0] = 0;
 					hq[j][k][l][1] = 1;
 					hq[j][k][l][2] = AIR;
 				}
+			}
+		}
 		for (x = c.x; x < c.x + CHUNK_SIZE; x += BLOCK_SIZE)
 		{
 			for (j = 0; j < 2; ++j)
@@ -205,13 +209,15 @@ Chunk::generateGreedyMesh(void)
 				{
 					if (hq[j][k][l][2] != AIR)
 					{
-						if (hq[j][k][l][0] == hq[j][k - 1][l][0]	// same quad width
-						&&	hq[j][k][l][2] == hq[j][k - 1][l][2])	// same quad type
+						if (hq[j][k][l][2] == hq[j][k - 1][l][2]) // same quad type
 						{
-							hq[j][k - 1][l][1] += hq[j][k][l][1];	// add height
-							hq[j][k][l][0] = 0;						// clear merged quad
-							hq[j][k][l][1] = 1;
-							hq[j][k][l][2] = AIR;
+							if (hq[j][k][l][0] == hq[j][k - 1][l][0]) // same quad size
+							{
+								hq[j][k - 1][l][1] += hq[j][k][l][1];
+								hq[j][k][l][0] = 0;
+								hq[j][k][l][1] = 1;
+								hq[j][k][l][2] = AIR;
+							}
 						}
 					}
 				}
