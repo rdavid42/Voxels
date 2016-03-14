@@ -9,6 +9,18 @@
 # include "Mesh.hpp"
 # include "Block.hpp"
 
+typedef struct
+{
+	char		w; // face width
+	char		h; // face height
+	char		t; // face type
+} meshFace;
+
+class MeshWorkDim
+{
+
+};
+
 class Chunk
 {
 private:
@@ -46,6 +58,9 @@ public:
 	void							renderRidges(Core &core) const;
 
 	bool							checkEmpty(int const &side, Vec3<int> const &p) const;
+	void							generateGreedyMeshTopBottom(void);
+	void							generateGreedyMeshFrontBack(void);
+	void							generateGreedyMeshLeftRight(void);
 	void							generateGreedyMesh(void);
 	void							generateNaiveMesh(void);
 

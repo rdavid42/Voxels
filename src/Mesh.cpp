@@ -69,15 +69,6 @@ Mesh::pushVertex(Vertex const &vertex)
 	_vertices++;
 }
 
-//          y
-//		    2----3
-//		   /|   /|
-//		 6----7  |
-//		 |  0-|--1 x
-//		 |/   | /
-//		 4____5
-//		z
-
 void
 Mesh::pushUpFace(float const &x, float const &y, float const &z, float const &s, float const &tex)
 {
@@ -100,6 +91,15 @@ Mesh::pushBottomFace(float const &x, float const &y, float const &z, float const
 	pushVertex({x,			y,			z,			0.0f,	1.0f, tex}); // 0
 }
 
+//          y
+//		    2----3
+//		   /|   /|
+//		 6----7  |
+//		 |  0-|--1 x
+//		 |/   | /
+//		 4____5
+//		z
+
 void
 Mesh::pushQuad(int const &type, float const &x, float const &y, float const &z, float const &sx, float const &sy, float const &sz, float const &tex)
 {
@@ -120,6 +120,42 @@ Mesh::pushQuad(int const &type, float const &x, float const &y, float const &z, 
 		pushVertex({x + sx,		y,			z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sx / BLOCK_SIZE), tex}); // 5
 		pushVertex({x,			y,			z + sz,		1.0f * (sz / BLOCK_SIZE),	0.0f, tex}); // 4
 		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+	}
+	else if (type == Chunk::V_BACK) // back, clockwise
+	{
+		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+		pushVertex({x,			y + sy,		z,			0.0f,	1.0f * (sy / BLOCK_SIZE), tex}); // 2
+		pushVertex({x + sx,		y + sy,		z,			1.0f * (sx / BLOCK_SIZE),	1.0f * (sy / BLOCK_SIZE), tex}); // 3
+		pushVertex({x + sx,		y + sy,		z,			1.0f * (sx / BLOCK_SIZE),	1.0f * (sy / BLOCK_SIZE), tex}); // 3
+		pushVertex({x + sx,		y,			z,			1.0f * (sx / BLOCK_SIZE),	0.0f, tex}); // 1
+		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+	}
+	else if (type == Chunk::V_FRONT) // front, counter clockwise
+	{
+		pushVertex({x,			y,			z + sz,		0.0f,	0.0f, tex}); // 4
+		pushVertex({x + sx,		y,			z + sz,		1.0f * (sx / BLOCK_SIZE),	0.0f, tex}); // 5
+		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * (sx / BLOCK_SIZE),	1.0f * (sy / BLOCK_SIZE), tex}); // 7
+		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * (sx / BLOCK_SIZE),	1.0f * (sy / BLOCK_SIZE), tex}); // 7
+		pushVertex({x,			y + sy,		z + sz,		0.0f,	1.0f * (sy / BLOCK_SIZE), tex}); // 6
+		pushVertex({x,			y,			z + sz,		0.0f,	0.0f, tex}); // 4
+	}
+	else if (type == Chunk::V_LEFT) // left, clockwise
+	{
+		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+		pushVertex({x,			y,			z + sz,		1.0f * (sz / BLOCK_SIZE),	0.0f, tex}); // 4
+		pushVertex({x,			y + sy,		z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sy / BLOCK_SIZE), tex}); // 6
+		pushVertex({x,			y + sy,		z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sy / BLOCK_SIZE), tex}); // 6
+		pushVertex({x,			y + sy,		z,			0.0f,	1.0f * (sy / BLOCK_SIZE), tex}); // 2
+		pushVertex({x,			y,			z,			0.0f,	0.0f, tex}); // 0
+	}
+	else if (type == Chunk::V_RIGHT) // right, counter clockwise
+	{
+		pushVertex({x + sx,		y,			z,			0.0f,	0.0f, tex}); // 1
+		pushVertex({x + sx,		y + sy,		z,			0.0f,	1.0f * (sy / BLOCK_SIZE), tex}); // 3
+		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sy / BLOCK_SIZE), tex}); // 7
+		pushVertex({x + sx,		y + sy,		z + sz,		1.0f * (sz / BLOCK_SIZE),	1.0f * (sy / BLOCK_SIZE), tex}); // 7
+		pushVertex({x + sx,		y,			z + sz,		1.0f * (sz / BLOCK_SIZE),	0.0f, tex}); // 5
+		pushVertex({x + sx,		y,			z,			0.0f,	0.0f, tex}); // 1
 	}
 }
 

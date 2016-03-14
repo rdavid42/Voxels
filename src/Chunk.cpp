@@ -125,16 +125,25 @@ Chunk::checkEmpty(int const &side, Vec3<int> const &p) const
 		return ((p.x + 1 < CHUNK_SIZE && getBlock(p.x + 1, p.y, p.z).getType() == AIR) || p.x + 1 == CHUNK_SIZE);
 	return (false);
 }
-
+/*
+	if (checkEmpty(V_BACK, i)) // Back
+		mesh.pushBackFace(x, y, z, bs, getTextureIndex(V_BACK, bt));
+	if (checkEmpty(V_FRONT, i)) // Front
+		mesh.pushFrontFace(x, y, z, bs, getTextureIndex(V_FRONT, bt));
+	if (checkEmpty(V_LEFT, i)) // Left
+		mesh.pushLeftFace(x, y, z, bs, getTextureIndex(V_LEFT, bt));
+	if (checkEmpty(V_RIGHT, i)) // Right
+		mesh.pushRightFace(x, y, z, bs, getTextureIndex(V_RIGHT, bt));
+*/
 void
-Chunk::generateGreedyMesh(void)
+Chunk::generateGreedyMeshTopBottom(void)
 {
 	float					x, y, z, bs;
 	Vec3<float>				c; // chunk world position
 	Vec3<int>				i; // block coordinate
 	float					bt; // current block type
 	int						j, k, l;
-	char					hq[2][CHUNK_SIZE][CHUNK_SIZE][3]; // [up/bottom][x][z][width(z)/height(x)/type]
+	meshFace				hq[2][CHUNK_SIZE][CHUNK_SIZE]; // [up/bottom][x][z][width(z)/height(x)/type]
 	int						qz[2]; // current quad z (up/bottom)
 
 	c.set(_cube.getX(), _cube.getY(), _cube.getZ());
@@ -147,9 +156,9 @@ Chunk::generateGreedyMesh(void)
 			{
 				for (l = 0; l < CHUNK_SIZE; ++l)
 				{
-					hq[j][k][l][0] = 0;
-					hq[j][k][l][1] = 1;
-					hq[j][k][l][2] = AIR;
+					hq[j][k][l].w = 0;
+					hq[j][k][l].h = 1;
+					hq[j][k][l].t = AIR;
 				}
 			}
 		}
@@ -170,28 +179,20 @@ Chunk::generateGreedyMesh(void)
 							if (qz[j] == -1)
 							{
 								qz[j] = i.z;
-								hq[j][i.x][qz[j]][2] = bt;
+								hq[j][i.x][qz[j]].t = bt;
 							}
-							if (bt == hq[j][i.x][qz[j]][2])
-								hq[j][i.x][qz[j]][0]++;
+							if (bt == hq[j][i.x][qz[j]].t)
+								hq[j][i.x][qz[j]].w++;
 							else
 							{
 								qz[j] = i.z;
-								hq[j][i.x][qz[j]][2] = bt;
-								hq[j][i.x][qz[j]][0]++;
+								hq[j][i.x][qz[j]].t = bt;
+								hq[j][i.x][qz[j]].w++;
 							}
 						}
 						else
 							qz[j] = -1;
 					}
-					if (checkEmpty(V_BACK, i)) // Back
-						mesh.pushBackFace(x, y, z, bs, getTextureIndex(V_BACK, bt));
-					if (checkEmpty(V_FRONT, i)) // Front
-						mesh.pushFrontFace(x, y, z, bs, getTextureIndex(V_FRONT, bt));
-					if (checkEmpty(V_LEFT, i)) // Left
-						mesh.pushLeftFace(x, y, z, bs, getTextureIndex(V_LEFT, bt));
-					if (checkEmpty(V_RIGHT, i)) // Right
-						mesh.pushRightFace(x, y, z, bs, getTextureIndex(V_RIGHT, bt));
 				}
 				else
 				{
@@ -207,16 +208,16 @@ Chunk::generateGreedyMesh(void)
 			{
 				for (l = 0; l < CHUNK_SIZE; ++l) // z
 				{
-					if (hq[j][k][l][2] != AIR)
+					if (hq[j][k][l].t != AIR)
 					{
-						if (hq[j][k][l][2] == hq[j][k - 1][l][2]) // same quad type
+						if (hq[j][k][l].t == hq[j][k - 1][l].t) // same quad type
 						{
-							if (hq[j][k][l][0] == hq[j][k - 1][l][0]) // same quad size
+							if (hq[j][k][l].w == hq[j][k - 1][l].w) // same quad size
 							{
-								hq[j][k - 1][l][1] += hq[j][k][l][1];
-								hq[j][k][l][0] = 0;
-								hq[j][k][l][1] = 1;
-								hq[j][k][l][2] = AIR;
+								hq[j][k - 1][l].h += hq[j][k][l].h;
+								hq[j][k][l].w = 0;
+								hq[j][k][l].h = 1;
+								hq[j][k][l].t = AIR;
 							}
 						}
 					}
@@ -227,13 +228,215 @@ Chunk::generateGreedyMesh(void)
 		for (j = 0; j < 2; ++j)
 			for (k = 0; k < CHUNK_SIZE; ++k) // x
 				for (l = 0; l < CHUNK_SIZE; ++l) // z
-					if (hq[j][k][l][2] != AIR)
+					if (hq[j][k][l].t != AIR)
 						mesh.pushQuad(j, c.x + k * bs, y, c.z + l * bs,
-									hq[j][k][l][1] * BLOCK_SIZE, bs, hq[j][k][l][0] * BLOCK_SIZE,
-									getTextureIndex(j, hq[j][k][l][2]));
+									hq[j][k][l].h * BLOCK_SIZE, bs, hq[j][k][l].w * BLOCK_SIZE,
+									getTextureIndex(j, hq[j][k][l].t));
 	}
-	// merge vertical quads
-	// push vertical quads
+}
+
+void
+Chunk::generateGreedyMeshFrontBack(void)
+{
+	float					x, y, z, bs;
+	Vec3<float>				c; // chunk world position
+	Vec3<int>				i; // block coordinate
+	float					bt; // current block type
+	int						j, k, l;
+	meshFace				hq[2][CHUNK_SIZE][CHUNK_SIZE]; // [up/bottom][x][y][width(x)/height(y)/type]
+	int						qy[2]; // current quad y (up/bottom)
+
+	c.set(_cube.getX(), _cube.getY(), _cube.getZ());
+	bs = BLOCK_SIZE;
+	for (z = c.z; z < c.z + CHUNK_SIZE; z += BLOCK_SIZE)
+	{
+		for (j = 0; j < 2; ++j)
+		{
+			for (k = 0; k < CHUNK_SIZE; ++k)
+			{
+				for (l = 0; l < CHUNK_SIZE; ++l)
+				{
+					hq[j][k][l].w = 0;
+					hq[j][k][l].h = 1;
+					hq[j][k][l].t = AIR;
+				}
+			}
+		}
+		for (x = c.x; x < c.x + CHUNK_SIZE; x += BLOCK_SIZE)
+		{
+			for (j = 0; j < 2; ++j)
+				qy[j] = -1;
+			for (y = c.y; y < c.y + CHUNK_SIZE; y += BLOCK_SIZE)
+			{
+				i.set((x - c.x) / BLOCK_SIZE, (y - c.y) / BLOCK_SIZE, (z - c.z) / BLOCK_SIZE);
+				bt = getBlock(i.x, i.y, i.z).getType();
+				if (bt != AIR)
+				{
+					for (j = 0; j < 2; ++j)
+					{
+						if (checkEmpty(j + V_BACK, i))
+						{
+							if (qy[j] == -1)
+							{
+								qy[j] = i.y;
+								hq[j][i.x][qy[j]].t = bt;
+							}
+							if (bt == hq[j][i.x][qy[j]].t)
+								hq[j][i.x][qy[j]].w++;
+							else
+							{
+								qy[j] = i.y;
+								hq[j][i.x][qy[j]].t = bt;
+								hq[j][i.x][qy[j]].w++;
+							}
+						}
+						else
+							qy[j] = -1;
+					}
+				}
+				else
+				{
+					for (j = 0; j < 2; ++j)
+						qy[j] = -1;
+				}
+			}
+		}
+		for (j = 0; j < 2; ++j)
+		{
+			for (k = CHUNK_SIZE - 1; k > 0; --k) // x, merge backwards, skip first row
+			{
+				for (l = 0; l < CHUNK_SIZE; ++l) // y
+				{
+					if (hq[j][k][l].t != AIR)
+					{
+						if (hq[j][k][l].t == hq[j][k - 1][l].t) // same quad type
+						{
+							if (hq[j][k][l].w == hq[j][k - 1][l].w) // same quad size
+							{
+								hq[j][k - 1][l].h += hq[j][k][l].h;
+								hq[j][k][l].w = 0;
+								hq[j][k][l].h = 1;
+								hq[j][k][l].t = AIR;
+							}
+						}
+					}
+				}
+			}
+		}
+		for (j = 0; j < 2; ++j)
+			for (k = 0; k < CHUNK_SIZE; ++k) // x
+				for (l = 0; l < CHUNK_SIZE; ++l) // y
+					if (hq[j][k][l].t != AIR)
+						mesh.pushQuad(j + V_BACK, c.x + k * bs, c.y + l * bs, z,
+									hq[j][k][l].h * BLOCK_SIZE, hq[j][k][l].w * BLOCK_SIZE, bs,
+									getTextureIndex(j + V_BACK, hq[j][k][l].t));
+	}
+}
+
+void
+Chunk::generateGreedyMeshLeftRight(void)
+{
+	float					x, y, z, bs;
+	Vec3<float>				c; // chunk world position
+	Vec3<int>				i; // block coordinate
+	float					bt; // current block type
+	int						j, k, l;
+	meshFace				hq[2][CHUNK_SIZE][CHUNK_SIZE]; // [up/bottom][z][y][width(z)/height(y)/type]
+	int						qy[2]; // current quad y (up/bottom)
+
+	c.set(_cube.getX(), _cube.getY(), _cube.getZ());
+	bs = BLOCK_SIZE;
+	for (x = c.x; x < c.x + CHUNK_SIZE; x += BLOCK_SIZE)
+	{
+		for (j = 0; j < 2; ++j)
+		{
+			for (k = 0; k < CHUNK_SIZE; ++k)
+			{
+				for (l = 0; l < CHUNK_SIZE; ++l)
+				{
+					hq[j][k][l].w = 0;
+					hq[j][k][l].h = 1;
+					hq[j][k][l].t = AIR;
+				}
+			}
+		}
+		for (z = c.z; z < c.z + CHUNK_SIZE; z += BLOCK_SIZE)
+		{
+			for (j = 0; j < 2; ++j)
+				qy[j] = -1;
+			for (y = c.y; y < c.y + CHUNK_SIZE; y += BLOCK_SIZE)
+			{
+				i.set((x - c.x) / BLOCK_SIZE, (y - c.y) / BLOCK_SIZE, (z - c.z) / BLOCK_SIZE);
+				bt = getBlock(i.x, i.y, i.z).getType();
+				if (bt != AIR)
+				{
+					for (j = 0; j < 2; ++j)
+					{
+						if (checkEmpty(j + V_LEFT, i))
+						{
+							if (qy[j] == -1)
+							{
+								qy[j] = i.y;
+								hq[j][i.z][qy[j]].t = bt;
+							}
+							if (bt == hq[j][i.z][qy[j]].t)
+								hq[j][i.z][qy[j]].w++;
+							else
+							{
+								qy[j] = i.y;
+								hq[j][i.z][qy[j]].t = bt;
+								hq[j][i.z][qy[j]].w++;
+							}
+						}
+						else
+							qy[j] = -1;
+					}
+				}
+				else
+				{
+					for (j = 0; j < 2; ++j)
+						qy[j] = -1;
+				}
+			}
+		}
+		for (j = 0; j < 2; ++j)
+		{
+			for (k = CHUNK_SIZE - 1; k > 0; --k) // z, merge backwards, skip first row
+			{
+				for (l = 0; l < CHUNK_SIZE; ++l) // y
+				{
+					if (hq[j][k][l].t != AIR)
+					{
+						if (hq[j][k][l].t == hq[j][k - 1][l].t) // same quad type
+						{
+							if (hq[j][k][l].w == hq[j][k - 1][l].w) // same quad size
+							{
+								hq[j][k - 1][l].h += hq[j][k][l].h;
+								hq[j][k][l].w = 0;
+								hq[j][k][l].h = 1;
+								hq[j][k][l].t = AIR;
+							}
+						}
+					}
+				}
+			}
+		}
+		for (j = 0; j < 2; ++j)
+			for (k = 0; k < CHUNK_SIZE; ++k) // z
+				for (l = 0; l < CHUNK_SIZE; ++l) // y
+					if (hq[j][k][l].t != AIR)
+						mesh.pushQuad(j + V_LEFT, x, c.y + l * bs, c.z + k * bs,
+									bs, hq[j][k][l].w * BLOCK_SIZE, hq[j][k][l].h * BLOCK_SIZE,
+									getTextureIndex(j + V_LEFT, hq[j][k][l].t));
+	}
+}
+
+void
+Chunk::generateGreedyMesh(void)
+{
+	generateGreedyMeshTopBottom();
+	generateGreedyMeshFrontBack();
+	generateGreedyMeshLeftRight();
 }
 
 void
